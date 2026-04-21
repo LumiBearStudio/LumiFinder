@@ -1,0 +1,419 @@
+<Window
+    x:Class="LumiFiles.Views.QuickLookWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:helpers="using:LumiFiles.Helpers">
+
+    <Grid x:Name="RootGrid" Background="{ThemeResource SpanBgLayer1Brush}">
+        <Grid.Resources>
+            <helpers:VisibilityConverter x:Key="VisConv"/>
+            <!-- Compact action button style -->
+            <Style x:Key="QuickLookActionButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="Padding" Value="6"/>
+                <Setter Property="MinWidth" Value="30"/>
+                <Setter Property="MinHeight" Value="30"/>
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource SpanAccentDimBrush}"/>
+                <Setter Property="FocusVisualSecondaryBrush" Value="Transparent"/>
+                <Setter Property="FocusVisualPrimaryThickness" Value="1"/>
+                <Setter Property="FocusVisualSecondaryThickness" Value="0"/>
+            </Style>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Custom Title Bar -->
+            <RowDefinition Height="*"/>     <!-- Content -->
+            <RowDefinition Height="Auto"/>  <!-- Bottom Bar -->
+        </Grid.RowDefinitions>
+
+        <!-- Custom Title Bar (LumiFiles 스타일) -->
+        <Grid x:Name="QuickLookTitleBar" Grid.Row="0" Height="32"
+              Background="{ThemeResource SpanBgLayer1Brush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition x:Name="TitleRightPadding" Width="0"/>
+            </Grid.ColumnDefinitions>
+            <Rectangle Grid.ColumnSpan="2" Height="1" VerticalAlignment="Bottom"
+                       Fill="{ThemeResource SpanBorderSubtleBrush}"/>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0" Spacing="6">
+                <Image Source="/Assets/Square44x44Logo.png" Height="14" Width="14"/>
+                <TextBlock x:Name="TitleText" Text="Quick Look"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource SpanTextSecondaryBrush}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ============================================ -->
+        <!--  Content Preview Mode (Image, Text, PDF...) -->
+        <!-- ============================================ -->
+        <!-- 좌우 네비게이션 버튼 (전체 윈도우 기준 고정 위치) -->
+        <Button x:Name="NavPrevButton" Grid.Row="0" Grid.RowSpan="3" Click="OnNavPrevClick"
+                VerticalAlignment="Center" HorizontalAlignment="Left"
+                Margin="4,0,0,0" Width="36" Height="60"
+                Background="Transparent" BorderBrush="Transparent"
+                CornerRadius="6" Opacity="0.4" IsTabStop="False"
+                Canvas.ZIndex="10"
+                ToolTipService.ToolTip="Previous (←)"
+                helpers:CursorHelper.IsHandCursor="True"
+                PointerEntered="OnNavButtonPointerEntered"
+                PointerExited="OnNavButtonPointerExited">
+            <FontIcon Glyph="&#xE76B;" FontSize="16"/>
+        </Button>
+        <Button x:Name="NavNextButton" Grid.Row="0" Grid.RowSpan="3" Click="OnNavNextClick"
+                VerticalAlignment="Center" HorizontalAlignment="Right"
+                Margin="0,0,4,0" Width="36" Height="60"
+                Background="Transparent" BorderBrush="Transparent"
+                CornerRadius="6" Opacity="0.4" IsTabStop="False"
+                Canvas.ZIndex="10"
+                ToolTipService.ToolTip="Next (→)"
+                helpers:CursorHelper.IsHandCursor="True"
+                PointerEntered="OnNavButtonPointerEntered"
+                PointerExited="OnNavButtonPointerExited">
+            <FontIcon Glyph="&#xE76C;" FontSize="16"/>
+        </Button>
+
+        <Grid x:Name="ContentPreviewArea" Grid.Row="1" Visibility="Collapsed">
+            <!-- Loading indicator -->
+            <ProgressBar IsIndeterminate="True"
+                         Visibility="{Binding IsLoading, Converter={StaticResource VisConv}}"
+                         VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
+
+            <!-- Image Preview -->
+            <Image x:Name="PreviewImage" Source="{Binding ImagePreview}"
+                   Visibility="{Binding IsImageVisible, Converter={StaticResource VisConv}}"
+                   Stretch="Uniform"
+                   HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                   Margin="16"
+                   RenderTransformOrigin="0.5,0.5">
+                <Image.RenderTransform>
+                    <CompositeTransform x:Name="ImageTransform"/>
+                </Image.RenderTransform>
+            </Image>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Visibility="{Binding HasContent, Converter={StaticResource VisConv}}">
+                <Grid>
+                    <!-- Text Preview -->
+                    <Border Visibility="{Binding IsTextVisible, Converter={StaticResource VisConv}}"
+                            CornerRadius="4" Padding="16" Margin="12">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Auto">
+                            <TextBlock Text="{Binding TextPreview}"
+                                       FontFamily="{StaticResource MonoFont}" FontSize="12"
+                                       TextWrapping="Wrap"
+                                       IsTextSelectionEnabled="True"
+                                       Foreground="{ThemeResource SpanTextSecondaryBrush}"/>
+                        </ScrollViewer>
+                    </Border>
+
+                    <!-- PDF Preview -->
+                    <Image Source="{Binding PdfPreview}"
+                           Visibility="{Binding IsPdfVisible, Converter={StaticResource VisConv}}"
+                           Stretch="Uniform"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Margin="16"/>
+
+                    <!-- Media Preview — 지연 생성: Grid placeholder만 배치 -->
+                    <Grid x:Name="MediaPlayerHost"
+                          Visibility="{Binding IsMediaVisible, Converter={StaticResource VisConv}}"
+                          VerticalAlignment="Center" Margin="16" MinHeight="180"/>
+
+                    <!-- Hex Binary Preview -->
+                    <Border Visibility="{Binding IsHexBinaryVisible, Converter={StaticResource VisConv}}"
+                            CornerRadius="4" Padding="16" Margin="12">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Auto">
+                            <TextBlock Text="{Binding HexPreview}"
+                                       FontFamily="{StaticResource MonoFont}" FontSize="11"
+                                       TextWrapping="NoWrap" LineHeight="16"
+                                       IsTextSelectionEnabled="True"
+                                       Foreground="{ThemeResource SpanTextSecondaryBrush}"/>
+                        </ScrollViewer>
+                    </Border>
+
+                    <!-- Font Preview -->
+                    <StackPanel Visibility="{Binding IsFontVisible, Converter={StaticResource VisConv}}"
+                                Spacing="12" Padding="20" VerticalAlignment="Center">
+                        <Border Background="{ThemeResource SpanBgLayer2Brush}"
+                                CornerRadius="4" Padding="6,3" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding FontFormat}" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource SpanAccentBrush}"/>
+                        </Border>
+                        <StackPanel Background="{ThemeResource SpanBgLayer2Brush}"
+                                    CornerRadius="4" Padding="12" Spacing="8">
+                            <TextBlock Text="AaBbCcDdEeFfGgHhIiJjKk" FontSize="24"
+                                       FontFamily="{Binding FontFamilySource}"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{ThemeResource SpanTextPrimaryBrush}"/>
+                            <TextBlock Text="0123456789 !@#$%^&amp;*()" FontSize="18"
+                                       FontFamily="{Binding FontFamilySource}"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{ThemeResource SpanTextSecondaryBrush}"/>
+                            <Rectangle Height="1" Fill="{ThemeResource SpanBorderSubtleBrush}" Margin="0,4"/>
+                            <TextBlock Text="The quick brown fox jumps over the lazy dog" FontSize="14"
+                                       FontFamily="{Binding FontFamilySource}"
+                                       TextWrapping="Wrap" TextAlignment="Center"
+                                       Foreground="{ThemeResource SpanTextSecondaryBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Archive Contents -->
+                    <StackPanel Visibility="{Binding IsArchiveVisible, Converter={StaticResource VisConv}}"
+                                Spacing="8" Padding="20">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="QLArchiveStats" Grid.Column="0" Text="{Binding ArchiveStats}"
+                                       FontSize="13" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="QLArchiveRatio" Grid.Column="1" Text="{Binding ArchiveCompressionRatio}"
+                                       FontSize="12" Foreground="{ThemeResource SpanAccentBrush}"
+                                       FontWeight="SemiBold"/>
+                        </Grid>
+                        <Border Background="{ThemeResource SpanBgLayer2Brush}"
+                                CornerRadius="4" Padding="10">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Auto">
+                                <TextBlock x:Name="QLArchiveTree" Text="{Binding ArchiveContentTree}"
+                                           FontSize="12" LineHeight="20"
+                                           TextWrapping="NoWrap"
+                                           IsTextSelectionEnabled="True"/>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+
+            <!-- Markdown Rendered Preview (WebView2) — 지연 생성: Grid placeholder만 배치 -->
+            <Grid x:Name="MarkdownWebViewHost"
+                  Visibility="{Binding IsMarkdownVisible, Converter={StaticResource VisConv}}"/>
+
+            <!-- CSV Table Preview -->
+            <Border Visibility="{Binding IsCsvVisible, Converter={StaticResource VisConv}}"
+                    Margin="0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Auto">
+                    <ItemsRepeater x:Name="CsvTableRepeater"/>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- ============================================ -->
+        <!--  Info-Only Mode (Finder Style - Compact)    -->
+        <!-- ============================================ -->
+        <Grid x:Name="InfoOnlyArea" Grid.Row="1" Visibility="Collapsed"
+              VerticalAlignment="Center" HorizontalAlignment="Center"
+              Padding="32,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>   <!-- Icon -->
+                <ColumnDefinition Width="16"/>      <!-- Spacing -->
+                <ColumnDefinition Width="*"/>       <!-- Info -->
+            </Grid.ColumnDefinitions>
+
+            <!-- Large Icon -->
+            <FontIcon x:Name="InfoIcon" Grid.Column="0"
+                      FontFamily="{StaticResource RemixIcons}"
+                      Glyph="{Binding FileIconGlyph}"
+                      Foreground="{Binding FileIconBrush}"
+                      FontSize="72" VerticalAlignment="Center"/>
+
+            <!-- Name + Metadata -->
+            <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="4">
+                <TextBlock x:Name="InfoFileName" Text="{Binding FileName}"
+                           FontSize="16" FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           IsTextSelectionEnabled="True"/>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock x:Name="InfoSizeText" FontSize="12"
+                               Foreground="{ThemeResource SpanTextSecondaryBrush}"/>
+                    <TextBlock Text="&#xB7;" FontSize="12"
+                               Foreground="{ThemeResource SpanTextTertiaryBrush}"
+                               x:Name="InfoSizeDot" Visibility="Collapsed"/>
+                    <TextBlock x:Name="InfoItemCountText" FontSize="12"
+                               Foreground="{ThemeResource SpanTextSecondaryBrush}"/>
+                </StackPanel>
+                <TextBlock x:Name="InfoTypeText" FontSize="12"
+                           Foreground="{ThemeResource SpanTextTertiaryBrush}"/>
+                <TextBlock x:Name="InfoDateText" FontSize="11"
+                           Foreground="{ThemeResource SpanTextTertiaryBrush}"/>
+
+                <!-- Info-Only Action Buttons -->
+                <StackPanel x:Name="InfoActionButtons" Orientation="Horizontal" Spacing="2" Margin="0,8,0,0">
+                    <Button x:Name="BtnInfoNewTab" Style="{StaticResource QuickLookActionButton}"
+                            Padding="6" MinWidth="0" MinHeight="0"
+                            Command="{Binding OpenInNewTabCommand}"
+                            Visibility="{Binding IsFolderVisible, Converter={StaticResource VisConv}}"
+                            ToolTipService.ToolTip="Open in New Tab"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE8A7;" FontSize="14"/>
+                    </Button>
+                    <Button x:Name="BtnInfoTerminal" Style="{StaticResource QuickLookActionButton}"
+                            Padding="6" MinWidth="0" MinHeight="0"
+                            Command="{Binding OpenTerminalCommand}"
+                            Visibility="{Binding IsFolderVisible, Converter={StaticResource VisConv}}"
+                            ToolTipService.ToolTip="Open Terminal"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE756;" FontSize="14"/>
+                    </Button>
+                    <Border x:Name="InfoSep" Width="1" Height="20" Margin="4,0"
+                            Background="{ThemeResource SpanBorderSubtleBrush}"
+                            Visibility="{Binding IsFolderVisible, Converter={StaticResource VisConv}}"/>
+                    <Button Style="{StaticResource QuickLookActionButton}"
+                            Padding="6" MinWidth="0" MinHeight="0"
+                            Command="{Binding CopyPathCommand}"
+                            ToolTipService.ToolTip="Copy Path"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE71B;" FontSize="14"/>
+                    </Button>
+                    <Button Style="{StaticResource QuickLookActionButton}"
+                            Padding="6" MinWidth="0" MinHeight="0"
+                            Command="{Binding OpenDefaultCommand}"
+                            ToolTipService.ToolTip="Open"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE8E5;" FontSize="14"/>
+                    </Button>
+                    <Button Style="{StaticResource QuickLookActionButton}"
+                            Padding="6" MinWidth="0" MinHeight="0"
+                            Command="{Binding ShowPropertiesCommand}"
+                            ToolTipService.ToolTip="Properties"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE946;" FontSize="14"/>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <!-- Bottom Info Bar (Content preview mode only) -->
+        <Border x:Name="BottomInfoBar" Grid.Row="2"
+                Background="{ThemeResource SpanBgLayer2Brush}"
+                BorderBrush="{ThemeResource SpanBorderSubtleBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="16,10"
+                Visibility="Collapsed">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: File info -->
+                <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontFamily="{StaticResource RemixIcons}"
+                                  Glyph="{Binding FileIconGlyph}"
+                                  Foreground="{Binding FileIconBrush}"
+                                  FontSize="16" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="BottomFileName" Text="{Binding FileName}"
+                                   FontWeight="SemiBold" FontSize="13"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <TextBlock x:Name="BottomFileType" Text="{Binding FileType}" FontSize="11"
+                                   Foreground="{ThemeResource SpanTextTertiaryBrush}"
+                                   Visibility="{Binding FileType, Converter={StaticResource VisConv}}"/>
+                        <TextBlock x:Name="BottomFileSize" Text="{Binding FileSizeFormatted}" FontSize="11"
+                                   Foreground="{ThemeResource SpanTextTertiaryBrush}"
+                                   Visibility="{Binding FileSizeFormatted, Converter={StaticResource VisConv}}"/>
+                        <TextBlock x:Name="BottomDimensions" Text="{Binding Dimensions}" FontSize="11"
+                                   Foreground="{ThemeResource SpanTextTertiaryBrush}"
+                                   Visibility="{Binding Dimensions, Converter={StaticResource VisConv}}"/>
+                        <TextBlock x:Name="BottomDuration" Text="{Binding Duration}" FontSize="11"
+                                   Foreground="{ThemeResource SpanTextTertiaryBrush}"
+                                   Visibility="{Binding Duration, Converter={StaticResource VisConv}}"/>
+                        <TextBlock x:Name="BottomDateModified" Text="{Binding DateModified}" FontSize="11"
+                                   Foreground="{ThemeResource SpanTextTertiaryBrush}"
+                                   Visibility="{Binding DateModified, Converter={StaticResource VisConv}}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Center: File Counter -->
+                <TextBlock x:Name="FileCounterText" Grid.Column="1"
+                           FontSize="11" VerticalAlignment="Center"
+                           Foreground="{ThemeResource SpanTextTertiaryBrush}"
+                           Margin="12,0"/>
+
+                <!-- Right: Action Buttons -->
+                <StackPanel x:Name="ContentActionButtons" Grid.Column="2"
+                            Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                    <Button x:Name="BtnRotate" Style="{StaticResource QuickLookActionButton}"
+                            Command="{Binding RotateRightCommand}"
+                            Visibility="{Binding IsImageVisible, Converter={StaticResource VisConv}}"
+                            ToolTipService.ToolTip="Rotate"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE7AD;" FontSize="14"/>
+                    </Button>
+                    <Button x:Name="BtnSaveRotation" Style="{StaticResource QuickLookActionButton}"
+                            Command="{Binding SaveRotationCommand}"
+                            Visibility="{Binding IsImageVisible, Converter={StaticResource VisConv}}"
+                            IsEnabled="{Binding HasPendingRotation}"
+                            ToolTipService.ToolTip="Save"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE74E;" FontSize="14"/>
+                    </Button>
+                    <Button x:Name="BtnCopyContent" Style="{StaticResource QuickLookActionButton}"
+                            Command="{Binding CopyContentCommand}"
+                            Visibility="{Binding IsTextVisible, Converter={StaticResource VisConv}}"
+                            ToolTipService.ToolTip="Copy Text"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE8C8;" FontSize="14"/>
+                    </Button>
+                    <Button x:Name="BtnExtractHere" Style="{StaticResource QuickLookActionButton}"
+                            Command="{Binding ExtractHereCommand}"
+                            Visibility="{Binding IsArchiveVisible, Converter={StaticResource VisConv}}"
+                            ToolTipService.ToolTip="Extract Here"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE8B7;" FontSize="14"/>
+                    </Button>
+                    <Button x:Name="BtnExtractTo" Style="{StaticResource QuickLookActionButton}"
+                            Command="{Binding ExtractToCommand}"
+                            Visibility="{Binding IsArchiveVisible, Converter={StaticResource VisConv}}"
+                            ToolTipService.ToolTip="Extract To..."
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xED25;" FontSize="14"/>
+                    </Button>
+                    <Border Width="1" Height="20" Margin="4,0"
+                            Background="{ThemeResource SpanBorderSubtleBrush}"/>
+                    <Button x:Name="BtnCopyPath" Style="{StaticResource QuickLookActionButton}"
+                            Command="{Binding CopyPathCommand}"
+                            ToolTipService.ToolTip="Copy Path"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE71B;" FontSize="14"/>
+                    </Button>
+                    <Button x:Name="BtnOpenDefault" Style="{StaticResource QuickLookActionButton}"
+                            Command="{Binding OpenDefaultCommand}"
+                            ToolTipService.ToolTip="Open"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE8E5;" FontSize="14"/>
+                    </Button>
+                    <Button x:Name="BtnOpenWith" Style="{StaticResource QuickLookActionButton}"
+                            Command="{Binding OpenWithCommand}"
+                            ToolTipService.ToolTip="Open With..."
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE7AC;" FontSize="14"/>
+                    </Button>
+                    <Button x:Name="BtnProperties" Style="{StaticResource QuickLookActionButton}"
+                            Command="{Binding ShowPropertiesCommand}"
+                            ToolTipService.ToolTip="Properties"
+                            helpers:CursorHelper.IsHandCursor="True">
+                        <FontIcon Glyph="&#xE946;" FontSize="14"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <!-- Toast Overlay -->
+        <Border x:Name="ToastOverlay" Grid.Row="1"
+                Background="{ThemeResource SpanAccentBrush}"
+                CornerRadius="6" Padding="12,6"
+                HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                Margin="0,0,0,12" Opacity="0" IsHitTestVisible="False">
+            <TextBlock x:Name="ToastText" Text="Copied!"
+                       FontSize="12" FontWeight="SemiBold"
+                       Foreground="White"/>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,178 @@
+<UserControl
+    x:Class="LumiFiles.Views.Controls.FileOperationProgressControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:services="using:LumiFiles.Services"
+    xmlns:helpers="using:LumiFiles.Helpers"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid>
+        <!-- Multi-operation list panel: shown when FileOperationManager has active operations.
+             SolidBackgroundFillColorQuarternaryBrush: 불투명 배경 사용 — 탐색기 콘텐츠 위에
+             오버레이되므로 반투명이면 텍스트 가독성이 떨어짐. 카드형 UI로 명확히 분리.
+             SpanAccentDimBrush: 탭과 동일한 액센트 테두리로 패널 존재감 강조. -->
+        <Border x:Name="MultiOperationPanel"
+                Background="{ThemeResource SolidBackgroundFillColorQuarternaryBrush}"
+                BorderBrush="{ThemeResource SpanAccentDimBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="0"
+                Width="300"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                Margin="0,0,16,8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- Header -->
+                    <RowDefinition Height="Auto"/> <!-- Operation list -->
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Grid Grid.Row="0" Padding="16,10,16,8"
+                      Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="HeaderText" Grid.Column="0" Text="File Operations"
+                               FontWeight="SemiBold" FontSize="13"
+                               VerticalAlignment="Center"/>
+
+                    <!-- CursorHelper.IsHandCursor: WinUI 3 Button의 기본 커서는 Arrow.
+                         파일 작업 패널은 오버레이 UI이므로 클릭 가능 영역을 Hand 커서로 명시. -->
+                    <Button x:Name="CancelAllButton" Grid.Column="1" Content="Cancel All"
+                            FontSize="11" Padding="8,4"
+                            helpers:CursorHelper.IsHandCursor="True"
+                            Command="{x:Bind ViewModel.CancelAllCommand}"
+                            Style="{StaticResource DefaultButtonStyle}"/>
+                </Grid>
+
+                <!-- Operation items -->
+                <ItemsControl Grid.Row="1"
+                              x:Name="OperationsList"
+                              Padding="0,4,0,4">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="services:FileOperationEntry">
+                            <Grid Padding="16,8" ColumnSpacing="8">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Row 0: Description + Percentage + buttons -->
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{x:Bind Description, Mode=OneWay}"
+                                               FontSize="13" FontWeight="SemiBold"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center"/>
+
+                                    <!-- Percentage text -->
+                                    <TextBlock Grid.Column="1"
+                                               Text="{x:Bind PercentageText, Mode=OneWay}"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource SpanAccentBrush}"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               Margin="8,0,4,0"/>
+
+                                    <!-- Pause/Resume button: Cancelling 상태에서 비활성화 -->
+                                    <Button Grid.Column="2"
+                                            Width="28" Height="28" Padding="0"
+                                            helpers:CursorHelper.IsHandCursor="True"
+                                            ToolTipService.ToolTip="{x:Bind PauseResumeTooltip, Mode=OneWay}"
+                                            IsEnabled="{x:Bind CanPauseOrResume, Mode=OneWay}"
+                                            Tag="{x:Bind Id}"
+                                            Click="OnPauseResumeClick"
+                                            Style="{StaticResource SubtleButtonStyle}">
+                                        <FontIcon Glyph="{x:Bind PauseResumeIcon, Mode=OneWay}" FontSize="12"/>
+                                    </Button>
+
+                                    <!-- Cancel button: Cancelling 상태에서 비활성화 (중복 클릭 방지) -->
+                                    <Button Grid.Column="3"
+                                            Width="28" Height="28" Padding="0"
+                                            helpers:CursorHelper.IsHandCursor="True"
+                                            ToolTipService.ToolTip="Cancel"
+                                            IsEnabled="{x:Bind CanCancel, Mode=OneWay}"
+                                            Tag="{x:Bind Id}"
+                                            Click="OnCancelClick"
+                                            Style="{StaticResource SubtleButtonStyle}">
+                                        <FontIcon Glyph="&#xE711;" FontSize="12"/>
+                                    </Button>
+                                </Grid>
+
+                                <!-- Row 1: Progress bar — Cancelling 시 ShowError=True (빨간색 표시) -->
+                                <ProgressBar Grid.Row="1"
+                                             Value="{x:Bind Percentage, Mode=OneWay}"
+                                             Maximum="100"
+                                             ShowPaused="{x:Bind IsPaused, Mode=OneWay}"
+                                             ShowError="{x:Bind IsCancelling, Mode=OneWay}"
+                                             Height="6"
+                                             CornerRadius="3"
+                                             Margin="0,6,0,4"/>
+
+                                <!-- Row 2: Current file + file count -->
+                                <Grid Grid.Row="2" ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{x:Bind CurrentFile, Mode=OneWay}"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextTrimming="CharacterEllipsis"/>
+
+                                    <TextBlock Grid.Column="1"
+                                               Text="{x:Bind FileCountText, Mode=OneWay}"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                                </Grid>
+
+                                <!-- Row 3: Speed/Status + Remaining time -->
+                                <Grid Grid.Row="3" ColumnSpacing="8" Margin="0,2,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Cancelling 상태: "취소 중..." 텍스트 (IsRunning=false → SpeedText 숨김) -->
+                                    <TextBlock Grid.Column="0"
+                                               Text="{x:Bind StatusText, Mode=OneWay}"
+                                               FontSize="12"
+                                               FontStyle="Italic"
+                                               Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                               Visibility="{x:Bind IsCancelling, Mode=OneWay}"/>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{x:Bind SpeedText, Mode=OneWay}"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                               Visibility="{x:Bind IsRunning, Mode=OneWay}"/>
+
+                                    <TextBlock Grid.Column="1"
+                                               Text="{x:Bind RemainingTimeText, Mode=OneWay}"
+                                               FontSize="12"
+                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                               Visibility="{x:Bind IsRunning, Mode=OneWay}"/>
+                                </Grid>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

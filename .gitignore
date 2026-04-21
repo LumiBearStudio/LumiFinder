@@ -1,0 +1,50 @@
+[Oo]bj/
+[Bb]in/
+BuildInfo.g.cs
+.vs/
+*.user
+*.suo
+*.ide
+*.log
+*.tmp
+*.bak
+*.swp
+node_modules/
+.DS_Store
+Thumbs.db
+*.pdb
+*.cache
+AppPackages/
+builds/
+
+# Development internal files
+.claude/
+CLAUDE.md
+AGENTS.md
+.agents/
+.mcp.json
+ROADMAP.md
+docs/
+design/
+
+# Build/debug artifacts
+build_log.txt
+errors.txt
+.bkit-memory.json
+.pdca-status.json
+
+# Sensitive data (safety net)
+connections.json
+credentials.dat
+*.pfx
+
+# Debug screenshots at root
+/[0-9]*.png
+/[0-9]*.PNG
+
+# Misc
+test-sentry/
+Logs/
+image.png
+pri_dump.xml
+github-docs

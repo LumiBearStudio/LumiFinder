@@ -1,0 +1,179 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>LumiFiles</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x86;x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>false</WinUISDKReferences>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    <!-- Sentry release 정확도 — Package.appxmanifest와 동기화 필요 (수동) -->
+    <Version>1.4.1</Version>
+    <AssemblyVersion>1.4.1.0</AssemblyVersion>
+    <FileVersion>1.4.1.0</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\SplashScreen.scale-200.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\LockScreenLogo.scale-200.png" />
+    <Content Include="Assets\Square150x150Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-32_altform-unplated.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-48_altform-unplated.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-256_altform-unplated.png" />
+    <Content Include="Assets\app.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="Assets\icon_coffee.png" />
+    <Content Include="Assets\icon_hamburger.png" />
+    <Content Include="Assets\icon_steak.png" />
+    <Content Include="Assets\lumibear_sleeping.png" />
+    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="Assets\Fonts\remixicon.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Fonts\Phosphor.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Fonts\tabler-icons.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Fonts\PretendardVariable.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="icons.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="icons-phosphor.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="icons-tabler.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!-- Onboarding assets — WebView2가 virtual host로 로드 -->
+  <ItemGroup>
+    <Content Include="Assets\Onboarding\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ProjectCapability Include="Msix" />
+  </ItemGroup>
+  <!-- Phase 1: 썸네일 격리 워커 — 빌드 의존성만 ProjectReference로,
+       출력 복사는 별도 target(CopyThumbsWorker)이 처리 -->
+  <ItemGroup>
+    <ProjectReference Include="..\LumiFiles.Thumbs\LumiFiles.Thumbs.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <PrivateAssets>all</PrivateAssets>
+      <Private>false</Private>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- 워커 .exe + .dll + 메타 파일을 메인 출력 폴더 + AppX staging 폴더 둘 다 복사.
+       MSIX 실행 시 메인은 AppX/ 하위에서 실행되므로 워커도 같은 위치에 있어야 함.
+       (이전 PackagingOutputs 등록은 DEP1000 상대경로 오해석으로 제거 — Content 방식으로 대체) -->
+  <Target Name="CopyThumbsWorker"
+          AfterTargets="Build"
+          DependsOnTargets="ResolveProjectReferences">
+    <PropertyGroup>
+      <_ThumbsBinDir>$(MSBuildThisFileDirectory)..\LumiFiles.Thumbs\bin\$(Platform)\$(Configuration)\$(TargetFramework)\</_ThumbsBinDir>
+      <_AppXDir>$(OutDir)AppX\</_AppXDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <_ThumbsFiles Include="$(_ThumbsBinDir)LumiFiles.Thumbs.exe" />
+      <_ThumbsFiles Include="$(_ThumbsBinDir)LumiFiles.Thumbs.dll" />
+      <_ThumbsFiles Include="$(_ThumbsBinDir)LumiFiles.Thumbs.deps.json" />
+      <_ThumbsFiles Include="$(_ThumbsBinDir)LumiFiles.Thumbs.runtimeconfig.json" />
+      <_ThumbsFiles Include="$(_ThumbsBinDir)LumiFiles.Thumbs.pdb" Condition="'$(Configuration)' == 'Debug'" />
+    </ItemGroup>
+    <!-- 1) bin/{config}/ 직속 (직접 실행 케이스) -->
+    <Copy SourceFiles="@(_ThumbsFiles)"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('%(Identity)')" />
+    <!-- 2) AppX/ 하위 (MSIX staging 케이스 — 사용자 baseDir이 여기) -->
+    <MakeDir Directories="$(_AppXDir)" Condition="!Exists('$(_AppXDir)')" />
+    <Copy SourceFiles="@(_ThumbsFiles)"
+          DestinationFolder="$(_AppXDir)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('%(Identity)')" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="ColorCode.WinUI" Version="2.0.15" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.251219" />
+    <PackageReference Include="FluentFTP" Version="53.0.2" />
+    <PackageReference Include="H.NotifyIcon.WinUI" Version="2.2.0" />
+<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.2" />
+    <PackageReference Include="SSH.NET" Version="2025.1.0" />
+    <PackageReference Include="Sentry" Version="6.1.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.3" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+  </PropertyGroup>
+  <!-- Self-signed cert for sideload/GitHub. Store re-signs on submission. -->
+  <PropertyGroup>
+    <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
+    <PackageCertificateKeyFile>LumiFiles_Dev.pfx</PackageCertificateKeyFile>
+    <PackageCertificatePassword>LumiDev2026</PackageCertificatePassword>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
+    <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
+    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
+  </PropertyGroup>
+
+  <!-- Auto-generate BuildInfo.g.cs with build date -->
+  <Target Name="_GenerateBuildInfo" BeforeTargets="BeforeCompile;CoreCompile;_GenerateCompileInputs" AfterTargets="_CheckForNETCoreSdkIsPreview">
+    <PropertyGroup>
+      <_BuildDate>$([System.DateTime]::UtcNow.ToString("yyyyMMdd"))</_BuildDate>
+      <_BuildInfoPath>$(ProjectDir)BuildInfo.g.cs</_BuildInfoPath>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_BuildInfoPath)" Lines="namespace LumiFiles%3B;internal static class BuildInfo;{;    public const string BuildDate = &quot;$(_BuildDate)&quot;%3B;}" Overwrite="true" />
+    <ItemGroup>
+      <Compile Include="$(_BuildInfoPath)" Condition="!@(Compile-&gt;AnyHaveMetadataValue('Identity','$(_BuildInfoPath)'))" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Fix VS MSBuild flattening XBF paths in embed directory.
+       VS build strips directory prefixes from embed.resfiles, causing
+       "Cannot locate resource from 'ms-appx:///Controls/...'" at runtime.
+       This target copies XBFs with correct relative paths and rewrites embed.resfiles. -->
+  <Target Name="_FixEmbedXbfPaths" BeforeTargets="_GenerateProjectPriFileCore;_GenerateProjectPriConfigFileCore" AfterTargets="CompileXaml;Prep_MakeEmbedFiles;_CreateEmbedFiles" Condition="Exists('$(IntermediateOutputPath)embed\embed.resfiles')">
+    <ItemGroup>
+      <_XbfWithPath Include="$(IntermediateOutputPath)Controls\*.xbf" />
+      <_XbfWithPath Include="$(IntermediateOutputPath)Views\**\*.xbf" />
+      <_XbfWithPath Include="$(IntermediateOutputPath)Assets\**\*.xbf" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_XbfWithPath)" DestinationFiles="@(_XbfWithPath->'$(IntermediateOutputPath)embed\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="'@(_XbfWithPath)' != ''" />
+    <!-- Rebuild embed.resfiles with correct relative paths -->
+    <ItemGroup>
+      <_EmbedXbf Remove="@(_EmbedXbf)" />
+      <_EmbedXbf Include="$(IntermediateOutputPath)embed\**\*.xbf" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)embed\embed.resfiles" Lines="@(_EmbedXbf->'%(RecursiveDir)%(Filename)%(Extension)')" Overwrite="true" />
+  </Target>
+</Project>

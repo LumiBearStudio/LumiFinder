@@ -1,0 +1,1206 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using LumiFiles.Models;
+using LumiFiles.Services;
+using LumiFiles.ViewModels;
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Graphics;
+
+namespace LumiFiles.Views
+{
+    /// <summary>
+    /// Quick Look 플로팅 윈도우.
+    /// 두 가지 모드:
+    ///   1. Content Preview (Image, Text, PDF 등): 메인 창 70% 크기
+    ///   2. Info Only (Folder, Generic): Finder 스타일 컴팩트 카드
+    /// ESC/Space로 닫기, 커스텀 타이틀바, Mica 배경.
+    /// </summary>
+    public sealed partial class QuickLookWindow : Window, System.ComponentModel.INotifyPropertyChanged
+    {
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
+        private Microsoft.UI.Xaml.Media.FontFamily? _userFont;
+        /// <summary>사용자 폰트 (Issue #11). x:Bind OneWay로 TextBlock에 바인딩.</summary>
+        public Microsoft.UI.Xaml.Media.FontFamily? UserFont
+        {
+            get => _userFont;
+            set { if (_userFont != value) { _userFont = value; PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(UserFont))); } }
+        }
+
+        public QuickLookViewModel ViewModel { get; private set; }
+
+        public event Action? WindowClosed;
+
+        private LocalizationService? _loc;
+        private bool _isInfoOnlyMode;
+        private AppWindow? _mainAppWindow;
+        private IntPtr _mainHwnd;
+        private ShellService? _shellService;
+
+        /// <summary>
+        /// MainWindow에서 처리할 액션 (extractHere, extractTo, openInNewTab 등).
+        /// </summary>
+        public event Action<string, string>? ActionForwarded;
+
+        /// <summary>
+        /// QuickLook 내 좌우 화살표/스페이스로 파일 이동 시 메인 윈도우에 선택 동기화 알림.
+        /// </summary>
+        public event Action<FileSystemViewModel>? SelectionSynced;
+
+        // Compact info-only size
+        private const int InfoWidth = 840;
+        private const int InfoHeight = 400;
+
+        // --- 형제 파일 목록 네비게이션 ---
+        private IReadOnlyList<FileSystemViewModel>? _siblingItems;
+        private int _currentIndex = -1;
+
+        public QuickLookWindow()
+        {
+            this.InitializeComponent();
+
+            var previewService = App.Current.Services.GetRequiredService<PreviewService>();
+            ViewModel = new QuickLookViewModel(previewService);
+            (this.Content as FrameworkElement)!.DataContext = ViewModel;
+
+            ViewModel.CloseRequested += () =>
+            {
+                try { this.Close(); } catch { }
+            };
+
+            ViewModel.ActionRequested += OnActionRequested;
+            ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+
+            _shellService = App.Current.Services.GetService<ShellService>();
+
+            ConfigureWindow();
+
+            // PreviewKeyDown: 버튼에 포커스가 있어도 Space/Arrow를 먼저 가로채서 파일 네비게이션 처리
+            this.Content.PreviewKeyDown += OnContentPreviewKeyDown;
+            this.Closed += OnWindowClosed;
+            ContentPreviewArea.SizeChanged += OnContentPreviewAreaSizeChanged;
+
+            // 네비 버튼은 항상 반투명 표시, 호버 시 강조 (각 버튼의 PointerEntered/Exited에서 처리)
+
+            _loc = App.Current.Services.GetService<LocalizationService>();
+            if (_loc != null)
+            {
+                LocalizeUI();
+                _loc.LanguageChanged += LocalizeUI;
+            }
+        }
+
+        private void ConfigureWindow()
+        {
+            // Mica backdrop
+            SystemBackdrop = new Microsoft.UI.Xaml.Media.MicaBackdrop();
+
+            // Custom title bar
+            ExtendsContentIntoTitleBar = true;
+            SetTitleBar(QuickLookTitleBar);
+
+            this.Title = LocalizationService.L("QuickLook_Title");
+            TitleText.Text = LocalizationService.L("QuickLook_Title");
+
+            var appWindow = this.AppWindow;
+
+            // Caption button padding
+            var titleBar = appWindow.TitleBar;
+            titleBar.ExtendsContentIntoTitleBar = true;
+            titleBar.ButtonBackgroundColor = Colors.Transparent;
+            titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+
+            // 메인 창의 80% 크기로 열기 (이후 파일 이동 시에도 사이즈 유지, 닫았다 열면 다시 80%)
+            var (w, h) = GetContentModeSize();
+            appWindow.Resize(new SizeInt32(w, h));
+            CenterOnMainWindow(w, h);
+
+            if (appWindow.Presenter is OverlappedPresenter presenter)
+            {
+                presenter.IsMinimizable = false;
+                presenter.IsMaximizable = false;
+            }
+
+            // Update right padding for caption buttons
+            UpdateTitleBarPadding();
+        }
+
+        private void UpdateTitleBarPadding()
+        {
+            try
+            {
+                // Reserve space for min/max/close caption buttons (approx 138px on standard DPI)
+                var scale = (this.Content as FrameworkElement)?.XamlRoot?.RasterizationScale ?? 1.0;
+                TitleRightPadding.Width = new GridLength(138);
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// 메인 윈도우의 AppWindow를 설정하여 중앙 위치 계산에 사용.
+        /// </summary>
+        public void SetMainWindow(AppWindow mainAppWindow, IntPtr mainHwnd)
+        {
+            _mainAppWindow = mainAppWindow;
+            _mainHwnd = mainHwnd;
+
+            // Owner 설정: QuickLook이 메인 창 위에만 표시 (모든 창 위가 아님)
+            var qlHwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            try
+            {
+                if (qlHwnd != IntPtr.Zero && mainHwnd != IntPtr.Zero)
+                    Helpers.NativeMethods.SetWindowLongPtr64(qlHwnd, Helpers.NativeMethods.GWLP_HWNDPARENT, mainHwnd);
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[QuickLook] SetWindowLongPtr64 failed: {ex.Message}");
+            }
+
+            // DPI 비율 보정: QuickLook이 메인 창과 다른 모니터에 생성될 수 있음
+            uint qlDpi = Helpers.NativeMethods.GetDpiForWindow(qlHwnd);
+            uint mainDpi = Helpers.NativeMethods.GetDpiForWindow(mainHwnd);
+            double dpiRatio = (mainDpi > 0 && qlDpi > 0) ? (double)qlDpi / mainDpi : 1.0;
+
+            var mainSize = mainAppWindow.Size;
+            int w = (int)(mainSize.Width * 0.8 * dpiRatio);
+            int h = (int)(mainSize.Height * 0.8 * dpiRatio);
+            w = Math.Max(500, w);
+            h = Math.Max(400, h);
+
+            this.AppWindow.Resize(new SizeInt32(w, h));
+
+            // 중앙 정렬: 메인 창 물리 좌표 기준으로 계산 (메인 모니터 80% 크기 기준)
+            int effectiveW = (int)(mainSize.Width * 0.8);
+            int effectiveH = (int)(mainSize.Height * 0.8);
+            CenterOnMainWindow(effectiveW, effectiveH);
+        }
+
+        /// <summary>
+        /// 형제 파일 목록과 현재 인덱스를 설정하여 QuickLook 내 좌우 네비게이션을 활성화.
+        /// </summary>
+        public void SetSiblingItems(IReadOnlyList<FileSystemViewModel> items, int currentIndex)
+        {
+            _siblingItems = items;
+            _currentIndex = currentIndex;
+            UpdateNavButtonStates();
+        }
+
+        /// <summary>
+        /// 메인 윈도우의 테마를 QuickLook 윈도우에 동기화.
+        /// WinUI 3에서 별도 Window는 독립적 테마를 가지므로 수동 동기화 필요.
+        /// </summary>
+        public void SyncTheme()
+        {
+            try
+            {
+                var settings = App.Current.Services.GetService<ISettingsService>();
+                if (settings == null) return;
+
+                var theme = settings.Theme;
+                if (this.Content is not FrameworkElement root) return;
+
+                bool isCustom = MainWindow._customThemes.Contains(theme);
+
+                var targetTheme = theme switch
+                {
+                    "light" => ElementTheme.Light,
+                    "dark" => ElementTheme.Dark,
+                    _ when isCustom && theme == "solarized-light" => ElementTheme.Light,
+                    _ when isCustom => ElementTheme.Dark,
+                    _ => ElementTheme.Default
+                };
+
+                if (isCustom)
+                {
+                    bool isLightCustom = theme == "solarized-light";
+                    root.RequestedTheme = isLightCustom ? ElementTheme.Dark : ElementTheme.Light;
+                    MainWindow.ApplyCustomThemeOverrides(root, theme);
+                    root.RequestedTheme = isLightCustom ? ElementTheme.Light : ElementTheme.Dark;
+                }
+                else
+                {
+                    MainWindow.ApplyCustomThemeOverrides(root, theme);
+                    root.RequestedTheme = targetTheme == ElementTheme.Light
+                        ? ElementTheme.Dark : ElementTheme.Light;
+                    root.RequestedTheme = targetTheme;
+                }
+
+                // 캡션 버튼 색상도 테마에 맞게 조정
+                var titleBar = this.AppWindow.TitleBar;
+                bool isLight = theme == "light" || theme == "solarized-light"
+                    || (theme == "system" && App.Current.RequestedTheme == ApplicationTheme.Light);
+                titleBar.ButtonForegroundColor = isLight ? Colors.Black : Colors.White;
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[QuickLook] SyncTheme error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 사용자 폰트 설정을 QuickLook 윈도우에 적용한다 (Issue #11).
+        /// 별도 Window는 MainWindow의 리소스를 상속하지 않으므로 독립적으로 적용해야 한다.
+        /// XAML에서 {ThemeResource ContentControlThemeFontFamily}를 사용하므로
+        /// 리소스만 설정하고 테마 토글로 재평가하면 된다.
+        /// </summary>
+        public void SyncFont()
+        {
+            try
+            {
+                var settings = App.Current.Services.GetService<ISettingsService>();
+                if (settings == null) return;
+
+                var fontFamily = settings.FontFamily;
+                if (string.IsNullOrEmpty(fontFamily)) return;
+
+                var font = new Microsoft.UI.Xaml.Media.FontFamily(MainWindow.ResolveFontSpec(fontFamily));
+                UserFont = font;
+
+                // 직접 설정: x:Bind 대신 코드-비하인드에서 모든 TextBlock에 FontFamily 적용
+                // Info-only mode
+                InfoFileName.FontFamily = font;
+                InfoSizeText.FontFamily = font;
+                InfoSizeDot.FontFamily = font;
+                InfoItemCountText.FontFamily = font;
+                InfoTypeText.FontFamily = font;
+                InfoDateText.FontFamily = font;
+                // Bottom bar
+                BottomFileName.FontFamily = font;
+                BottomFileType.FontFamily = font;
+                BottomFileSize.FontFamily = font;
+                BottomDimensions.FontFamily = font;
+                BottomDuration.FontFamily = font;
+                BottomDateModified.FontFamily = font;
+                // Archive
+                QLArchiveStats.FontFamily = font;
+                QLArchiveRatio.FontFamily = font;
+                QLArchiveTree.FontFamily = font;
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[QuickLook] SyncFont error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 파일명 중간 말줄임표 처리.
+        /// 확장자를 보존하고 파일명 중간을 "…"로 대체하여 앞뒤 컨텍스트를 유지.
+        /// </summary>
+        private static string MiddleEllipsis(string fileName, int maxLength)
+        {
+            if (fileName.Length <= maxLength) return fileName;
+
+            var ext = System.IO.Path.GetExtension(fileName);
+            var nameWithoutExt = System.IO.Path.GetFileNameWithoutExtension(fileName);
+
+            // 확장자 + 말줄임표("…") 길이를 제외한 남은 글자 수를 앞/뒤에 분배
+            int available = maxLength - ext.Length - 1; // 1 for "…"
+            if (available < 4) available = 4; // 최소 앞2 + 뒤2
+
+            int front = (available + 1) / 2;
+            int back = available / 2;
+
+            if (front + back >= nameWithoutExt.Length) return fileName;
+
+            return nameWithoutExt[..front] + "…" + nameWithoutExt[^back..] + ext;
+        }
+
+        /// <summary>
+        /// 미리보기 내용 업데이트 + 모드/사이즈 자동 전환.
+        /// </summary>
+        public void UpdateContent(FileSystemViewModel? item)
+        {
+            if (item != null)
+            {
+                // 타이틀바: 중간 말줄임표로 파일명 표시 (확장자 보존)
+                var displayName = MiddleEllipsis(item.Name, 50);
+                TitleText.Text = string.Format(LocalizationService.L("QuickLook_TitleWithName"), displayName);
+                this.Title = string.Format(LocalizationService.L("QuickLook_TitleWithName"), displayName);
+            }
+
+            ViewModel.UpdateContent(item);
+
+            // 파일 카운터 업데이트
+            UpdateFileCounter();
+
+            // Determine mode after ViewModel updates
+            if (item != null)
+            {
+                bool isFolder = item is FolderViewModel;
+                var previewType = App.Current.Services.GetRequiredService<PreviewService>()
+                    .GetPreviewType(item.Path, isFolder);
+
+                bool infoOnly = previewType == PreviewType.Folder || previewType == PreviewType.Generic;
+                SwitchMode(infoOnly, item);
+            }
+        }
+
+        /// <summary>
+        /// 모드 전환: 컨텐츠 미리보기 vs 정보만 표시.
+        /// </summary>
+        private void SwitchMode(bool infoOnly, FileSystemViewModel item)
+        {
+            _isInfoOnlyMode = infoOnly;
+
+            if (infoOnly)
+            {
+                // === Info Only Mode (Finder style compact) ===
+                ContentPreviewArea.Visibility = Visibility.Collapsed;
+                BottomInfoBar.Visibility = Visibility.Collapsed;
+                InfoOnlyArea.Visibility = Visibility.Visible;
+
+                // Populate info texts
+                UpdateInfoOnlyTexts(item);
+            }
+            else
+            {
+                // === Content Preview Mode ===
+                ContentPreviewArea.Visibility = Visibility.Visible;
+                BottomInfoBar.Visibility = Visibility.Visible;
+                InfoOnlyArea.Visibility = Visibility.Collapsed;
+            }
+            // 사이즈/위치는 ConfigureWindow()에서 1회만 설정.
+            // 파일 이동 시 Resize/Center 하지 않음 → 사용자가 조정한 크기 유지.
+        }
+
+        private void UpdateInfoOnlyTexts(FileSystemViewModel item)
+        {
+            bool isFolder = item is FolderViewModel;
+
+            // Size
+            if (!isFolder && !string.IsNullOrEmpty(ViewModel.FileSizeFormatted))
+            {
+                InfoSizeText.Text = ViewModel.FileSizeFormatted;
+            }
+            else if (isFolder)
+            {
+                // Folder size will be updated async via binding
+                InfoSizeText.Text = "";
+                // Subscribe to ViewModel property changes for folder size
+                ViewModel.PropertyChanged += OnInfoOnlyPropertyChanged;
+            }
+            else
+            {
+                InfoSizeText.Text = "";
+            }
+
+            // Item count for folders
+            if (isFolder && item is FolderViewModel folderVm)
+            {
+                int count = folderVm.Children.Count;
+                InfoItemCountText.Text = count > 0 ? string.Format(LocalizationService.L("QuickLook_Items"), count) : "";
+                InfoSizeDot.Visibility = Visibility.Collapsed; // will show when size arrives
+            }
+            else
+            {
+                InfoItemCountText.Text = "";
+                InfoSizeDot.Visibility = Visibility.Collapsed;
+            }
+
+            // Type
+            InfoTypeText.Text = !string.IsNullOrEmpty(ViewModel.FileType) ? ViewModel.FileType : "";
+
+            // Date
+            if (!string.IsNullOrEmpty(ViewModel.DateModified))
+            {
+                var modLabel = _loc?.Get("Preview_Modified") ?? "Modified";
+                InfoDateText.Text = $"{modLabel}: {ViewModel.DateModified}";
+            }
+            else
+            {
+                InfoDateText.Text = "";
+            }
+        }
+
+        private void OnInfoOnlyPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(QuickLookViewModel.FolderSizeText))
+            {
+                var sizeText = ViewModel.FolderSizeText;
+                if (!string.IsNullOrEmpty(sizeText) && sizeText != LocalizationService.L("QuickLook_CalculatingSize"))
+                {
+                    InfoSizeText.Text = sizeText;
+                    if (!string.IsNullOrEmpty(InfoItemCountText.Text))
+                        InfoSizeDot.Visibility = Visibility.Visible;
+                }
+                else if (sizeText == LocalizationService.L("QuickLook_CalculatingSize"))
+                {
+                    var calcLabel = _loc?.Get("Preview_Calculating") ?? "Calculating...";
+                    InfoSizeText.Text = calcLabel;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 메인 창 70% 크기 계산.
+        /// </summary>
+        private (int width, int height) GetContentModeSize()
+        {
+            int w = 800, h = 600; // default fallback
+
+            if (_mainAppWindow != null)
+            {
+                var mainSize = _mainAppWindow.Size;
+                w = (int)(mainSize.Width * 0.8);
+                h = (int)(mainSize.Height * 0.8);
+            }
+
+            // Minimum size
+            w = Math.Max(500, w);
+            h = Math.Max(400, h);
+
+            return (w, h);
+        }
+
+        /// <summary>
+        /// 메인 LumiFiles 창 중앙에 배치.
+        /// </summary>
+        private void CenterOnMainWindow(int width, int height)
+        {
+            try
+            {
+                if (_mainAppWindow != null)
+                {
+                    var mainPos = _mainAppWindow.Position;
+                    var mainSize = _mainAppWindow.Size;
+                    int x = mainPos.X + (mainSize.Width - width) / 2;
+                    int y = mainPos.Y + (mainSize.Height - height) / 2;
+                    this.AppWindow.Move(new PointInt32(x, y));
+                }
+                else
+                {
+                    // Fallback: screen center
+                    var displayArea = DisplayArea.GetFromWindowId(this.AppWindow.Id, DisplayAreaFallback.Primary);
+                    if (displayArea != null)
+                    {
+                        var workArea = displayArea.WorkArea;
+                        int x = (workArea.Width - width) / 2 + workArea.X;
+                        int y = (workArea.Height - height) / 2 + workArea.Y;
+                        this.AppWindow.Move(new PointInt32(x, y));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[QuickLook] CenterOnMainWindow error: {ex.Message}");
+            }
+        }
+
+        private void OnContentPreviewKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Windows.System.VirtualKey.Escape:
+                    e.Handled = true;
+                    this.Close();
+                    break;
+
+                case Windows.System.VirtualKey.Space:
+                    // 미디어 재생 중이면 Space = 일시정지/재생 (기본 동작에 맡김)
+                    if (ViewModel.CurrentPreviewType == PreviewType.Media)
+                        return;
+                    // 그 외: 다음 파일로 이동 (버튼 포커스와 무관하게 동작)
+                    e.Handled = true;
+                    NavigateSibling(+1);
+                    break;
+
+                case Windows.System.VirtualKey.Right:
+                    e.Handled = true;
+                    NavigateSibling(+1);
+                    break;
+
+                case Windows.System.VirtualKey.Down:
+                    // 스크롤 가능한 콘텐츠(텍스트, 코드 등)에서는 Down = 스크롤
+                    if (ViewModel.IsScrollableContent)
+                        return; // 기본 스크롤 동작에 맡김
+                    e.Handled = true;
+                    NavigateSibling(+1);
+                    break;
+
+                case Windows.System.VirtualKey.Left:
+                    e.Handled = true;
+                    NavigateSibling(-1);
+                    break;
+
+                case Windows.System.VirtualKey.Up:
+                    if (ViewModel.IsScrollableContent)
+                        return;
+                    e.Handled = true;
+                    NavigateSibling(-1);
+                    break;
+
+                case Windows.System.VirtualKey.Delete:
+                    e.Handled = true;
+                    bool shift = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(
+                        Windows.System.VirtualKey.Shift).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+                    RequestDeleteCurrentFile(shift);
+                    break;
+            }
+        }
+
+        // ── 마우스 오버 좌우 네비게이션 버튼 ──────────────────────
+
+        private void OnNavPrevClick(object sender, RoutedEventArgs e) => NavigateSibling(-1);
+        private void OnNavNextClick(object sender, RoutedEventArgs e) => NavigateSibling(+1);
+
+        private void OnNavButtonPointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            if (sender is Button btn)
+            {
+                btn.Opacity = 1.0;
+                btn.Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SpanBgLayer2Brush"];
+            }
+        }
+
+        private void OnNavButtonPointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            if (sender is Button btn)
+            {
+                btn.Opacity = 0.4;
+                btn.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            }
+        }
+
+        /// <summary>
+        /// 네비게이션 후 좌우 버튼 활성 상태 업데이트 (처음/끝 도달 시 비활성).
+        /// </summary>
+        private void UpdateNavButtonStates()
+        {
+            try
+            {
+                if (_siblingItems == null || _siblingItems.Count <= 1)
+                {
+                    NavPrevButton.Visibility = Visibility.Collapsed;
+                    NavNextButton.Visibility = Visibility.Collapsed;
+                    return;
+                }
+                NavPrevButton.Visibility = Visibility.Visible;
+                NavNextButton.Visibility = Visibility.Visible;
+                NavPrevButton.IsEnabled = _currentIndex > 0;
+                NavNextButton.IsEnabled = _currentIndex < _siblingItems.Count - 1;
+            }
+            catch { }
+        }
+
+        // ── 삭제 요청 + 삭제 후 다음 파일 이동 ────────────────────
+
+        /// <summary>
+        /// 현재 미리보기 중인 파일의 삭제를 MainWindow에 요청한다.
+        /// </summary>
+        private void RequestDeleteCurrentFile(bool permanent)
+        {
+            if (_siblingItems == null || _currentIndex < 0 || _currentIndex >= _siblingItems.Count) return;
+            var item = _siblingItems[_currentIndex];
+            if (item is FolderViewModel) return; // 폴더 삭제는 QuickLook에서 지원하지 않음
+
+            var action = permanent ? "permanentDelete" : "delete";
+            ActionForwarded?.Invoke(action, item.Path);
+        }
+
+        /// <summary>
+        /// MainWindow에서 삭제 완료 후 호출. 형제 목록을 갱신하고 다음 파일로 이동.
+        /// 남은 파일이 없으면 QuickLook을 닫는다.
+        /// </summary>
+        public void OnFileDeleted(string deletedPath)
+        {
+            if (_siblingItems == null) return;
+
+            // 삭제된 항목의 인덱스 찾기
+            int deletedIndex = -1;
+            for (int i = 0; i < _siblingItems.Count; i++)
+            {
+                if (string.Equals(_siblingItems[i].Path, deletedPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    deletedIndex = i;
+                    break;
+                }
+            }
+            if (deletedIndex < 0) return;
+
+            // 형제 목록에서 삭제된 항목 제거 (IReadOnlyList → 새 리스트)
+            var newList = new System.Collections.Generic.List<FileSystemViewModel>(_siblingItems);
+            newList.RemoveAt(deletedIndex);
+            _siblingItems = newList;
+
+            // 남은 파일이 없으면 QuickLook 닫기
+            if (newList.Count == 0)
+            {
+                try { this.Close(); } catch { }
+                return;
+            }
+
+            // 다음 파일로 이동 (같은 인덱스, 범위 초과 시 마지막 항목)
+            _currentIndex = Math.Clamp(deletedIndex, 0, newList.Count - 1);
+            var nextItem = newList[_currentIndex];
+
+            StopMedia();
+            UpdateContent(nextItem);
+            SelectionSynced?.Invoke(nextItem);
+            UpdateNavButtonStates();
+            UpdateFileCounter();
+
+            Helpers.DebugLogger.Log($"[QuickLook] After delete: showing {nextItem.Name} ({_currentIndex + 1}/{newList.Count})");
+        }
+
+        /// <summary>
+        /// 형제 파일 목록에서 다음/이전 항목으로 이동하여 미리보기를 갱신한다.
+        /// </summary>
+        private void NavigateSibling(int direction)
+        {
+            if (_siblingItems == null || _siblingItems.Count == 0) return;
+
+            int newIndex = _currentIndex + direction;
+            if (newIndex < 0 || newIndex >= _siblingItems.Count) return;
+
+            _currentIndex = newIndex;
+            var nextItem = _siblingItems[_currentIndex];
+
+            // 미디어 재생 중이면 먼저 정지
+            StopMedia();
+
+            UpdateContent(nextItem);
+
+            // 메인 윈도우에 선택 동기화
+            SelectionSynced?.Invoke(nextItem);
+
+            UpdateNavButtonStates();
+
+            Helpers.DebugLogger.Log($"[QuickLook] Navigate {(direction > 0 ? "next" : "prev")}: {nextItem.Name} ({_currentIndex + 1}/{_siblingItems.Count})");
+        }
+
+        public void StopMedia()
+        {
+            try
+            {
+                if (_mediaPlayer?.MediaPlayer != null)
+                {
+                    _mediaPlayer.MediaPlayer.Pause();
+                    _mediaPlayer.Source = null;
+                }
+            }
+            catch { }
+        }
+
+        // ── 파일 카운터 (3/25) ────────────────────────────────
+
+        private void UpdateFileCounter()
+        {
+            try
+            {
+                if (_siblingItems == null || _siblingItems.Count <= 1)
+                {
+                    FileCounterText.Text = "";
+                    return;
+                }
+                FileCounterText.Text = $"{_currentIndex + 1} / {_siblingItems.Count}";
+            }
+            catch { }
+        }
+
+        // ── Markdown 렌더링 (WebView2 — 지연 생성) ──────────────────────
+
+        private Microsoft.UI.Xaml.Controls.WebView2? _markdownWebView;
+
+        private async Task RenderMarkdownAsync()
+        {
+            try
+            {
+                var html = ViewModel.MarkdownHtml;
+                if (string.IsNullOrEmpty(html))
+                {
+                    if (_markdownWebView != null)
+                        _markdownWebView.Visibility = Visibility.Collapsed;
+                    return;
+                }
+
+                // WebView2 지연 생성: Markdown 파일을 열 때만 인스턴스화
+                if (_markdownWebView == null)
+                {
+                    _markdownWebView = new Microsoft.UI.Xaml.Controls.WebView2
+                    {
+                        DefaultBackgroundColor = Microsoft.UI.Colors.Transparent
+                    };
+                    MarkdownWebViewHost.Children.Add(_markdownWebView);
+                }
+
+                _markdownWebView.Visibility = Visibility.Visible;
+                await _markdownWebView.EnsureCoreWebView2Async();
+                var isDark = (this.Content as FrameworkElement)?.ActualTheme != ElementTheme.Light;
+                var fullHtml = Helpers.MarkdownHelper.WrapInHtmlDocument(html, isDark);
+                _markdownWebView.NavigateToString(fullHtml);
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[QuickLook] Markdown render error: {ex.Message}");
+            }
+        }
+
+        // ── CSV 테이블 렌더링 ────────────────────────────────
+
+        private void RenderCsvTable()
+        {
+            try
+            {
+                var headers = ViewModel.CsvHeaders;
+                var rows = ViewModel.CsvRows;
+                if (headers == null || rows == null || headers.Length == 0)
+                {
+                    CsvTableRepeater.ItemsSource = null;
+                    return;
+                }
+
+                var colCount = headers.Length;
+
+                // Grid로 테이블 구성
+                var tablePanel = new StackPanel { Spacing = 0, Padding = new Thickness(12) };
+
+                // 헤더 행
+                var headerGrid = CreateTableRow(headers, colCount, isHeader: true);
+                tablePanel.Children.Add(headerGrid);
+
+                // 데이터 행 (최대 200개)
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    var row = rows[i];
+                    // 열 수가 맞지 않으면 패딩
+                    var cells = new string[colCount];
+                    for (int c = 0; c < colCount; c++)
+                        cells[c] = c < row.Length ? row[c] : "";
+
+                    var rowGrid = CreateTableRow(cells, colCount, isHeader: false, isAlternate: i % 2 == 1);
+                    tablePanel.Children.Add(rowGrid);
+                }
+
+                // 행 카운터
+                if (rows.Count >= 200)
+                {
+                    var moreText = new TextBlock
+                    {
+                        Text = $"… {rows.Count}+ rows (showing first 200)",
+                        FontSize = 11,
+                        Margin = new Thickness(0, 8, 0, 0),
+                        Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SpanTextTertiaryBrush"]
+                    };
+                    tablePanel.Children.Add(moreText);
+                }
+                else
+                {
+                    var countText = new TextBlock
+                    {
+                        Text = $"{rows.Count} rows",
+                        FontSize = 11,
+                        Margin = new Thickness(0, 8, 0, 0),
+                        Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SpanTextTertiaryBrush"]
+                    };
+                    tablePanel.Children.Add(countText);
+                }
+
+                // ItemsRepeater 대신 직접 ScrollViewer 안의 Content로 설정
+                // CsvTableRepeater의 부모 ScrollViewer의 Content로 교체
+                var scrollViewer = CsvTableRepeater.Parent as ScrollViewer;
+                if (scrollViewer != null)
+                {
+                    scrollViewer.Content = tablePanel;
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[QuickLook] CSV render error: {ex.Message}");
+            }
+        }
+
+        private Grid CreateTableRow(string[] cells, int colCount, bool isHeader, bool isAlternate = false)
+        {
+            var grid = new Grid();
+            grid.Padding = new Thickness(0);
+
+            if (isHeader)
+                grid.Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SpanBgLayer2Brush"];
+            else if (isAlternate)
+                grid.Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SpanBgLayer1Brush"];
+
+            for (int c = 0; c < colCount; c++)
+            {
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 60 });
+            }
+
+            for (int c = 0; c < colCount; c++)
+            {
+                var border = new Border
+                {
+                    BorderBrush = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["SpanBorderSubtleBrush"],
+                    BorderThickness = new Thickness(c == 0 ? 1 : 0, isHeader ? 1 : 0, 1, 1),
+                    Padding = new Thickness(8, 4, 8, 4)
+                };
+
+                var tb = new TextBlock
+                {
+                    Text = cells[c],
+                    FontSize = 12,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    MaxLines = 2,
+                    FontWeight = isHeader ? Microsoft.UI.Text.FontWeights.SemiBold : Microsoft.UI.Text.FontWeights.Normal
+                };
+
+                border.Child = tb;
+                Grid.SetColumn(border, c);
+                grid.Children.Add(border);
+            }
+
+            return grid;
+        }
+
+        /// <summary>
+        /// ViewModel에서 발생한 액션 요청을 처리.
+        /// 직접 처리 가능한 것은 바로 실행, MainWindow 필요한 것은 포워딩.
+        /// </summary>
+        private void OnActionRequested(string action, string path)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+
+            try
+            {
+                bool shouldClose = false;
+
+                switch (action)
+                {
+                    // --- 팝업 종료: 다른 앱/창으로 전환되는 액션 ---
+                    case "open":
+                        _shellService?.OpenFile(path);
+                        shouldClose = true;
+                        break;
+
+                    case "openWith":
+                        _ = _shellService?.OpenWithAsync(path);
+                        shouldClose = true;
+                        break;
+
+                    case "openTerminal":
+                        _shellService?.OpenTerminal(path);
+                        shouldClose = true;
+                        break;
+
+                    case "showProperties":
+                        _shellService?.ShowProperties(path);
+                        shouldClose = true; // TopMost 때문에 Properties가 뒤에 가려짐 → 닫기
+                        break;
+
+                    // --- 팝업 종료: MainWindow 포워딩 액션 ---
+                    case "extractHere":
+                    case "extractTo":
+                    case "openInNewTab":
+                        ActionForwarded?.Invoke(action, path);
+                        shouldClose = true;
+                        break;
+
+                    // --- 팝업 유지 + 토스트 ---
+                    case "copyPath":
+                        _shellService?.CopyPathToClipboard(path);
+                        ShowToast(_loc?.Get("Toast_PathCopied") ?? "Path copied to clipboard");
+                        break;
+
+                    case "copyContent":
+                        CopyTextContent();
+                        ShowToast(_loc?.Get("Toast_TextCopied") ?? "Text copied to clipboard");
+                        break;
+
+                    // --- 팝업 유지: 회전 저장 ---
+                    case "saveRotation":
+                        _ = SaveRotationAsync(path);
+                        break;
+                }
+
+                if (shouldClose)
+                {
+                    try { this.Close(); } catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[QuickLook] Action '{action}' error: {ex.Message}");
+            }
+        }
+
+        private void ShowToast(string message)
+        {
+            ToastText.Text = message;
+            ToastOverlay.Opacity = 1;
+
+            var timer = new Microsoft.UI.Xaml.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(1200)
+            };
+            timer.Tick += (s, e) =>
+            {
+                timer.Stop();
+                ToastOverlay.Opacity = 0;
+            };
+            timer.Start();
+        }
+
+        private void CopyTextContent()
+        {
+            try
+            {
+                var text = ViewModel.TextPreview;
+                if (string.IsNullOrEmpty(text)) return;
+
+                var dataPackage = new DataPackage();
+                dataPackage.SetText(text);
+                Clipboard.SetContent(dataPackage);
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[QuickLook] CopyContent error: {ex.Message}");
+            }
+        }
+
+        private async Task SaveRotationAsync(string path)
+        {
+            int angle = (int)ViewModel.RotationAngle;
+            if (angle == 0) return;
+
+            string? tmpPath = null;
+            try
+            {
+                var rotation = angle switch
+                {
+                    90 => Windows.Graphics.Imaging.BitmapRotation.Clockwise90Degrees,
+                    270 => Windows.Graphics.Imaging.BitmapRotation.Clockwise270Degrees,
+                    180 => Windows.Graphics.Imaging.BitmapRotation.Clockwise180Degrees,
+                    _ => Windows.Graphics.Imaging.BitmapRotation.None
+                };
+
+                // 확장자 기반 인코더 결정
+                var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+                var encoderId = ext switch
+                {
+                    ".png" => Windows.Graphics.Imaging.BitmapEncoder.PngEncoderId,
+                    ".bmp" => Windows.Graphics.Imaging.BitmapEncoder.BmpEncoderId,
+                    ".gif" => Windows.Graphics.Imaging.BitmapEncoder.GifEncoderId,
+                    ".tif" or ".tiff" => Windows.Graphics.Imaging.BitmapEncoder.TiffEncoderId,
+                    _ => Windows.Graphics.Imaging.BitmapEncoder.JpegEncoderId
+                };
+
+                // 1) 원본 파일을 메모리로 읽기
+                byte[] sourceBytes = await System.IO.File.ReadAllBytesAsync(path);
+
+                // 2) 임시 파일에 회전 결과 쓰기 (원본 보호)
+                tmpPath = path + ".rotate.tmp";
+
+                using (var memStream = new Windows.Storage.Streams.InMemoryRandomAccessStream())
+                {
+                    // 소스 바이트를 스트림에 쓰기
+                    await memStream.WriteAsync(sourceBytes.AsBuffer());
+                    memStream.Seek(0);
+
+                    var decoder = await Windows.Graphics.Imaging.BitmapDecoder.CreateAsync(memStream);
+                    var bitmap = await decoder.GetSoftwareBitmapAsync();
+
+                    // 임시 파일에 회전 적용하여 저장
+                    var tmpFile = await Windows.Storage.StorageFile.GetFileFromPathAsync(
+                        await Task.Run(() =>
+                        {
+                            System.IO.File.WriteAllBytes(tmpPath, new byte[0]);
+                            return tmpPath;
+                        }));
+
+                    using (var outStream = await tmpFile.OpenAsync(Windows.Storage.FileAccessMode.ReadWrite))
+                    {
+                        var encoder = await Windows.Graphics.Imaging.BitmapEncoder.CreateAsync(encoderId, outStream);
+                        encoder.SetSoftwareBitmap(bitmap);
+                        encoder.BitmapTransform.Rotation = rotation;
+                        await encoder.FlushAsync();
+                    }
+
+                    bitmap.Dispose();
+                }
+
+                // 3) 임시 파일 크기 검증 후 원본 교체
+                var tmpInfo = new System.IO.FileInfo(tmpPath);
+                if (tmpInfo.Exists && tmpInfo.Length > 0)
+                {
+                    System.IO.File.Move(tmpPath, path, overwrite: true);
+                    tmpPath = null; // 성공 → cleanup 불필요
+
+                    // 회전 상태 리셋 + 미리보기 새로고침
+                    ViewModel.RotationAngle = 0;
+                    ViewModel.HasPendingRotation = false;
+                    ShowToast(_loc?.Get("QuickLook_RotationSaved") ?? "Saved");
+                    await Task.Delay(150);
+                    ActionForwarded?.Invoke("refreshAfterRotate", path);
+                }
+                else
+                {
+                    Helpers.DebugLogger.Log("[QuickLook] Rotate: tmp file empty, aborting");
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[QuickLook] Rotate error: {ex.Message}");
+            }
+            finally
+            {
+                // 실패 시 임시 파일 정리
+                if (tmpPath != null)
+                {
+                    try { System.IO.File.Delete(tmpPath); } catch { }
+                }
+            }
+        }
+
+        private void OnWindowClosed(object sender, WindowEventArgs args)
+        {
+            StopMedia();
+            if (_loc != null) _loc.LanguageChanged -= LocalizeUI;
+            ViewModel.ActionRequested -= OnActionRequested;
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            ViewModel.PropertyChanged -= OnInfoOnlyPropertyChanged;
+            ContentPreviewArea.SizeChanged -= OnContentPreviewAreaSizeChanged;
+            this.Content.PreviewKeyDown -= OnContentPreviewKeyDown;
+
+            // 지연 생성 네이티브 컨트롤 정리
+            try { _markdownWebView?.Close(); } catch { }
+            _markdownWebView = null;
+            try { if (_mediaPlayer != null) { _mediaPlayer.Source = null; } } catch { }
+            _mediaPlayer = null;
+
+            ViewModel?.Dispose();
+            WindowClosed?.Invoke();
+        }
+
+        // ── MediaPlayerElement 지연 생성 ──────────────────────
+        private MediaPlayerElement? _mediaPlayer;
+
+        private void EnsureMediaPlayer()
+        {
+            if (_mediaPlayer != null) return;
+            _mediaPlayer = new MediaPlayerElement
+            {
+                AreTransportControlsEnabled = true,
+                Stretch = Microsoft.UI.Xaml.Media.Stretch.Uniform,
+                AutoPlay = false,
+                MinHeight = 180,
+                TransportControls = new MediaTransportControls { IsCompact = true, Opacity = 0.85 }
+            };
+            MediaPlayerHost.Children.Add(_mediaPlayer);
+        }
+
+        private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(QuickLookViewModel.RotationAngle))
+            {
+                UpdateImageTransform();
+            }
+            else if (e.PropertyName == nameof(QuickLookViewModel.MediaSource))
+            {
+                if (ViewModel.MediaSource != null)
+                {
+                    EnsureMediaPlayer();
+                    _mediaPlayer!.Source = ViewModel.MediaSource;
+                }
+                else if (_mediaPlayer != null)
+                {
+                    _mediaPlayer.Source = null;
+                }
+            }
+            else if (e.PropertyName == nameof(QuickLookViewModel.MarkdownHtml))
+            {
+                _ = RenderMarkdownAsync();
+            }
+            else if (e.PropertyName == nameof(QuickLookViewModel.CsvRows))
+            {
+                RenderCsvTable();
+            }
+        }
+
+        private void OnContentPreviewAreaSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            // 컨테이너 크기 변경 시 스케일 재계산
+            if (ViewModel.RotationAngle % 180 != 0)
+            {
+                UpdateImageTransform();
+            }
+        }
+
+        /// <summary>
+        /// 이미지 회전 시 스케일 보정.
+        /// 90/270° 회전 시 RenderTransform은 레이아웃에 영향을 주지 않으므로,
+        /// 컨테이너 크기와 이미지 비율을 고려한 스케일 팩터를 적용해야 함.
+        /// </summary>
+        private void UpdateImageTransform()
+        {
+            double angle = ViewModel.RotationAngle;
+            ImageTransform.Rotation = angle;
+
+            bool isSwapped = (int)angle % 180 != 0; // 90° or 270°
+
+            if (!isSwapped)
+            {
+                ImageTransform.ScaleX = 1;
+                ImageTransform.ScaleY = 1;
+                return;
+            }
+
+            try
+            {
+                // 컨테이너 영역 (Margin 16 제외)
+                double containerW = ContentPreviewArea.ActualWidth - 32;
+                double containerH = ContentPreviewArea.ActualHeight - 32;
+
+                if (containerW <= 0 || containerH <= 0) return;
+
+                // 원본 이미지 픽셀 크기
+                var bmp = ViewModel.ImagePreview as Microsoft.UI.Xaml.Media.Imaging.BitmapImage;
+                double imgW = bmp?.PixelWidth ?? 0;
+                double imgH = bmp?.PixelHeight ?? 0;
+
+                if (imgW <= 0 || imgH <= 0) return;
+
+                // 0° 상태에서의 Uniform 스케일 = min(containerW/imgW, containerH/imgH)
+                double normalScale = Math.Min(containerW / imgW, containerH / imgH);
+                // 90° 회전 후 원하는 스케일 = min(containerW/imgH, containerH/imgW)
+                double rotatedScale = Math.Min(containerW / imgH, containerH / imgW);
+
+                double factor = rotatedScale / normalScale;
+
+                ImageTransform.ScaleX = factor;
+                ImageTransform.ScaleY = factor;
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[QuickLook] UpdateImageTransform error: {ex.Message}");
+                ImageTransform.ScaleX = 1;
+                ImageTransform.ScaleY = 1;
+            }
+        }
+
+        private void LocalizeUI()
+        {
+            if (_loc == null) return;
+
+            // Content mode action tooltips
+            ToolTipService.SetToolTip(BtnRotate, _loc.Get("QuickLook_Rotate"));
+            ToolTipService.SetToolTip(BtnSaveRotation, _loc.Get("QuickLook_SaveRotation"));
+            ToolTipService.SetToolTip(BtnCopyContent, _loc.Get("QuickLook_CopyText"));
+            ToolTipService.SetToolTip(BtnExtractHere, _loc.Get("ExtractHere"));
+            ToolTipService.SetToolTip(BtnExtractTo, _loc.Get("ExtractTo"));
+            ToolTipService.SetToolTip(BtnCopyPath, _loc.Get("CopyPath"));
+            ToolTipService.SetToolTip(BtnOpenDefault, _loc.Get("Open"));
+            ToolTipService.SetToolTip(BtnOpenWith, _loc.Get("OpenWith"));
+            ToolTipService.SetToolTip(BtnProperties, _loc.Get("Properties"));
+
+            // Info-only mode action tooltips
+            ToolTipService.SetToolTip(BtnInfoNewTab, _loc.Get("OpenInNewTab"));
+            ToolTipService.SetToolTip(BtnInfoTerminal, _loc.Get("OpenTerminal"));
+        }
+    }
+}

@@ -1,0 +1,1400 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using LumiFiles.Models;
+using System.Threading;
+using System.Threading.Tasks;
+using LumiFiles.Services;
+using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace LumiFiles.ViewModels
+{
+    /// <summary>
+    /// 폴더 뷰모델. 지연 로딩(EnsureChildrenLoadedAsync), 정렬(Name/Date/Type/Size),
+    /// FolderContentCache 캐시 연동, 원격 폴더 로딩(FTP/SFTP/SMB), 멀티 선택,
+    /// on-demand 클라우드/Git 상태 주입, 폴더 크기 비동기 계산을 지원.
+    /// </summary>
+    public partial class FolderViewModel : FileSystemViewModel
+    {
+        private readonly FileSystemService _fileService;
+        private readonly FolderItem _folderModel;
+        private static LocalizationService? _sLoc;
+        private bool _isLoaded = false;
+        private string? _calculatedSize;
+        private Microsoft.UI.Dispatching.DispatcherQueue? _uiDispatcher;
+
+        /// <summary>
+        /// 이 폴더가 클라우드 경로인지 캐시 (on-demand cloud state 주입용).
+        /// </summary>
+        private bool _isCloudFolder;
+        private CloudSyncService? _cloudSvc;
+
+        /// <summary>
+        /// Git 레포 여부 캐시 (on-demand git state 주입용).
+        /// </summary>
+        private bool _isGitFolder;
+        private GitStatusService? _gitSvc;
+
+        /// <summary>
+        /// 다운로드 폴더 여부. 뷰에서 자동 그룹핑 적용 판단용.
+        /// </summary>
+        public bool IsDownloadsFolder => Helpers.KnownFolderHelper.IsDownloadsFolder(Path);
+
+        [ObservableProperty]
+        private ObservableCollection<FileSystemViewModel> _children = new();
+
+        /// <summary>
+        /// Children을 원자적으로 교체. Clear+Add 대신 새 컬렉션을 할당하여
+        /// 28K CollectionChanged 이벤트를 단일 Reset으로 줄인다.
+        /// </summary>
+        public void ReplaceChildren(System.Collections.Generic.IList<FileSystemViewModel> newItems)
+        {
+            // 정렬 변경은 대부분의 항목 위치가 바뀌므로 전체 교체가 효율적
+            Children = new ObservableCollection<FileSystemViewModel>(newItems);
+        }
+
+        /// <summary>
+        /// Children 컬렉션을 diff 기반으로 증분 업데이트.
+        /// 기존 ViewModel 인스턴스를 유지하여 스크롤/선택/썸네일 상태를 보존한다.
+        /// 대량 변경(50% 이상) 시 전체 교체로 fallback.
+        /// </summary>
+        /// <param name="newItems">정렬/필터 적용 완료된 새 목록</param>
+        /// <returns>true: 증분 적용됨, false: 전체 교체 fallback</returns>
+        public bool SyncChildren(IList<FileSystemViewModel> newItems)
+        {
+            var oldItems = Children;
+
+            // 빈 목록 → 전체 교체
+            if (oldItems.Count == 0 || newItems.Count == 0)
+            {
+                Children = new ObservableCollection<FileSystemViewModel>(newItems);
+                // Children 전체 교체 시 SelectedItems도 정리 (고아 참조 방지)
+                PruneSelectedItems();
+                return false;
+            }
+
+            // Path 기반 old 인덱스 구축
+            var oldByPath = new Dictionary<string, int>(
+                oldItems.Count, StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < oldItems.Count; i++)
+                oldByPath[oldItems[i].Path] = i;
+
+            var newPathSet = new HashSet<string>(
+                newItems.Select(x => x.Path), StringComparer.OrdinalIgnoreCase);
+
+            // 변경량 계산
+            int addCount = newItems.Count(item => !oldByPath.ContainsKey(item.Path));
+            int removeCount = oldItems.Count(item => !newPathSet.Contains(item.Path));
+            int totalChanges = addCount + removeCount;
+            int threshold = Math.Max(oldItems.Count, newItems.Count) / 2;
+
+            // Bug 2: 이름 변경만 감지 (항목 수 동일, 1개만 Path 변경) → in-place 속성 업데이트
+            if (oldItems.Count == newItems.Count && addCount == 1 && removeCount == 1)
+            {
+                // 변경된 old/new 항목 찾기
+                FileSystemViewModel? removedOld = null;
+                FileSystemViewModel? addedNew = null;
+                for (int i = 0; i < oldItems.Count; i++)
+                {
+                    if (!newPathSet.Contains(oldItems[i].Path))
+                        removedOld = oldItems[i];
+                }
+                for (int i = 0; i < newItems.Count; i++)
+                {
+                    if (!oldByPath.ContainsKey(newItems[i].Path))
+                        addedNew = newItems[i];
+                }
+
+                // 같은 부모 디렉토리 → 이름 변경으로 판단
+                if (removedOld != null && addedNew != null)
+                {
+                    string? oldDir = System.IO.Path.GetDirectoryName(removedOld.Path);
+                    string? newDir = System.IO.Path.GetDirectoryName(addedNew.Path);
+                    if (string.Equals(oldDir, newDir, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // in-place 업데이트: Remove/Insert 없이 기존 VM의 속성만 변경
+                        removedOld.UpdateFrom(addedNew);
+                        return true;
+                    }
+                }
+            }
+
+            // 대량 변경 → 전체 교체 fallback
+            if (totalChanges > threshold)
+            {
+                Children = new ObservableCollection<FileSystemViewModel>(newItems);
+                // Children 전체 교체 시 SelectedItems도 정리 (고아 참조 방지)
+                PruneSelectedItems();
+                return false;
+            }
+
+            // === 증분 업데이트 ===
+
+            // 1단계: 삭제 (뒤에서부터 — 인덱스 안정성)
+            for (int i = oldItems.Count - 1; i >= 0; i--)
+            {
+                if (!newPathSet.Contains(oldItems[i].Path))
+                    oldItems.RemoveAt(i);
+            }
+
+            // 2단계: 추가 & 순서 맞추기
+            for (int newIdx = 0; newIdx < newItems.Count; newIdx++)
+            {
+                var newItem = newItems[newIdx];
+
+                if (newIdx < oldItems.Count &&
+                    string.Equals(oldItems[newIdx].Path, newItem.Path, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue; // 같은 위치에 같은 항목
+                }
+
+                // 현재 컬렉션에서 찾기
+                int existingIdx = -1;
+                for (int j = newIdx; j < oldItems.Count; j++)
+                {
+                    if (string.Equals(oldItems[j].Path, newItem.Path, StringComparison.OrdinalIgnoreCase))
+                    {
+                        existingIdx = j;
+                        break;
+                    }
+                }
+
+                if (existingIdx >= 0)
+                {
+                    // 위치 이동
+                    if (existingIdx != newIdx)
+                        oldItems.Move(existingIdx, newIdx);
+                }
+                else
+                {
+                    // 새 항목 삽입
+                    oldItems.Insert(newIdx, newItem);
+                }
+            }
+
+            // 3단계: 초과 항목 제거
+            while (oldItems.Count > newItems.Count)
+                oldItems.RemoveAt(oldItems.Count - 1);
+
+            // 증분 업데이트 후 SelectedItems에서 Children에 없는 항목 제거 (고아 참조 방지)
+            PruneSelectedItems();
+
+            return true;
+        }
+
+        /// <summary>
+        /// 필터링 전 전체 아이템 목록. 필터 활성 시 Children은 이 리스트의 부분집합.
+        /// </summary>
+        private List<FileSystemViewModel>? _allChildren;
+        private string _currentFilterText = string.Empty;
+
+        /// <summary>
+        /// 필터링/정렬 중 Children 교체로 인한 PropertyChanged 연쇄를 차단하기 위한 가드.
+        /// true일 때 ExplorerViewModel.FolderVm_PropertyChanged가 Children 변경을 무시.
+        /// </summary>
+        private bool _isBulkUpdating;
+        internal bool IsBulkUpdating => _isBulkUpdating;
+
+        /// <summary>
+        /// 현재 적용 중인 필터 텍스트 (ExplorerViewModel에서 전파 확인용).
+        /// </summary>
+        internal string CurrentFilterText => _currentFilterText;
+
+        /// <summary>
+        /// 전체 아이템 수 (필터 적용 전). 필터 비활성 시 Children.Count와 동일.
+        /// </summary>
+        public int TotalChildCount => _allChildren?.Count ?? Children.Count;
+
+        [ObservableProperty]
+        private FileSystemViewModel? _selectedChild;
+
+        /// <summary>
+        /// Multi-selection: tracks all selected items in this column.
+        /// Updated via SyncSelectedItems() from ListView.SelectionChanged.
+        /// </summary>
+        [ObservableProperty]
+        private ObservableCollection<FileSystemViewModel> _selectedItems = new();
+
+        /// <summary>
+        /// True when more than one item is selected.
+        /// Used to suppress auto-navigation in Miller Columns.
+        /// </summary>
+        public bool HasMultiSelection => SelectedItems.Count > 1;
+
+        [ObservableProperty]
+        private bool _isLoading = false;
+
+        /// <summary>
+        /// True when loading completed but the folder has no children.
+        /// </summary>
+        [ObservableProperty]
+        private bool _isEmpty = false;
+
+        /// <summary>
+        /// Error message shown when folder loading fails (e.g., access denied, path too long).
+        /// </summary>
+        [ObservableProperty]
+        private string? _errorMessage;
+
+        /// <summary>
+        /// Segoe Fluent icon glyph for the error state.
+        /// </summary>
+        [ObservableProperty]
+        private string? _errorIcon;
+
+        public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+
+        /// <summary>
+        /// 폴더 로딩 실패 시 에러 메시지를 전파하는 이벤트.
+        /// ExplorerViewModel에서 구독하여 토스트 알림으로 버블링.
+        /// </summary>
+        public event Action<string>? LoadError;
+
+        partial void OnErrorMessageChanged(string? value)
+        {
+            OnPropertyChanged(nameof(HasError));
+            if (!string.IsNullOrEmpty(value))
+                LoadError?.Invoke(value);
+        }
+
+        [ObservableProperty]
+        private bool _isActive = false; // Indicates if this column has focus
+
+        /// <summary>
+        /// 정렬 중 플래그 - true일 때 PropertyChanged 이벤트 무시
+        /// </summary>
+        public bool IsSorting { get; set; } = false;
+
+        /// <summary>
+        /// 이미 로드 완료된 폴더인지 확인 (디바운스 건너뛰기용).
+        /// </summary>
+        public bool IsAlreadyLoaded => _isLoaded;
+
+        /// <summary>
+        /// 검색 결과용 가상 폴더로 표시하여 EnsureChildrenLoadedAsync()에서
+        /// 디스크 I/O를 시도하지 않도록 함.
+        /// </summary>
+        internal void MarkAsManuallyPopulated()
+        {
+            _isLoaded = true;
+            IsLoading = false;
+        }
+
+        public override string IconGlyph => Services.IconService.Current?.FolderIcon ?? "\uED53";
+        public override Microsoft.UI.Xaml.Media.Brush IconBrush => Services.IconService.Current?.FolderBrush;
+
+        /// <summary>
+        /// 폴더 크기: 백그라운드 계산 완료 시 표시, 미완료 시 빈칸.
+        /// </summary>
+        public override string Size => _calculatedSize ?? string.Empty;
+
+        public override long SizeValue
+        {
+            get
+            {
+                var svc = App.Current.Services.GetService(typeof(FolderSizeService)) as FolderSizeService;
+                return svc?.TryGetCachedSize(Path) ?? 0;
+            }
+        }
+
+        /// <summary>
+        /// 폴더 크기 계산 요청 (Details 뷰에서 호출).
+        /// </summary>
+        public void RequestFolderSizeCalculation()
+        {
+            if (_calculatedSize != null) return; // 이미 계산됨
+
+            var svc = App.Current.Services.GetService(typeof(FolderSizeService)) as FolderSizeService;
+            if (svc == null) return;
+
+            var cached = svc.TryGetCachedSize(Path);
+            if (cached.HasValue)
+            {
+                _calculatedSize = cached.Value >= 0 ? FormatFolderSize(cached.Value) : string.Empty;
+                OnPropertyChanged(nameof(Size));
+                OnPropertyChanged(nameof(SizeValue));
+                return;
+            }
+
+            // UI 스레드의 DispatcherQueue를 캡처 (콜백은 백그라운드 스레드에서 호출됨)
+            _uiDispatcher ??= Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            svc.SizeCalculated += OnFolderSizeCalculated;
+            svc.RequestCalculation(Path);
+        }
+
+        private void OnFolderSizeCalculated(string folderPath, long bytes)
+        {
+            if (!folderPath.Equals(Path, System.StringComparison.OrdinalIgnoreCase)) return;
+
+            var svc = App.Current.Services.GetService(typeof(FolderSizeService)) as FolderSizeService;
+            if (svc != null) svc.SizeCalculated -= OnFolderSizeCalculated;
+
+            _calculatedSize = bytes >= 0 ? FormatFolderSize(bytes) : string.Empty;
+
+            // UI 스레드에서 PropertyChanged 발생
+            // OnFolderSizeCalculated는 FolderSizeService의 백그라운드 스레드에서 호출되므로
+            // 반드시 캡처된 UI DispatcherQueue를 사용해야 함 (GetForCurrentThread()는 항상 null)
+            try
+            {
+                if (_uiDispatcher != null)
+                {
+                    _uiDispatcher.TryEnqueue(() =>
+                    {
+                        OnPropertyChanged(nameof(Size));
+                        OnPropertyChanged(nameof(SizeValue));
+                    });
+                }
+                else
+                {
+                    Helpers.DebugLogger.Log("[FolderViewModel] UI dispatcher not captured, size update skipped");
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[FolderViewModel] Size update dispatch error: {ex.Message}");
+            }
+        }
+
+        private static readonly string[] SizeUnits = { "B", "KB", "MB", "GB", "TB" };
+
+        private static string FormatFolderSize(long bytes)
+        {
+            if (bytes == 0) return "0 B";
+            int order = 0;
+            double size = bytes;
+            while (size >= 1024 && order < SizeUnits.Length - 1)
+            {
+                order++;
+                size /= 1024;
+            }
+            return $"{size:0.##} {SizeUnits[order]}";
+        }
+
+        /// <summary>
+        /// 자식 항목 존재 여부 — Miller 컬럼 셰브론(▶) Visibility 바인딩용.
+        /// 미로드 시: FolderItem.HasChildEntries (열거 시 경량 체크 결과) 사용.
+        /// 로드 후: 실제 Children.Count 기반.
+        /// </summary>
+        public bool HasChildren => _isLoaded ? Children.Count > 0 : _folderModel.HasChildEntries;
+
+        /// <summary>
+        /// Item count text for folder badge display.
+        /// Shows the number of child items once loaded, empty string if not loaded or zero.
+        /// </summary>
+        public string ChildCountText
+        {
+            get
+            {
+                if (!_isLoaded || Children.Count == 0)
+                    return string.Empty;
+                // 필터 활성 시 "X/Y" 형식 표시
+                if (!string.IsNullOrEmpty(_currentFilterText) && _allChildren != null)
+                    return $"{Children.Count}/{_allChildren.Count}";
+                return Children.Count.ToString();
+            }
+        }
+
+        public FolderViewModel(FolderItem model, FileSystemService fileService) : base(model)
+        {
+            _folderModel = model;
+            _fileService = fileService;
+            // DO NOT load children here. Lazy loading only.
+        }
+
+        private System.Threading.CancellationTokenSource? _cts;
+
+        /// <summary>
+        /// Lazy load: only called when this folder becomes a visible column.
+        /// </summary>
+        public async Task EnsureChildrenLoadedAsync()
+        {
+            if (_isLoaded) return;
+
+            _isLoaded = true;
+            IsLoading = true;
+
+            try { _cts?.Cancel(); } catch (ObjectDisposedException) { }
+            _cts = new System.Threading.CancellationTokenSource();
+            var token = _cts.Token;
+
+            try
+            {
+                // Capture settings on UI thread before background work
+                bool showHidden = false;
+                Services.FolderContentCache? folderCache = null;
+                try
+                {
+                    var settings = App.Current.Services.GetService(typeof(Services.SettingsService)) as Services.SettingsService;
+                    if (settings != null) showHidden = settings.ShowHiddenFiles;
+                    folderCache = App.Current.Services.GetService(typeof(Services.FolderContentCache)) as Services.FolderContentCache;
+                }
+                catch (Exception ex) { Helpers.DebugLogger.Log($"[FolderViewModel] Service resolution failed: {ex.Message}"); }
+
+                var folderPath = _folderModel.Path;
+
+                var cached = folderCache?.TryGet(folderPath, showHidden);
+                Helpers.DebugLogger.Log($"[EnsureChildrenLoaded] path='{folderPath}', cached={cached != null}, isArchive={Helpers.ArchivePathHelper.IsArchivePath(folderPath)}, isRemote={FileSystemRouter.IsRemotePath(folderPath)}");
+                if (cached != null)
+                {
+                    // Yield to let UI render ProgressRing before synchronous cache load
+                    await Task.Yield();
+                    await LoadFromCacheAsync(cached, token);
+                }
+                else if (Helpers.ArchivePathHelper.IsArchivePath(folderPath))
+                {
+                    await LoadFromArchiveAsync(folderPath, token);
+                }
+                else if (FileSystemRouter.IsRemotePath(folderPath))
+                {
+                    await LoadFromRemoteAsync(folderPath, token);
+                }
+                else
+                {
+                    await LoadFromDiskAsync(folderPath, showHidden, folderCache, token);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[EnsureChildrenLoadedAsync] 예외: {ex.Message}");
+                _isLoaded = false;
+            }
+            finally
+            {
+                if (!token.IsCancellationRequested)
+                {
+                    IsLoading = false;
+                    IsEmpty = Children.Count == 0 && !HasError;
+
+                    // 빈 폴더 확정 시 모델 + 셰브론 즉시 갱신
+                    if (IsEmpty)
+                    {
+                        _folderModel.HasChildEntries = false;
+                        OnPropertyChanged(nameof(HasChildren));
+                    }
+                }
+                if (_cts?.Token == token)
+                {
+                    _cts.Dispose();
+                    _cts = null;
+                }
+            }
+        }
+
+        private async Task LoadFromCacheAsync(Services.FolderContentCache.CachedFolder cached, System.Threading.CancellationToken token)
+        {
+            // Move ViewModel creation to background thread to avoid UI blocking for large folders
+            var items = await Task.Run(() =>
+            {
+                var result = new List<FileSystemViewModel>();
+                foreach (var d in cached.Folders)
+                {
+                    if (token.IsCancellationRequested) return result;
+                    result.Add(new FolderViewModel(d, _fileService));
+                }
+                foreach (var f in cached.Files)
+                {
+                    if (token.IsCancellationRequested) return result;
+                    result.Add(new FileViewModel(f));
+                }
+
+                // Sort on background thread
+                EnsureSortSettingsLoaded();
+
+                // Downloads folder override: always sort by DateModified descending
+                bool isDownloads = Helpers.KnownFolderHelper.IsDownloadsFolder(_folderModel.Path);
+                Helpers.DebugLogger.Log($"[LoadFromCacheAsync] path='{_folderModel.Path}', isDownloads={isDownloads}, sortBy={_sortBy}");
+                if (isDownloads)
+                {
+                    _sortBy = "DateModified";
+                    _sortAscending = false;
+                }
+
+                return ApplySort(result, _sortBy, _sortAscending, mixFoldersAndFiles: isDownloads);
+            }, token);
+
+            if (!token.IsCancellationRequested)
+                PopulateChildren(items, token, preSorted: true);
+        }
+
+        private async Task LoadFromArchiveAsync(string archivePath, System.Threading.CancellationToken token)
+        {
+            try
+            {
+                var router = App.Current.Services.GetRequiredService<FileSystemRouter>();
+                var provider = router.GetProvider(archivePath);
+                Helpers.DebugLogger.Log($"[LoadFromArchiveAsync] path='{archivePath}', provider={provider?.GetType().Name ?? "null"}");
+                var archiveItems = await provider.GetItemsAsync(archivePath, token);
+                Helpers.DebugLogger.Log($"[LoadFromArchiveAsync] Got {archiveItems.Count} items from provider");
+
+                if (token.IsCancellationRequested) return;
+
+                var items = new List<FileSystemViewModel>();
+                foreach (var item in archiveItems)
+                {
+                    if (token.IsCancellationRequested) break;
+                    if (item is Models.FolderItem folder)
+                        items.Add(new FolderViewModel(folder, _fileService));
+                    else if (item is Models.FileItem file)
+                        items.Add(new FileViewModel(file));
+                }
+
+                Helpers.DebugLogger.Log($"[LoadFromArchiveAsync] Populating {items.Count} children");
+                if (!token.IsCancellationRequested)
+                    PopulateChildren(items, token);
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[LoadFromArchiveAsync] Error: {ex.Message}\n{ex.StackTrace}");
+                ErrorMessage = ex.Message;
+            }
+        }
+
+        private async Task LoadFromRemoteAsync(string folderPath, System.Threading.CancellationToken token)
+        {
+            var router = App.Current.Services.GetRequiredService<FileSystemRouter>();
+            var provider = router.GetConnectionForPath(folderPath);
+            if (provider == null)
+            {
+                IsLoading = false;
+                ErrorMessage = GetLoc().Get("Error_ConnectionNotFound") ?? "Remote connection not found";
+                ErrorIcon = "\uE871";
+                return;
+            }
+
+            try
+            {
+                var remotePath = FileSystemRouter.ExtractRemotePath(folderPath);
+                var uriPrefix = FileSystemRouter.GetUriPrefix(folderPath);
+                var remoteItems = await provider.GetItemsAsync(remotePath, token);
+
+                var items = new List<FileSystemViewModel>();
+                foreach (var item in remoteItems)
+                {
+                    if (token.IsCancellationRequested) break;
+                    var fullPath = uriPrefix + item.Path;
+                    if (item is FolderItem folder)
+                    {
+                        folder.Path = fullPath;
+                        items.Add(new FolderViewModel(folder, _fileService));
+                    }
+                    else if (item is FileItem file)
+                    {
+                        file.Path = fullPath;
+                        items.Add(new FileViewModel(file));
+                    }
+                }
+
+                if (!token.IsCancellationRequested)
+                    PopulateChildren(items, token);
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+                // 사용자가 명시적으로 취소한 경우만 재전파
+                throw;
+            }
+            catch (OperationCanceledException ex)
+            {
+                // 소켓 타임아웃 등 네트워크 레벨 취소 → 에러로 분류
+                ErrorMessage = ClassifyRemoteError(ex);
+                ErrorIcon = "\uE871";
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ClassifyRemoteError(ex);
+                ErrorIcon = "\uE871";
+            }
+        }
+
+        private async Task LoadFromDiskAsync(
+            string folderPath, bool showHidden,
+            Services.FolderContentCache? folderCache,
+            System.Threading.CancellationToken token)
+        {
+            var (items, rawFolders, rawFiles, errorMsg, errorIcon) = await Task.Run(() =>
+            {
+                var result = new List<FileSystemViewModel>();
+                var folders = new List<Models.FolderItem>();
+                var files = new List<Models.FileItem>();
+
+                if (string.IsNullOrEmpty(folderPath))
+                    return (result, folders, files, (string?)null, (string?)null);
+
+                if (!System.IO.Directory.Exists(folderPath))
+                {
+                    // UNC 경로는 네트워크 문제와 경로 미존재를 구분
+                    if (folderPath.StartsWith(@"\\"))
+                        return (result, folders, files, LocalizationService.L("Error_NetworkPathNotFound"), "\uE871");
+                    else
+                        return (result, folders, files, LocalizationService.L("Error_FolderNotFoundGeneric"), "\uE711");
+                }
+
+                try
+                {
+                    var dirInfo = new System.IO.DirectoryInfo(folderPath);
+
+                    foreach (var d in dirInfo.EnumerateDirectories())
+                    {
+                        if (token.IsCancellationRequested) return (new List<FileSystemViewModel>(), folders, files, (string?)null, (string?)null);
+                        var attrs = d.Attributes;
+                        if (!showHidden && (attrs & System.IO.FileAttributes.Hidden) != 0) continue;
+                        if ((attrs & System.IO.FileAttributes.System) != 0) continue;
+
+                        bool hasChild;
+                        try { hasChild = System.IO.Directory.EnumerateFileSystemEntries(d.FullName).Any(); }
+                        catch { hasChild = true; }
+
+                        var folderItem = new FolderItem { Name = d.Name, Path = d.FullName, DateModified = d.LastWriteTime, IsHidden = (attrs & System.IO.FileAttributes.Hidden) != 0, HasChildEntries = hasChild };
+                        folders.Add(folderItem);
+                        result.Add(new FolderViewModel(folderItem, _fileService));
+                    }
+
+                    foreach (var f in dirInfo.EnumerateFiles())
+                    {
+                        if (token.IsCancellationRequested) return (new List<FileSystemViewModel>(), folders, files, (string?)null, (string?)null);
+                        var attrs = f.Attributes;
+                        if (!showHidden && (attrs & System.IO.FileAttributes.Hidden) != 0) continue;
+                        if ((attrs & System.IO.FileAttributes.System) != 0) continue;
+
+                        var fileItem = new FileItem { Name = f.Name, Path = f.FullName, Size = f.Length, DateModified = f.LastWriteTime, FileType = f.Extension, IsHidden = (attrs & System.IO.FileAttributes.Hidden) != 0 };
+                        files.Add(fileItem);
+                        result.Add(new FileViewModel(fileItem));
+                    }
+                }
+                catch (System.UnauthorizedAccessException)
+                {
+                    return (result, folders, files, LocalizationService.L("Error_AccessDenied"), "\uE72E");
+                }
+                catch (System.IO.PathTooLongException)
+                {
+                    return (result, folders, files, LocalizationService.L("Error_PathTooLong"), "\uE7BA");
+                }
+                catch (System.IO.DirectoryNotFoundException)
+                {
+                    return (result, folders, files, LocalizationService.L("Error_FolderNotFoundGeneric"), "\uE711");
+                }
+                catch (System.IO.IOException ex) when (ex.HResult is unchecked((int)0x80070035) or unchecked((int)0x8007052E))
+                {
+                    return (result, folders, files, LocalizationService.L("Error_NetworkDisconnected"), "\uE871");
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+                    return (result, folders, files, string.Format(LocalizationService.L("Error_LoadFailed"), ex.Message), "\uE783");
+                }
+
+                // Pre-sort in background thread to avoid UI thread blocking for large folders (10K+)
+                EnsureSortSettingsLoaded();
+
+                // Downloads folder override: always sort by DateModified descending
+                bool isDl = Helpers.KnownFolderHelper.IsDownloadsFolder(folderPath);
+                Helpers.DebugLogger.Log($"[LoadFromDiskAsync] path='{folderPath}', isDownloads={isDl}, sortBy={_sortBy}");
+                if (isDl)
+                {
+                    _sortBy = "DateModified";
+                    _sortAscending = false;
+                }
+                else if (_sortBy == "Name" && s_defaultSortBy != "Name")
+                {
+                    _sortBy = s_defaultSortBy;
+                    _sortAscending = s_defaultSortAscending;
+                }
+                var sorted = ApplySort(result, _sortBy, _sortAscending, mixFoldersAndFiles: isDl);
+
+                return (sorted, folders, files, (string?)null, (string?)null);
+            }, token);
+
+            if (!token.IsCancellationRequested)
+            {
+                if (errorMsg != null)
+                {
+                    ErrorMessage = errorMsg;
+                    ErrorIcon = errorIcon;
+                }
+                else
+                {
+                    folderCache?.Set(folderPath, rawFolders, rawFiles, showHidden);
+                }
+                PopulateChildren(items, token, preSorted: true);
+            }
+        }
+
+        /// <summary>
+        /// 인스턴스별 정렬 기준. 멀티윈도우 간 독립 정렬 지원.
+        /// 초기값은 LocalSettings에서 복원 (앱 전체에서 한 번만 로드).
+        /// </summary>
+        private string _sortBy = s_defaultSortBy;
+        private bool _sortAscending = s_defaultSortAscending;
+
+        // 앱 전체 기본값 (LocalSettings에서 1회 로드)
+        private static string s_defaultSortBy = "Name";
+        private static bool s_defaultSortAscending = true;
+        private static bool s_sortSettingsLoaded = false;
+
+        /// <summary>
+        /// 저장된 정렬 설정을 LocalSettings에서 복원 (최초 1회).
+        /// 이후 생성되는 FolderViewModel의 기본 정렬값으로 사용.
+        /// </summary>
+        private static void EnsureSortSettingsLoaded()
+        {
+            if (s_sortSettingsLoaded) return;
+            s_sortSettingsLoaded = true;
+            try
+            {
+                var settings = Windows.Storage.ApplicationData.Current.LocalSettings;
+                if (settings.Values.TryGetValue("MillerSortBy", out var sortObj) && sortObj is string sortBy)
+                    s_defaultSortBy = sortBy;
+                if (settings.Values.TryGetValue("MillerSortAsc", out var ascObj) && ascObj is bool asc)
+                    s_defaultSortAscending = asc;
+                Helpers.DebugLogger.Log($"[FolderViewModel] Sort settings loaded: {s_defaultSortBy}, ascending={s_defaultSortAscending}");
+            }
+            catch (Exception ex) { Helpers.DebugLogger.Log($"[FolderViewModel] Sort settings load failed: {ex.Message}"); }
+        }
+
+        /// <summary>
+        /// 정렬 기준 변경 후 현재 컬럼의 Children을 재정렬.
+        /// </summary>
+        public void SortChildren(string sortBy, bool ascending)
+        {
+            _sortBy = sortBy;
+            _sortAscending = ascending;
+
+            // _allChildren 기준 정렬 (있으면), 없으면 Children 기준
+            var source = _allChildren ?? Children.ToList();
+            if (source.Count == 0) return;
+            IsSorting = true;
+            _isBulkUpdating = true;
+            var saved = SelectedChild;
+
+            try
+            {
+                var sorted = ApplySort(source, sortBy, ascending, mixFoldersAndFiles: IsDownloadsFolder);
+                _allChildren = sorted;
+
+                // 필터 활성 시 → 필터 재적용
+                if (!string.IsNullOrEmpty(_currentFilterText))
+                {
+                    var filtered = sorted.Where(item => MatchesFilter(item.Name, _currentFilterText)).ToList();
+                    Children = new ObservableCollection<FileSystemViewModel>(filtered);
+                }
+                else
+                {
+                    Children = new ObservableCollection<FileSystemViewModel>(sorted);
+                }
+                if (saved != null) SelectedChild = saved;
+            }
+            finally
+            {
+                IsSorting = false;
+                _isBulkUpdating = false;
+                // 정렬 완료 후 한 번에 갱신
+                OnPropertyChanged(nameof(ChildCountText));
+                OnPropertyChanged(nameof(HasChildren));
+                OnPropertyChanged(nameof(TotalChildCount));
+            }
+
+            // 설정 저장 (다음 앱 실행의 기본값으로 사용)
+            try
+            {
+                s_defaultSortBy = sortBy;
+                s_defaultSortAscending = ascending;
+                var settings = Windows.Storage.ApplicationData.Current.LocalSettings;
+                settings.Values["MillerSortBy"] = sortBy;
+                settings.Values["MillerSortAsc"] = ascending;
+            }
+            catch (Exception ex) { Helpers.DebugLogger.Log($"[FolderViewModel] Sort settings save failed: {ex.Message}"); }
+        }
+
+        private static List<FileSystemViewModel> ApplySort(
+            List<FileSystemViewModel> items, string sortBy, bool ascending, bool mixFoldersAndFiles = false)
+        {
+            // In-place sort — no LINQ buffer/ToList allocation (saves ~30% for 10K items)
+            Comparison<FileSystemViewModel> cmp;
+            switch (sortBy)
+            {
+                case "DateModified":
+                    cmp = ascending
+                        ? (a, b) => a.DateModifiedValue.CompareTo(b.DateModifiedValue)
+                        : (a, b) => b.DateModifiedValue.CompareTo(a.DateModifiedValue);
+                    break;
+                case "Type":
+                    cmp = ascending
+                        ? (a, b) => string.Compare(a.FileType, b.FileType, StringComparison.OrdinalIgnoreCase)
+                        : (a, b) => string.Compare(b.FileType, a.FileType, StringComparison.OrdinalIgnoreCase);
+                    break;
+                case "Size":
+                    cmp = ascending
+                        ? (a, b) => a.SizeValue.CompareTo(b.SizeValue)
+                        : (a, b) => b.SizeValue.CompareTo(a.SizeValue);
+                    break;
+                default: // "Name"
+                    var nc = Helpers.NaturalStringComparer.Instance;
+                    cmp = ascending
+                        ? (a, b) => nc.Compare(a.Name, b.Name)
+                        : (a, b) => nc.Compare(b.Name, a.Name);
+                    break;
+            }
+
+            // 다운로드 폴더 등: 폴더/파일 구분 없이 날짜순 혼합 정렬
+            if (mixFoldersAndFiles)
+            {
+                items.Sort(cmp);
+                return items;
+            }
+
+            // 기본: 폴더/파일 1회 분할 — 비교마다 `x is FileViewModel` 타입 체크 제거 (14K+ 성능 최적화)
+            var folders = new List<FileSystemViewModel>(items.Count);
+            var files = new List<FileSystemViewModel>(items.Count);
+            foreach (var item in items)
+            {
+                if (item is FileViewModel)
+                    files.Add(item);
+                else
+                    folders.Add(item);
+            }
+
+            folders.Sort(cmp);
+            files.Sort(cmp);
+
+            // 폴더 먼저, 파일 나중
+            var result = new List<FileSystemViewModel>(items.Count);
+            result.AddRange(folders);
+            result.AddRange(files);
+            return result;
+        }
+
+        /// <summary>
+        /// Children 컬렉션에 정렬된 아이템을 채운다.
+        /// 썸네일과 클라우드 상태는 on-demand (ContainerContentChanging)로 로드.
+        /// 배치 교체로 CollectionChanged 이벤트를 최소화.
+        /// </summary>
+        private void PopulateChildren(List<FileSystemViewModel> items, System.Threading.CancellationToken token, bool preSorted = false)
+        {
+            if (token.IsCancellationRequested) return;
+
+            List<FileSystemViewModel> sortedItems;
+            if (preSorted)
+            {
+                sortedItems = items;
+            }
+            else
+            {
+                EnsureSortSettingsLoaded();
+                if (_sortBy == "Name" && s_defaultSortBy != "Name")
+                {
+                    _sortBy = s_defaultSortBy;
+                    _sortAscending = s_defaultSortAscending;
+                }
+                sortedItems = ApplySort(items, _sortBy, _sortAscending);
+            }
+
+            // _allChildren 저장 (필터 인프라)
+            _allChildren = sortedItems;
+
+            // Set Children FIRST — display items before git/cloud detection (saves 100-300ms UI blocking)
+            _isBulkUpdating = true;
+            try
+            {
+                IList<FileSystemViewModel> displayItems;
+                if (!string.IsNullOrEmpty(_currentFilterText))
+                {
+                    displayItems = sortedItems.Where(item => MatchesFilter(item.Name, _currentFilterText)).ToList();
+                }
+                else
+                {
+                    displayItems = sortedItems;
+                }
+
+                // Save SelectedChild path before collection update.
+                // SyncChildren fallback (or full replace) creates new ViewModel instances,
+                // which breaks the old SelectedChild reference → ListView clears selection
+                // → SelectedChild becomes null → HandleNullSelection removes child columns.
+                var savedSelectedPath = SelectedChild?.Path;
+
+                // 기존 Children이 있으면 diff 기반 증분 업데이트 시도 (스크롤/선택/썸네일 보존)
+                bool usedSync = false;
+                if (Children.Count > 0)
+                {
+                    usedSync = SyncChildren(displayItems);
+                }
+                else
+                {
+                    Children = new ObservableCollection<FileSystemViewModel>(displayItems);
+                }
+
+                // Restore SelectedChild if its reference was lost during collection replacement.
+                // Setting SelectedChild fires PropertyChanged, but IsBulkUpdating is true so
+                // ExplorerViewModel.FolderVm_PropertyChanged ignores it (no auto-navigation).
+                // The OneWay binding updates ListView.SelectedItem to the matched instance.
+                if (savedSelectedPath != null && (SelectedChild == null || !Children.Contains(SelectedChild)))
+                {
+                    var match = Children.FirstOrDefault(c =>
+                        string.Equals(c.Path, savedSelectedPath, StringComparison.OrdinalIgnoreCase));
+                    if (match != null)
+                        SelectedChild = match;
+                }
+
+                Helpers.DebugLogger.Log($"[FolderViewModel] Children populated: {sortedItems.Count} items (incremental={usedSync}), displayed={Children.Count}");
+            }
+            finally
+            {
+                _isBulkUpdating = false;
+                OnPropertyChanged(nameof(Children));
+                OnPropertyChanged(nameof(ChildCountText));
+                OnPropertyChanged(nameof(HasChildren));
+                OnPropertyChanged(nameof(TotalChildCount));
+            }
+
+            // Detect cloud/git on background thread AFTER items are displayed
+            // Badges are injected on-demand via ContainerContentChanging
+            _ = Task.Run(() =>
+            {
+                try
+                {
+                    _cloudSvc = App.Current.Services.GetService(typeof(CloudSyncService)) as CloudSyncService;
+                    _isCloudFolder = _cloudSvc != null && _cloudSvc.IsCloudPath(Path);
+                }
+                catch { _isCloudFolder = false; }
+
+                try
+                {
+                    var settings = App.Current.Services.GetService(typeof(Services.SettingsService)) as Services.SettingsService;
+                    if (settings != null && settings.ShowGitIntegration)
+                    {
+                        _gitSvc = App.Current.Services.GetService(typeof(GitStatusService)) as GitStatusService;
+                        var isAvail = _gitSvc?.IsAvailable == true;
+                        var repoRoot = isAvail ? _gitSvc!.FindRepoRoot(Path) : null;
+                        _isGitFolder = repoRoot != null;
+                    }
+                    else
+                    {
+                        _isGitFolder = false;
+                    }
+                }
+                catch { _isGitFolder = false; }
+
+                if (_isGitFolder && _gitSvc != null && !token.IsCancellationRequested)
+                {
+                    _ = WarmGitCacheAsync(token);
+                }
+            });
+        }
+
+        /// <summary>
+        /// 백그라운드에서 git status 실행 → 캐시 채움 → UI 스레드에서 Children에 상태 주입.
+        /// PopulateChildren에서 fire-and-forget으로 호출.
+        /// </summary>
+        private async Task WarmGitCacheAsync(CancellationToken ct)
+        {
+            // UI 스레드의 DispatcherQueue를 먼저 캡처
+            var dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            Helpers.DebugLogger.Log($"[Git.Warm] START path={Path}, dispatcher={dispatcher != null}");
+
+            try
+            {
+                // 백그라운드에서 git status 실행 → 캐시 채움
+                Dictionary<string, Models.GitFileState>? states = null;
+                await Task.Run(async () =>
+                {
+                    states = await _gitSvc!.GetFolderStatesAsync(Path, ct);
+                }, ct);
+
+                Helpers.DebugLogger.Log($"[Git.Warm] GetFolderStatesAsync returned {states?.Count ?? -1} entries");
+
+                if (ct.IsCancellationRequested) return;
+
+                // Git 캐시 워밍 완료 — 실제 UI 주입은 ContainerContentChanging에서 on-demand 수행.
+                // 14K+ 파일 폴더에서 전체 Children 루프를 방지하여 UI 스레드 부하 제거.
+                // 단, 0 entries이면 _isGitFolder=false로 InjectGitStateIfNeeded 호출 자체 skip 가능
+                // (현재 의심: deferred injection이 ContainerContentChanging 측에서 native crash 유발)
+                if ((states?.Count ?? 0) == 0)
+                {
+                    _isGitFolder = false;
+                    Helpers.DebugLogger.Log($"[Git.Warm] 0 entries → _isGitFolder=false (skip on-demand inject)");
+                }
+                else
+                {
+                    Helpers.DebugLogger.Log($"[Git.Warm] Cache warmed with {states.Count} entries, injection deferred to ContainerContentChanging");
+                }
+            }
+            catch (OperationCanceledException) { Helpers.DebugLogger.Log("[Git.Warm] Cancelled"); }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[Git.Warm] ERROR: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// On-demand: 보이는 아이템에 클라우드 상태 주입.
+        /// ContainerContentChanging에서 호출.
+        /// </summary>
+        public void InjectCloudStateIfNeeded(FileSystemViewModel item)
+        {
+            if (item.CloudStateInjected) return; // 이미 주입 완료 — 스크롤 시 재주입 방지
+            if (!_isCloudFolder || _cloudSvc == null) { item.CloudStateInjected = true; return; }
+            item.CloudState = _cloudSvc.GetCloudState(item.Path);
+            item.CloudStateInjected = true;
+        }
+
+        /// <summary>
+        /// On-demand: 보이는 아이템에 Git 상태 주입.
+        /// ContainerContentChanging에서 호출 (Details 뷰 전용).
+        /// 캐시된 값만 사용 (I/O 없음).
+        /// </summary>
+        public void InjectGitStateIfNeeded(FileSystemViewModel item)
+        {
+            if (item.GitStateInjected) return; // 이미 주입 완료 — 스크롤 시 재주입 방지
+            if (!_isGitFolder || _gitSvc == null) { item.GitStateInjected = true; return; }
+            var state = _gitSvc.GetCachedState(item.Path);
+            if (state.HasValue)
+                item.GitState = state.Value;
+            item.GitStateInjected = true;
+        }
+
+        /// <summary>
+        /// Git 레포 여부를 반환 (Details 뷰에서 상태 로드 판단용).
+        /// </summary>
+        public bool IsGitFolder => _isGitFolder;
+
+        /// <summary>
+        /// 원격 연결 예외를 사용자 친화적 에러 메시지로 분류.
+        /// 연결 실패, 인증 실패, 타임아웃, 권한 거부를 구분.
+        /// </summary>
+        private static string ClassifyRemoteError(Exception ex)
+        {
+            var loc = GetLoc();
+            var msg = ex.Message;
+            var typeName = ex.GetType().Name;
+
+            // 소켓/네트워크 레벨의 OperationCanceledException (사용자 취소가 아닌 타임아웃)
+            if (ex is OperationCanceledException)
+                return loc.Get("Error_Timeout") ?? "Connection timed out: check server";
+
+            // SSH.NET 인증 실패
+            if (typeName.Contains("Authentication") || msg.Contains("denied") || msg.Contains("authentication", StringComparison.OrdinalIgnoreCase))
+                return loc.Get("Error_AuthFailed") ?? "Authentication failed: check credentials";
+
+            // SSH.NET 연결 끊김
+            if (typeName.Contains("SshConnection") || typeName.Contains("SshOperationTimeout"))
+                return loc.Get("Error_Disconnected") ?? "Server connection lost";
+
+            // 소켓/네트워크 에러
+            if (typeName.Contains("Socket") || msg.Contains("No such host")
+                || msg.Contains("actively refused") || msg.Contains("Connection refused")
+                || msg.Contains("unreachable", StringComparison.OrdinalIgnoreCase))
+                return loc.Get("Error_CannotConnect") ?? "Cannot connect: check network";
+
+            // 타임아웃
+            if (msg.Contains("timed out", StringComparison.OrdinalIgnoreCase)
+                || msg.Contains("Timeout", StringComparison.OrdinalIgnoreCase))
+                return loc.Get("Error_Timeout") ?? "Connection timed out: check server";
+
+            // FTP 권한 에러 (530, 550 등)
+            if (msg.Contains("550") || msg.Contains("Permission denied")
+                || msg.Contains("Access denied", StringComparison.OrdinalIgnoreCase))
+                return loc.Get("Error_AccessDenied") ?? "Access denied";
+
+            // FluentFTP 연결 실패
+            if (msg.Contains("Unable to connect") || msg.Contains("disconnected")
+                || msg.Contains("Not connected", StringComparison.OrdinalIgnoreCase))
+                return loc.Get("Error_ConnectionFailed") ?? "Server connection failed";
+
+            // 기본
+            return string.Format(loc.Get("Error_RemoteGeneric") ?? "Remote error: {0}", msg);
+        }
+
+        private static LocalizationService GetLoc()
+        {
+            return _sLoc ??= App.Current.Services.GetRequiredService<LocalizationService>();
+        }
+
+        public static string GetEmptyFolderText() => GetLoc().Get("EmptyFolder") ?? "Empty folder";
+
+        public static string GetRetryText() => GetLoc().Get("Retry") ?? "Retry";
+
+        public void CancelLoading()
+        {
+            try { _cts?.Cancel(); } catch (ObjectDisposedException) { }
+            _cts?.Dispose();
+            _cts = null;
+            IsLoading = false;
+
+            // FolderSizeService 이벤트 구독 누수 방지
+            UnsubscribeFolderSizeEvent();
+        }
+
+        /// <summary>
+        /// FolderSizeService.SizeCalculated 이벤트 구독 해제.
+        /// CancelLoading/ResetState에서 호출하여 메모리 누수 방지.
+        /// </summary>
+        private void UnsubscribeFolderSizeEvent()
+        {
+            try
+            {
+                var svc = App.Current.Services.GetService(typeof(FolderSizeService)) as FolderSizeService;
+                if (svc != null) svc.SizeCalculated -= OnFolderSizeCalculated;
+            }
+            catch (Exception ex) { Helpers.DebugLogger.Log($"[FolderViewModel] FolderSize unsubscribe failed: {ex.Message}"); }
+        }
+
+        /// <summary>
+        /// Set error state from NavigateIntoFolder exception (async void crash prevention).
+        /// </summary>
+        internal void SetNavigationError(string message)
+        {
+            ErrorMessage = message;
+            ErrorIcon = "\uE783"; // generic error icon
+        }
+
+        /// <summary>
+        /// Reset only the load flag and error state so the folder can be reloaded (retry button).
+        /// </summary>
+        public void ResetLoadState()
+        {
+            _isLoaded = false;
+            ErrorMessage = null;
+            ErrorIcon = null;
+        }
+
+        /// <summary>
+        /// Reset folder state when removed from view.
+        /// This ensures fresh data when folder is revisited.
+        /// </summary>
+        public void ResetState()
+        {
+            Helpers.DebugLogger.Log($"[FolderViewModel.ResetState] Resetting folder: {Name}");
+
+            // Cancel any pending loading
+            CancelLoading();
+
+            // Clear selection to reset focus
+            SelectedChild = null;
+
+            // Release thumbnails to free memory
+            UnloadAllThumbnails();
+
+            // Clear filter state
+            _allChildren = null;
+            _currentFilterText = string.Empty;
+
+            // Mark as not loaded so it reloads next time
+            _isLoaded = false;
+
+            Helpers.DebugLogger.Log($"[FolderViewModel.ResetState] Reset complete - _isLoaded=false, SelectedChild=null");
+        }
+
+        /// <summary>
+        /// Release all thumbnails in this folder to free memory.
+        /// Called when folder is removed from view or reset.
+        /// </summary>
+        public void UnloadAllThumbnails()
+        {
+            foreach (var child in Children)
+            {
+                if (child is FileViewModel fileVm && fileVm.ThumbnailSource != null)
+                {
+                    fileVm.UnloadThumbnail();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Fully release all child ViewModels and their resources.
+        /// Used during tab close / window close to ensure GC can reclaim everything.
+        /// Unlike UnloadAllThumbnails (which keeps Children for re-visit caching),
+        /// this method clears the entire collection.
+        /// </summary>
+        public void ClearChildren()
+        {
+            UnloadAllThumbnails();
+            // PropertyChanged를 발생시키지 않고 필드 직접 교체.
+            // Cleanup 중 x:Bind가 이미 visual tree에서 제거된 ListView의 ItemsSource를
+            // 업데이트하려다 COMException(0x80070490) 발생하는 것을 방지.
+            _children = new System.Collections.ObjectModel.ObservableCollection<FileSystemViewModel>();
+            _allChildren = null;
+            _currentFilterText = string.Empty;
+            _isLoaded = false;
+        }
+
+        /// <summary>
+        /// 필터 텍스트를 적용하여 Children을 _allChildren의 부분집합으로 교체.
+        /// 빈 문자열이면 전체 복원.
+        /// </summary>
+        public void ApplyFilter(string filterText)
+        {
+            _currentFilterText = filterText ?? string.Empty;
+            _isBulkUpdating = true;
+
+            try
+            {
+                if (_allChildren == null || _allChildren.Count == 0)
+                    return;
+
+                IList<FileSystemViewModel> displayItems;
+                if (string.IsNullOrEmpty(_currentFilterText))
+                {
+                    displayItems = _allChildren;
+                }
+                else
+                {
+                    displayItems = _allChildren.Where(item => MatchesFilter(item.Name, _currentFilterText)).ToList();
+                }
+
+                // diff 기반 증분 업데이트 (필터 타이핑 시 소수 항목만 변경)
+                if (Children.Count > 0)
+                    SyncChildren(displayItems);
+                else
+                    Children = new ObservableCollection<FileSystemViewModel>(displayItems);
+            }
+            finally
+            {
+                _isBulkUpdating = false;
+                OnPropertyChanged(nameof(Children));
+                OnPropertyChanged(nameof(ChildCountText));
+                OnPropertyChanged(nameof(HasChildren));
+                OnPropertyChanged(nameof(TotalChildCount));
+            }
+        }
+
+        /// <summary>
+        /// 이름이 필터 패턴에 매칭되는지 확인.
+        /// - 빈 필터 → 항상 true
+        /// - * 또는 ? 포함 → wildcard 패턴 매칭 (Regex 변환)
+        /// - 기본 → 대소문자 무시 substring 매칭
+        /// </summary>
+        /// <summary>
+        /// Compiled Regex cache for wildcard filter patterns.
+        /// Avoids creating 14K+ Regex objects per filter application.
+        /// </summary>
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, System.Text.RegularExpressions.Regex?> _regexCache = new();
+
+        internal static bool MatchesFilter(string name, string filter)
+        {
+            if (string.IsNullOrEmpty(filter)) return true;
+            if (string.IsNullOrEmpty(name)) return false;
+
+            if (filter.Contains('*') || filter.Contains('?'))
+            {
+                var regex = _regexCache.GetOrAdd(filter, f =>
+                {
+                    var pattern = "^" + System.Text.RegularExpressions.Regex.Escape(f)
+                        .Replace("\\*", ".*")
+                        .Replace("\\?", ".") + "$";
+                    try
+                    {
+                        return new System.Text.RegularExpressions.Regex(
+                            pattern,
+                            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+                    }
+                    catch { return null; }
+                });
+
+                return regex?.IsMatch(name) ?? false;
+            }
+
+            return name.Contains(filter, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // LoadThumbnailsAsync 제거됨 — 썸네일은 ContainerContentChanging에서 on-demand 로드
+
+        /// <summary>
+        /// Alias for ReloadAsync (used by settings refresh).
+        /// </summary>
+        public Task RefreshAsync() => ReloadAsync();
+
+        /// <summary>
+        /// Force reload (F5 새로고침).
+        /// </summary>
+        public async Task ReloadAsync()
+        {
+            Helpers.DebugLogger.Log($"[FolderViewModel.ReloadAsync] START - Folder: {Name}, Path: {Path}");
+
+            // 캐시 무효화 (강제 새로고침)
+            try
+            {
+                var cache = App.Current.Services.GetService(typeof(Services.FolderContentCache)) as Services.FolderContentCache;
+                cache?.Invalidate(Path);
+            }
+            catch (Exception ex) { Helpers.DebugLogger.Log($"[FolderViewModel] Cache invalidate failed: {ex.Message}"); }
+
+            _isLoaded = false;
+            ErrorMessage = null;
+            ErrorIcon = null;
+            await EnsureChildrenLoadedAsync();
+
+            Helpers.DebugLogger.Log($"[FolderViewModel.ReloadAsync] ===== COMPLETE =====");
+        }
+
+        partial void OnSelectedChildChanged(FileSystemViewModel? value)
+        {
+            // ExplorerViewModel listens to this via PropertyChanged
+        }
+
+        /// <summary>
+        /// Synchronize SelectedItems from ListView.SelectionChanged.
+        /// Single selection: updates SelectedChild (triggers auto-navigation).
+        /// Multi-selection: suppresses SelectedChild update (navigation suppressed).
+        /// </summary>
+        public void SyncSelectedItems(IList<object> selectedObjects)
+        {
+            SelectedItems.Clear();
+            foreach (var obj in selectedObjects)
+            {
+                if (obj is FileSystemViewModel fsvm)
+                    SelectedItems.Add(fsvm);
+            }
+
+            // Single selection: sync SelectedChild for navigation
+            if (SelectedItems.Count == 1)
+            {
+                SelectedChild = SelectedItems[0];
+            }
+            // Multi/Zero selection: don't touch SelectedChild
+            // → SelectedChild는 탐색 전용 (null 설정 시 자식 컬럼 제거됨)
+            // → 상태바 선택 수는 SelectedItems.Count 기준으로 별도 처리
+
+            OnPropertyChanged(nameof(HasMultiSelection));
+        }
+
+        /// <summary>
+        /// Children에 없는 SelectedItems 항목을 제거한다 (고아 참조 방지).
+        /// SyncChildren에서 Children이 변경된 후 호출된다.
+        /// SelectedChild도 Children에 없으면 null로 설정한다.
+        /// </summary>
+        private void PruneSelectedItems()
+        {
+            if (SelectedItems.Count > 0)
+            {
+                var childPaths = new HashSet<string>(
+                    Children.Select(c => c.Path), StringComparer.OrdinalIgnoreCase);
+
+                for (int i = SelectedItems.Count - 1; i >= 0; i--)
+                {
+                    if (!childPaths.Contains(SelectedItems[i].Path))
+                        SelectedItems.RemoveAt(i);
+                }
+
+                OnPropertyChanged(nameof(HasMultiSelection));
+            }
+
+            // SelectedChild도 Children에 없으면 null로 설정
+            if (SelectedChild != null &&
+                !Children.Any(c => string.Equals(c.Path, SelectedChild.Path, StringComparison.OrdinalIgnoreCase)))
+            {
+                SelectedChild = null;
+            }
+        }
+
+        /// <summary>
+        /// Get all selected items (multi or single).
+        /// </summary>
+        public List<FileSystemViewModel> GetSelectedItemsList()
+        {
+            if (HasMultiSelection)
+                return SelectedItems.ToList();
+            return SelectedChild != null ? new List<FileSystemViewModel> { SelectedChild } : new List<FileSystemViewModel>();
+        }
+    }
+}

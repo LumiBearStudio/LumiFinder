@@ -1,0 +1,102 @@
+using System;
+
+namespace LumiFiles.Services
+{
+    /// <summary>
+    /// Appearance-related settings (Theme, Density, Font, Icons).
+    /// </summary>
+    public interface IAppearanceSettings
+    {
+        string Theme { get; set; }
+        string Density { get; set; }
+        string FontFamily { get; set; }
+        string IconPack { get; set; }
+    }
+
+    /// <summary>
+    /// Browsing behavior settings.
+    /// </summary>
+    public interface IBrowsingSettings
+    {
+        bool ShowHiddenFiles { get; set; }
+        bool ShowFileExtensions { get; set; }
+        bool ShowCheckboxes { get; set; }
+        string MillerClickBehavior { get; set; }
+        bool ShowThumbnails { get; set; }
+        bool EnableQuickLook { get; set; }
+        bool EnableWasdNavigation { get; set; }
+        bool ConfirmDelete { get; set; }
+        bool PreviewShowFolderInfo { get; set; }
+        int UndoHistorySize { get; set; }
+    }
+
+    /// <summary>
+    /// Tool and integration settings.
+    /// </summary>
+    public interface IToolSettings
+    {
+        string DefaultTerminal { get; set; }
+        bool ShowContextMenu { get; set; }
+        bool MinimizeToTray { get; set; }
+        bool RememberWindowPosition { get; set; }
+        bool ShowFavoritesTree { get; set; }
+        bool ShowWindowsShellExtras { get; set; }
+        bool ShowShellExtensions { get; set; }
+        bool ShowCopilotMenu { get; set; }
+
+        // Sidebar section visibility
+        bool SidebarShowHome { get; set; }
+        bool SidebarShowFavorites { get; set; }
+        bool SidebarShowLocalDrives { get; set; }
+        bool SidebarShowCloud { get; set; }
+        bool SidebarShowNetwork { get; set; }
+        bool SidebarShowRecycleBin { get; set; }
+    }
+
+    /// <summary>
+    /// Developer settings (독립 섹션).
+    /// </summary>
+    public interface IDeveloperSettings
+    {
+        bool ShowDeveloperMenu { get; set; }
+        bool ShowGitIntegration { get; set; }
+        bool ShowHexPreview { get; set; }
+        bool EnableCrashReporting { get; set; }
+        bool ShowFileHash { get; set; }
+    }
+
+    /// <summary>
+    /// Full settings service combining all domain interfaces.
+    /// </summary>
+    public interface ISettingsService : IAppearanceSettings, IBrowsingSettings, IToolSettings, IDeveloperSettings
+    {
+        event Action<string, object?>? SettingChanged;
+
+        T Get<T>(string key, T defaultValue);
+        void Set<T>(string key, T value);
+
+        int StartupBehavior { get; set; }
+        string LastSessionPath { get; set; }
+        string LastSessionViewMode { get; set; }
+        string Language { get; set; }
+        string TabsJson { get; set; }
+        int ActiveTabIndex { get; set; }
+        bool ListShowSize { get; set; }
+        bool ListShowDate { get; set; }
+        int ListColumnWidth { get; set; }
+
+        // Per-tab startup settings
+        int Tab1StartupBehavior { get; set; }
+        int Tab2StartupBehavior { get; set; }
+        string Tab1StartupPath { get; set; }
+        string Tab2StartupPath { get; set; }
+        int Tab1StartupViewMode { get; set; }
+        int Tab2StartupViewMode { get; set; }
+        bool DefaultPreviewEnabled { get; set; }
+        bool ShelfSaveEnabled { get; set; }
+        bool ShelfEnabled { get; set; }
+
+        // Command Palette: 최근 실행한 커맨드 ID 목록 ("|" 구분)
+        string RecentCommandIds { get; set; }
+    }
+}

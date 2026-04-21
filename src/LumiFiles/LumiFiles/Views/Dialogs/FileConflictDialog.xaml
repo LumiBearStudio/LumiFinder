@@ -1,0 +1,171 @@
+<ContentDialog
+    x:Class="LumiFiles.Views.Dialogs.FileConflictDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="파일이 이미 존재합니다"
+    PrimaryButtonText="확인"
+    CloseButtonText="취소"
+    DefaultButton="Primary">
+
+    <Grid RowSpacing="16" Padding="0,8,0,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 충돌 메시지 -->
+        <TextBlock Grid.Row="0"
+                   TextWrapping="Wrap">
+            <Run x:Name="ConflictMessageRun" Text="같은 이름의 파일이 이 위치에 이미 존재합니다:"/>
+            <LineBreak/>
+            <Run Text="{x:Bind ViewModel.DestinationPath, Mode=OneWay}"
+                 FontWeight="SemiBold"/>
+        </TextBlock>
+
+        <!-- 파일 비교 -->
+        <Grid Grid.Row="1" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 원본 파일 정보 -->
+            <Border Grid.Column="0"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock x:Name="SourceFileHeader" Text="원본 파일"
+                               FontWeight="SemiBold"
+                               Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                    <TextBlock Text="{x:Bind ViewModel.SourcePath, Mode=OneWay}"
+                               TextWrapping="Wrap"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <Grid ColumnSpacing="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock x:Name="SourceSizeLabel" Grid.Row="0" Grid.Column="0"
+                                   Text="크기:"
+                                   FontSize="12"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1"
+                                   Text="{x:Bind FormatFileSize(ViewModel.SourceSize), Mode=OneWay}"
+                                   FontSize="12"
+                                   Margin="4,0,0,0"/>
+
+                        <TextBlock x:Name="SourceModifiedLabel" Grid.Row="1" Grid.Column="0"
+                                   Text="수정일:"
+                                   FontSize="12"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1"
+                                   Text="{x:Bind FormatDateTime(ViewModel.SourceModified), Mode=OneWay}"
+                                   FontSize="12"
+                                   Margin="4,0,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- 대상 파일 정보 -->
+            <Border Grid.Column="1"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock x:Name="ExistingFileHeader" Text="기존 파일"
+                               FontWeight="SemiBold"
+                               Foreground="{ThemeResource SystemFillColorCriticalBrush}"/>
+                    <TextBlock Text="{x:Bind ViewModel.DestinationPath, Mode=OneWay}"
+                               TextWrapping="Wrap"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <Grid ColumnSpacing="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock x:Name="DestSizeLabel" Grid.Row="0" Grid.Column="0"
+                                   Text="크기:"
+                                   FontSize="12"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1"
+                                   Text="{x:Bind FormatFileSize(ViewModel.DestinationSize), Mode=OneWay}"
+                                   FontSize="12"
+                                   Margin="4,0,0,0"/>
+
+                        <TextBlock x:Name="DestModifiedLabel" Grid.Row="1" Grid.Column="0"
+                                   Text="수정일:"
+                                   FontSize="12"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1"
+                                   Text="{x:Bind FormatDateTime(ViewModel.DestinationModified), Mode=OneWay}"
+                                   FontSize="12"
+                                   Margin="4,0,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 해결 옵션 -->
+        <StackPanel Grid.Row="2" Spacing="8">
+            <TextBlock x:Name="ChooseActionText" Text="수행할 작업을 선택하세요:"
+                       FontWeight="SemiBold"/>
+
+            <RadioButton x:Name="ReplaceRadio" AutomationProperties.AutomationId="Radio_Replace"
+                         GroupName="ConflictResolution"
+                         IsChecked="{x:Bind IsReplace, Mode=TwoWay}">
+                <StackPanel>
+                    <TextBlock x:Name="ReplaceText" Text="대상 파일 바꾸기"
+                               FontWeight="SemiBold"/>
+                    <TextBlock x:Name="ReplaceDesc" Text="기존 파일을 덮어씁니다"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </RadioButton>
+
+            <RadioButton x:Name="KeepBothRadio" AutomationProperties.AutomationId="Radio_KeepBoth"
+                         GroupName="ConflictResolution"
+                         IsChecked="{x:Bind IsKeepBoth, Mode=TwoWay}">
+                <StackPanel>
+                    <TextBlock x:Name="KeepBothText" Text="두 파일 모두 유지"
+                               FontWeight="SemiBold"/>
+                    <TextBlock x:Name="KeepBothDesc" Text="새 파일의 이름이 자동으로 변경됩니다"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </RadioButton>
+
+            <RadioButton x:Name="SkipRadio" AutomationProperties.AutomationId="Radio_Skip"
+                         GroupName="ConflictResolution"
+                         IsChecked="{x:Bind IsSkip, Mode=TwoWay}">
+                <StackPanel>
+                    <TextBlock x:Name="SkipText" Text="이 파일 건너뛰기"
+                               FontWeight="SemiBold"/>
+                    <TextBlock x:Name="SkipDesc" Text="변경 사항 없음"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </RadioButton>
+        </StackPanel>
+
+        <!-- 모든 충돌에 적용 체크박스 -->
+        <CheckBox x:Name="ApplyToAllCheckbox" AutomationProperties.AutomationId="CheckBox_ApplyToAll" Grid.Row="3"
+                  Content="모든 충돌에 이 작업 적용"
+                  IsChecked="{x:Bind ViewModel.ApplyToAll, Mode=TwoWay}"/>
+    </Grid>
+</ContentDialog>

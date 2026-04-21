@@ -1,0 +1,326 @@
+<UserControl
+    x:Class="LumiFiles.Views.DetailsModeView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:LumiFiles.ViewModels"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <!-- 헤더 버튼: 텍스트 좌측정렬 강제 -->
+        <Style x:Key="HeaderButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Foreground" Value="{ThemeResource SpanTextSecondaryBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter
+                            Content="{TemplateBinding Content}"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Padding="{TemplateBinding Padding}"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid x:Name="RootGrid" Tapped="OnRootTapped" RightTapped="OnEmptyAreaRightTapped" Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Row -->
+        <Grid Grid.Row="0" Height="24"
+              x:Name="HeaderGrid" AutomationProperties.AutomationId="Details_Header"
+              Background="{ThemeResource SpanBgLayer2Brush}"
+              BorderBrush="{ThemeResource SpanBorderSubtleBrush}"
+              BorderThickness="0,0,0,1"
+              RightTapped="OnHeaderRightTapped">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"/>
+                <ColumnDefinition Width="*" MinWidth="100"/>
+                <ColumnDefinition x:Name="Splitter1aColDef" Width="Auto"/>
+                <ColumnDefinition x:Name="LocationColumnDef" Width="0" MinWidth="0"/>
+                <ColumnDefinition x:Name="Splitter1bColDef" Width="Auto"/>
+                <ColumnDefinition x:Name="DateColumnDef" Width="200" MinWidth="80"/>
+                <ColumnDefinition x:Name="Splitter2ColDef" Width="Auto"/>
+                <ColumnDefinition x:Name="TypeColumnDef" Width="150" MinWidth="50"/>
+                <ColumnDefinition x:Name="Splitter3ColDef" Width="Auto"/>
+                <ColumnDefinition x:Name="SizeColumnDef" Width="100" MinWidth="50"/>
+                <ColumnDefinition x:Name="Splitter4ColDef" Width="Auto"/>
+                <ColumnDefinition x:Name="GitColumnDef" Width="50" MinWidth="40"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Name Header -->
+            <Button x:Name="NameHeaderButton" Grid.Column="0" Grid.ColumnSpan="2"
+                    Content="Name"
+                    Click="OnHeaderClick"
+                    Tag="Name"
+                    Padding="11,0,6,0"
+                    Style="{StaticResource HeaderButtonStyle}"/>
+
+            <!-- Splitter 1a: between Name and Location (검색 결과에서만 표시) -->
+            <controls:GridSplitter x:Name="Splitter1a" Grid.Column="2"
+                                   Width="2"
+                                   Padding="0"
+                                   Margin="0"
+                                   Visibility="Collapsed"
+                                   ResizeDirection="Columns"
+                                   HorizontalAlignment="Center"
+                                   Background="Transparent"
+                                   Opacity="0.3"/>
+
+            <!-- Location Header (검색 결과에서만 표시) -->
+            <Grid Grid.Column="3" x:Name="LocationHeaderContainer" Visibility="Collapsed">
+                <Button x:Name="LocationHeaderButton"
+                        Content="Location"
+                        Click="OnHeaderClick"
+                        Tag="Location"
+                        Style="{StaticResource HeaderButtonStyle}"/>
+            </Grid>
+
+            <!-- Splitter 1b: Name|Date 구분선 (Location 숨김 시에도 항상 표시) -->
+            <controls:GridSplitter x:Name="Splitter1b" Grid.Column="4"
+                                   Width="2"
+                                   Padding="0"
+                                   Margin="0"
+                                   ResizeDirection="Columns"
+                                   HorizontalAlignment="Center"
+                                   Background="Transparent"
+                                   Opacity="0.3"/>
+
+            <!-- Date Modified Header -->
+            <Grid Grid.Column="5" x:Name="DateHeaderContainer">
+                <Button x:Name="DateHeaderButton"
+                        Content="Date Modified"
+                        Click="OnHeaderClick"
+                        Tag="DateModified"
+                        Style="{StaticResource HeaderButtonStyle}"/>
+            </Grid>
+
+            <!-- Splitter 2: between Date and Type -->
+            <controls:GridSplitter x:Name="Splitter2" Grid.Column="6"
+                                   Width="2"
+                                   Padding="0"
+                                   Margin="0"
+                                   ResizeDirection="Columns"
+                                   HorizontalAlignment="Center"
+                                   Background="Transparent"
+                                   Opacity="0.3"/>
+
+            <!-- Type Header -->
+            <Grid Grid.Column="7" x:Name="TypeHeaderContainer">
+                <Button x:Name="TypeHeaderButton"
+                        Content="Type"
+                        Click="OnHeaderClick"
+                        Tag="Type"
+                        Style="{StaticResource HeaderButtonStyle}"/>
+            </Grid>
+
+            <!-- Splitter 3: between Type and Size -->
+            <controls:GridSplitter x:Name="Splitter3" Grid.Column="8"
+                                   Width="2"
+                                   Padding="0"
+                                   Margin="0"
+                                   ResizeDirection="Columns"
+                                   HorizontalAlignment="Center"
+                                   Background="Transparent"
+                                   Opacity="0.3"/>
+
+            <!-- Size Header -->
+            <Grid Grid.Column="9" x:Name="SizeHeaderContainer">
+                <Button x:Name="SizeHeaderButton"
+                        Content="Size"
+                        Click="OnHeaderClick"
+                        Tag="Size"
+                        Style="{StaticResource HeaderButtonStyle}"/>
+            </Grid>
+
+            <!-- Splitter 4: between Size and Git -->
+            <controls:GridSplitter x:Name="Splitter4" Grid.Column="10"
+                                   Width="2"
+                                   Padding="0"
+                                   Margin="0"
+                                   ResizeDirection="Columns"
+                                   HorizontalAlignment="Center"
+                                   Background="Transparent"
+                                   Opacity="0.3"/>
+
+            <!-- Git Status Header -->
+            <Grid Grid.Column="11" x:Name="GitHeaderContainer">
+                <Button x:Name="GitHeaderButton"
+                        Content="Git"
+                        Click="OnHeaderClick"
+                        Tag="Git"
+                        Style="{StaticResource HeaderButtonStyle}"/>
+            </Grid>
+        </Grid>
+
+        <!-- Items List -->
+        <Grid Grid.Row="1" x:Name="ListViewWrapper"
+              Loaded="OnListViewWrapperLoaded" Unloaded="OnListViewWrapperUnloaded">
+        <ListView x:Name="DetailsListView" AutomationProperties.AutomationId="Details_ListView"
+                  ItemsSource="{Binding CurrentItems, Mode=OneWay}"
+                  SelectedItem="{Binding CurrentFolder.SelectedChild, Mode=TwoWay}"
+                  SelectionMode="Extended"
+                  CanDragItems="True"
+                  AllowDrop="True"
+                  DragItemsStarting="OnDragItemsStarting"
+                  DragItemsCompleted="OnDragItemsCompleted"
+                  DragOver="OnListViewDragOver"
+                  Drop="OnListViewDrop"
+                  DragLeave="OnListViewDragLeave"
+                  DoubleTapped="OnItemDoubleClick"
+                  KeyDown="OnDetailsKeyDown"
+                  SelectionChanged="OnDetailsSelectionChanged"
+                  ContainerContentChanging="OnContainerContentChanging"
+                  Background="Transparent"
+                  Padding="0">
+            <ListView.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <Grid Padding="6,4,6,2" Background="{ThemeResource SpanBgLayer2Brush}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding Key}"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           Foreground="{ThemeResource SpanTextSecondaryBrush}"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Count}"
+                                           FontSize="10"
+                                           Foreground="{ThemeResource SpanTextTertiaryBrush}"
+                                           Margin="8,0,0,0"/>
+                            </Grid>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </ListView.GroupStyle>
+            <ListView.ItemContainerStyle>
+                <StaticResource ResourceKey="DetailsItemStyle"/>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="vm:FileSystemViewModel">
+                    <Grid Height="24" RightTapped="OnItemRightTapped"
+                          ToolTipService.ToolTip="{x:Bind TooltipText}"
+                          Opacity="{x:Bind ItemOpacity, Mode=OneWay}">
+                        <!-- 데이터 셀: splitter 간격은 각 셀의 Margin.Left에 포함.
+                             ApplyCellWidths에서 Border.Width + Margin 설정. -->
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Icon / Thumbnail -->
+                        <Grid Grid.Column="0" Width="16" Height="16"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Image Source="{x:Bind ThumbnailSource, Mode=OneWay}" Stretch="UniformToFill"
+                                   Visibility="{x:Bind vm:FileSystemViewModel.ShowIfTrue(HasThumbnail), Mode=OneWay}"/>
+                            <FontIcon FontFamily="{StaticResource RemixIcons}"
+                                      Glyph="{x:Bind IconGlyph, Mode=OneWay}"
+                                      Foreground="{x:Bind IconBrush, Mode=OneWay}"
+                                      FontSize="{Binding IconFontSize, Source={StaticResource FontScale}}"
+                                      Visibility="{x:Bind vm:FileSystemViewModel.ShowIfFalse(HasThumbnail), Mode=OneWay}"/>
+                            <!-- Cloud sync badge -->
+                            <Border Visibility="{x:Bind vm:FileSystemViewModel.ShowIfTrue(HasCloudBadge), Mode=OneWay}"
+                                    HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-4,-4"
+                                    Width="12" Height="12" CornerRadius="6"
+                                    Background="{x:Bind CloudBadgeBrush, Mode=OneWay}">
+                                <FontIcon Glyph="{x:Bind CloudStateGlyph, Mode=OneWay}" FontSize="8"
+                                          Foreground="{ThemeResource SpanTextSecondaryBrush}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- Name (display) -->
+                        <TextBlock Grid.Column="1"
+                                   Text="{x:Bind TruncatedDisplayName, Mode=OneWay}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
+                                   Padding="6,0"
+                                   Visibility="{x:Bind vm:FileSystemViewModel.NotRenaming(IsRenaming), Mode=OneWay}"/>
+                        <!-- Rename TextBox (visible during rename) -->
+                        <TextBox Grid.Column="1"
+                                 Text="{x:Bind EditableName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Visibility="{x:Bind IsRenaming, Mode=OneWay}"
+                                 VerticalAlignment="Center"
+                                 VerticalContentAlignment="Center"
+                                 Padding="6,0" MinHeight="0" FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
+                                 LostFocus="OnRenameTextBoxLostFocus"
+                                 KeyDown="OnRenameTextBoxKeyDown"/>
+
+                        <!-- Location (검색 결과에서만 표시) -->
+                        <Border Grid.Column="2" x:Name="LocationCell" Width="0">
+                            <TextBlock Text="{x:Bind LocationPath, Mode=OneWay}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       FontSize="{Binding SecondaryFontSize, Source={StaticResource FontScale}}"
+                                       Foreground="{ThemeResource SpanTextSecondaryBrush}"
+                                       Padding="6,0"/>
+                        </Border>
+
+                        <!-- Date Modified -->
+                        <Border Grid.Column="3" x:Name="DateCell" Width="200">
+                            <TextBlock Text="{x:Bind DateModified, Mode=OneWay}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       FontSize="{Binding SecondaryFontSize, Source={StaticResource FontScale}}"
+                                       Padding="6,0"/>
+                        </Border>
+                        <!-- Type -->
+                        <Border Grid.Column="4" x:Name="TypeCell" Width="150">
+                            <TextBlock Text="{x:Bind FileType, Mode=OneWay}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       FontSize="{Binding SecondaryFontSize, Source={StaticResource FontScale}}"
+                                       Padding="6,0"/>
+                        </Border>
+
+                        <!-- Size -->
+                        <Border Grid.Column="5" x:Name="SizeCell" Width="100">
+                            <TextBlock Text="{x:Bind Size, Mode=OneWay}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       FontSize="{Binding SecondaryFontSize, Source={StaticResource FontScale}}"
+                                       Padding="6,0"/>
+                        </Border>
+
+                        <!-- Git Status -->
+                        <Border Grid.Column="6" x:Name="GitCell" Width="50">
+                            <TextBlock Text="{x:Bind GitStatusText, Mode=OneWay}"
+                                       Foreground="{x:Bind GitStatusBrush, Mode=OneWay}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{Binding SecondaryFontSize, Source={StaticResource FontScale}}"
+                                       FontWeight="Bold"
+                                       Padding="6,0"/>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        </Grid>
+    </Grid>
+</UserControl>

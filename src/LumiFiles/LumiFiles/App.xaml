@@ -1,0 +1,646 @@
+<Application
+    x:Class="LumiFiles.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:LumiFiles"
+    xmlns:helpers="using:LumiFiles.Helpers">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <ResourceDictionary Source="/Assets/Styles/Icons.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- ============================================================
+                 Theme Dictionaries: Dark / Light color tokens
+                 ============================================================ -->
+            <ResourceDictionary.ThemeDictionaries>
+
+                <!-- ==================== DARK THEME ==================== -->
+                <ResourceDictionary x:Key="Dark">
+                    <!-- Backgrounds -->
+                    <Color x:Key="SpanBgMicaColor">#202020</Color>
+                    <Color x:Key="SpanBgLayer1Color">#2d2d2d</Color>
+                    <Color x:Key="SpanBgLayer2Color">#383838</Color>
+                    <Color x:Key="SpanBgLayer3Color">#484848</Color>
+                    <Color x:Key="SpanBgLayer2TransparentColor">#00383838</Color>
+
+                    <!-- Accent -->
+                    <Color x:Key="SpanAccentColor">#60cdff</Color>
+                    <Color x:Key="SpanAccentHoverColor">#7ed8ff</Color>
+                    <Color x:Key="SpanAccentDimColor">#B360CDFF</Color>
+
+                    <!-- Text -->
+                    <Color x:Key="SpanTextPrimaryColor">#ffffff</Color>
+                    <Color x:Key="SpanTextSecondaryColor">#ababab</Color>
+                    <Color x:Key="SpanTextTertiaryColor">#787878</Color>
+                    <Color x:Key="SpanTextDisabledColor">#555555</Color>
+
+                    <!-- Solid Brushes -->
+                    <SolidColorBrush x:Key="SpanBgMicaBrush" Color="{StaticResource SpanBgMicaColor}" />
+                    <SolidColorBrush x:Key="SpanBgLayer1Brush" Color="{StaticResource SpanBgLayer1Color}" />
+                    <SolidColorBrush x:Key="SpanBgLayer2Brush" Color="{StaticResource SpanBgLayer2Color}" />
+                    <SolidColorBrush x:Key="SpanBgLayer3Brush" Color="{StaticResource SpanBgLayer3Color}" />
+                    <SolidColorBrush x:Key="SpanAccentBrush" Color="{StaticResource SpanAccentColor}" />
+                    <SolidColorBrush x:Key="SpanAccentHoverBrush" Color="{StaticResource SpanAccentHoverColor}" />
+                    <SolidColorBrush x:Key="SpanAccentDimBrush" Color="{StaticResource SpanAccentDimColor}" />
+
+                    <SolidColorBrush x:Key="SpanTextPrimaryBrush" Color="{StaticResource SpanTextPrimaryColor}" />
+                    <SolidColorBrush x:Key="SpanTextSecondaryBrush" Color="{StaticResource SpanTextSecondaryColor}" />
+                    <SolidColorBrush x:Key="SpanTextTertiaryBrush" Color="{StaticResource SpanTextTertiaryColor}" />
+                    <SolidColorBrush x:Key="SpanTextDisabledBrush" Color="{StaticResource SpanTextDisabledColor}" />
+
+                    <!-- Translucent Brushes (accent-tinted, Windows Explorer style) -->
+                    <SolidColorBrush x:Key="SpanBgHoverBrush" Color="#0F60CDFF" />
+                    <SolidColorBrush x:Key="SpanBgActiveBrush" Color="#1A60CDFF" />
+                    <SolidColorBrush x:Key="SpanBgSelectedBrush" Color="#2560CDFF" />
+                    <SolidColorBrush x:Key="SpanBgSelectedHoverBrush" Color="#3060CDFF" />
+                    <!-- Path highlight: border line for navigation breadcrumb items (not background fill) -->
+                    <SolidColorBrush x:Key="SpanPathHighlightBrush" Color="#6060CDFF" />
+
+                    <!-- Override WinUI system ListView/GridView selection colors -->
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#2560CDFF" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#3060CDFF" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#1A60CDFF" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelected" Color="#2560CDFF" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPointerOver" Color="#3060CDFF" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPressed" Color="#1A60CDFF" />
+
+                    <!-- Override WinUI TextBox/AutoSuggestBox focus bottom line -->
+                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource SpanAccentColor}" />
+
+                    <!-- Rubber-band selection -->
+                    <SolidColorBrush x:Key="SpanSelectionRectFillBrush" Color="{StaticResource SpanAccentColor}" Opacity="0.15" />
+                    <SolidColorBrush x:Key="SpanSelectionRectStrokeBrush" Color="{StaticResource SpanAccentColor}" Opacity="0.6" />
+
+                    <!-- Borders (white overlay for dark) -->
+                    <SolidColorBrush x:Key="SpanBorderSubtleBrush" Color="#0FFFFFFF" />
+                    <SolidColorBrush x:Key="SpanBorderCardBrush" Color="#14FFFFFF" />
+                    <SolidColorBrush x:Key="SpanBorderControlBrush" Color="#1AFFFFFF" />
+
+                    <!-- Global FocusVisual: 액센트 톤 얇은 포커스 링 (기본 흰+검 2px → 액센트 1px) -->
+                    <SolidColorBrush x:Key="SystemControlFocusVisualPrimaryBrush" Color="{StaticResource SpanAccentDimColor}" />
+                    <SolidColorBrush x:Key="SystemControlFocusVisualSecondaryBrush" Color="Transparent" />
+
+                    <!-- Depth shadows (Miller column + sidebar edge) -->
+                    <LinearGradientBrush x:Key="SpanColumnShadowBrush" StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="Transparent" Offset="0"/>
+                        <GradientStop Color="#1C000000" Offset="1"/>
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="SpanSidebarShadowBrush" StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#1C000000" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </LinearGradientBrush>
+                </ResourceDictionary>
+
+                <!-- ==================== LIGHT THEME ==================== -->
+                <ResourceDictionary x:Key="Light">
+                    <!-- Backgrounds (WinUI 3 Fluent tone-matched) -->
+                    <Color x:Key="SpanBgMicaColor">#F3F3F3</Color>
+                    <Color x:Key="SpanBgLayer1Color">#F9F9F9</Color>
+                    <Color x:Key="SpanBgLayer2Color">#F3F3F3</Color>
+                    <Color x:Key="SpanBgLayer3Color">#E6E6E6</Color>
+                    <Color x:Key="SpanBgLayer2TransparentColor">#00F3F3F3</Color>
+
+                    <!-- Accent -->
+                    <Color x:Key="SpanAccentColor">#0078D4</Color>
+                    <Color x:Key="SpanAccentHoverColor">#106EBE</Color>
+                    <Color x:Key="SpanAccentDimColor">#B30078D4</Color>
+
+                    <!-- Text -->
+                    <Color x:Key="SpanTextPrimaryColor">#1B1B1B</Color>
+                    <Color x:Key="SpanTextSecondaryColor">#616161</Color>
+                    <Color x:Key="SpanTextTertiaryColor">#8B8B8B</Color>
+                    <Color x:Key="SpanTextDisabledColor">#C4C4C4</Color>
+
+                    <!-- Solid Brushes -->
+                    <SolidColorBrush x:Key="SpanBgMicaBrush" Color="{StaticResource SpanBgMicaColor}" />
+                    <SolidColorBrush x:Key="SpanBgLayer1Brush" Color="{StaticResource SpanBgLayer1Color}" />
+                    <SolidColorBrush x:Key="SpanBgLayer2Brush" Color="{StaticResource SpanBgLayer2Color}" />
+                    <SolidColorBrush x:Key="SpanBgLayer3Brush" Color="{StaticResource SpanBgLayer3Color}" />
+                    <SolidColorBrush x:Key="SpanAccentBrush" Color="{StaticResource SpanAccentColor}" />
+                    <SolidColorBrush x:Key="SpanAccentHoverBrush" Color="{StaticResource SpanAccentHoverColor}" />
+                    <SolidColorBrush x:Key="SpanAccentDimBrush" Color="{StaticResource SpanAccentDimColor}" />
+
+                    <SolidColorBrush x:Key="SpanTextPrimaryBrush" Color="{StaticResource SpanTextPrimaryColor}" />
+                    <SolidColorBrush x:Key="SpanTextSecondaryBrush" Color="{StaticResource SpanTextSecondaryColor}" />
+                    <SolidColorBrush x:Key="SpanTextTertiaryBrush" Color="{StaticResource SpanTextTertiaryColor}" />
+                    <SolidColorBrush x:Key="SpanTextDisabledBrush" Color="{StaticResource SpanTextDisabledColor}" />
+
+                    <!-- Translucent Brushes (accent-tinted, Windows Explorer style) -->
+                    <SolidColorBrush x:Key="SpanBgHoverBrush" Color="#0F0078D4" />
+                    <SolidColorBrush x:Key="SpanBgActiveBrush" Color="#1A0078D4" />
+                    <SolidColorBrush x:Key="SpanBgSelectedBrush" Color="#250078D4" />
+                    <SolidColorBrush x:Key="SpanBgSelectedHoverBrush" Color="#300078D4" />
+                    <!-- Path highlight: border line for navigation breadcrumb items (not background fill) -->
+                    <SolidColorBrush x:Key="SpanPathHighlightBrush" Color="#600078D4" />
+
+                    <!-- Override WinUI system ListView/GridView selection colors -->
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#250078D4" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#300078D4" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#1A0078D4" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelected" Color="#250078D4" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPointerOver" Color="#300078D4" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPressed" Color="#1A0078D4" />
+
+                    <!-- Override WinUI TextBox/AutoSuggestBox focus bottom line -->
+                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource SpanAccentColor}" />
+
+                    <!-- Rubber-band selection -->
+                    <SolidColorBrush x:Key="SpanSelectionRectFillBrush" Color="{StaticResource SpanAccentColor}" Opacity="0.15" />
+                    <SolidColorBrush x:Key="SpanSelectionRectStrokeBrush" Color="{StaticResource SpanAccentColor}" Opacity="0.6" />
+
+                    <!-- Borders (black overlay for light) -->
+                    <SolidColorBrush x:Key="SpanBorderSubtleBrush" Color="#0F000000" />
+                    <SolidColorBrush x:Key="SpanBorderCardBrush" Color="#14000000" />
+                    <SolidColorBrush x:Key="SpanBorderControlBrush" Color="#1A000000" />
+
+                    <!-- Global FocusVisual: 액센트 톤 얇은 포커스 링 -->
+                    <SolidColorBrush x:Key="SystemControlFocusVisualPrimaryBrush" Color="{StaticResource SpanAccentDimColor}" />
+                    <SolidColorBrush x:Key="SystemControlFocusVisualSecondaryBrush" Color="Transparent" />
+
+                    <!-- Depth shadows (Miller column + sidebar edge) -->
+                    <LinearGradientBrush x:Key="SpanColumnShadowBrush" StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="Transparent" Offset="0"/>
+                        <GradientStop Color="#0C000000" Offset="1"/>
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="SpanSidebarShadowBrush" StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#0C000000" Offset="0"/>
+                        <GradientStop Color="Transparent" Offset="1"/>
+                    </LinearGradientBrush>
+                </ResourceDictionary>
+
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!-- ============================================================
+                 Theme-Independent Resources
+                 ============================================================ -->
+
+            <!-- FontScale: 전역 폰트 스케일 서비스 (Single Source of Truth).
+                 모든 XAML의 {Binding Source={StaticResource FontScale}, Path=...} 가 이 인스턴스를 참조.
+                 FontScaleService.Instance (C#) 는 Application.Current.Resources["FontScale"] 을 읽어
+                 XAML 파서가 만든 이 인스턴스와 동일한 객체를 반환한다. -->
+            <helpers:FontScaleService x:Key="FontScale"/>
+
+            <!-- Dimensions -->
+            <x:Double x:Key="TitleBarHeight">40</x:Double>
+            <x:Double x:Key="CommandBarHeight">44</x:Double>
+            <x:Double x:Key="AddressBarHeight">38</x:Double>
+            <x:Double x:Key="StatusBarHeight">28</x:Double>
+            <x:Double x:Key="SidebarWidth">200</x:Double>
+            <x:Double x:Key="MillerColumnWidth">220</x:Double>
+            <x:Double x:Key="PreviewWidth">280</x:Double>
+
+            <CornerRadius x:Key="RadiusSm">4</CornerRadius>
+            <CornerRadius x:Key="RadiusMd">6</CornerRadius>
+            <CornerRadius x:Key="RadiusLg">8</CornerRadius>
+            <CornerRadius x:Key="RadiusXl">12</CornerRadius>
+
+            <!-- Fonts -->
+            <FontFamily x:Key="FluentIcons">Segoe Fluent Icons</FontFamily>
+            <FontFamily x:Key="RemixIcons">/Assets/Fonts/remixicon.ttf#RemixIcon, /Assets/Fonts/remixicon.ttf#remixicon</FontFamily>
+            <FontFamily x:Key="AppFont">Segoe UI Variable, Segoe UI, Malgun Gothic, Microsoft YaHei UI, Microsoft JhengHei UI, Yu Gothic UI</FontFamily>
+            <FontFamily x:Key="MonoFont">Cascadia Code, Consolas, Malgun Gothic, Microsoft YaHei UI, Microsoft JhengHei UI, Yu Gothic UI</FontFamily>
+
+            <!-- Styles -->
+
+            <!-- Unified Button Style (Command Bar Icons) -->
+            <Style x:Key="UnifiedButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="8,4" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="CornerRadius" Value="{StaticResource RadiusSm}" />
+                <Setter Property="Foreground" Value="{ThemeResource SpanTextSecondaryBrush}" />
+                <Setter Property="helpers:CursorHelper.IsHandCursor" Value="True" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid x:Name="RootGrid" Background="Transparent" CornerRadius="{TemplateBinding CornerRadius}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.15">
+                                                <VisualTransition.GeneratedEasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </VisualTransition.GeneratedEasingFunction>
+                                            </VisualTransition>
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgHoverBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0" />
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanTextPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgActiveBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0" />
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanTextPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Disabled">
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="ContentPresenter"
+                                                                 Storyboard.TargetProperty="Opacity"
+                                                                 To="0.3" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0"
+                                        CornerRadius="{TemplateBinding CornerRadius}" />
+                                <ContentPresenter x:Name="ContentPresenter"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTransitions="{TemplateBinding ContentTransitions}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  Padding="{TemplateBinding Padding}"
+                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  AutomationProperties.AccessibilityView="Raw" />
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="CaptionTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+            </Style>
+
+            <!-- Miller Column Item Style -->
+            <Style x:Key="MillerColumnItemStyle" TargetType="ListViewItem">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0,0" />
+                <!-- 키보드 포커스 시 액센트 1px 테두리 표시 -->
+                <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource SpanAccentDimBrush}" />
+                <Setter Property="FocusVisualSecondaryBrush" Value="Transparent" />
+                <Setter Property="FocusVisualPrimaryThickness" Value="1" />
+                <Setter Property="FocusVisualSecondaryThickness" Value="0" />
+                <Setter Property="UseSystemFocusVisuals" Value="True" />
+                <Setter Property="CornerRadius" Value="0" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="MinHeight" Value="24" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListViewItem">
+                            <Grid x:Name="ContentBorder" Background="Transparent">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <!-- No VisualTransition: instant state changes prevent
+                                             flicker caused by animated StateOverlay competing
+                                             with DataTemplate PathBackground binding -->
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgHoverBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgActiveBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Selected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="PointerOverSelected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="PressedSelected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedHoverBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="DisabledStates">
+                                        <VisualState x:Name="Enabled" />
+                                        <VisualState x:Name="Disabled" />
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="MultiSelectStates">
+                                        <VisualState x:Name="MultiSelectDisabled" />
+                                        <VisualState x:Name="MultiSelectEnabled" />
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="DataVirtualizationStates">
+                                        <VisualState x:Name="DataAvailable" />
+                                        <VisualState x:Name="DataPlaceholder" />
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="ReorderHintStates">
+                                        <VisualState x:Name="NoReorderHint" />
+                                        <VisualState x:Name="BottomReorderHint" />
+                                        <VisualState x:Name="TopReorderHint" />
+                                        <VisualState x:Name="RightReorderHint" />
+                                        <VisualState x:Name="LeftReorderHint" />
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="DragStates">
+                                        <VisualState x:Name="NotDragging" />
+                                        <VisualState x:Name="Dragging" />
+                                        <VisualState x:Name="DraggingTarget" />
+                                        <VisualState x:Name="MultipleDraggingPrimary" />
+                                        <VisualState x:Name="MultipleDraggingSecondary" />
+                                        <VisualState x:Name="DraggedPlaceholder" />
+                                        <VisualState x:Name="Reordering" />
+                                        <VisualState x:Name="ReorderingTarget" />
+                                        <VisualState x:Name="MultipleReorderingPrimary" />
+                                        <VisualState x:Name="ReorderedPlaceholder" />
+                                        <VisualState x:Name="DragOver" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0" />
+                                <ContentPresenter x:Name="ContentPresenter"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  Padding="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="Stretch"
+                                                  VerticalAlignment="Stretch"
+                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  Foreground="{TemplateBinding Foreground}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Details View Item Style (same selection visuals as Miller) -->
+            <Style x:Key="DetailsItemStyle" TargetType="ListViewItem">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="CornerRadius" Value="0" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="MinHeight" Value="24" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListViewItem">
+                            <Grid x:Name="ContentBorder" Background="Transparent">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgHoverBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgActiveBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Selected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="PointerOverSelected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="PressedSelected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedHoverBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="DisabledStates">
+                                        <VisualState x:Name="Enabled" /><VisualState x:Name="Disabled" />
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="MultiSelectStates">
+                                        <VisualState x:Name="MultiSelectDisabled" /><VisualState x:Name="MultiSelectEnabled" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0" />
+                                <ContentPresenter x:Name="ContentPresenter"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  Padding="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  Foreground="{TemplateBinding Foreground}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- List View Item Style (GridViewItem, same selection visuals as Miller) -->
+            <Style x:Key="ListViewItemStyle" TargetType="GridViewItem">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="CornerRadius" Value="0" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="MinHeight" Value="24" />
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="GridViewItem">
+                            <Grid x:Name="ContentBorder" Background="Transparent">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgHoverBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgActiveBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Selected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="PointerOverSelected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="PressedSelected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedHoverBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="DisabledStates">
+                                        <VisualState x:Name="Enabled" /><VisualState x:Name="Disabled" />
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="MultiSelectStates">
+                                        <VisualState x:Name="MultiSelectDisabled" /><VisualState x:Name="MultiSelectEnabled" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0" />
+                                <ContentPresenter x:Name="ContentPresenter"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  Padding="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  Foreground="{TemplateBinding Foreground}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+             <!-- Sidebar Item Style -->
+            <Style x:Key="SidebarItemStyle" TargetType="ListViewItem">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Padding" Value="16,6" />
+                <Setter Property="Margin" Value="4,0" />
+                <Setter Property="CornerRadius" Value="{StaticResource RadiusSm}" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="Foreground" Value="{ThemeResource SpanTextSecondaryBrush}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListViewItem">
+                            <Grid x:Name="RootGrid" Background="Transparent" CornerRadius="{TemplateBinding CornerRadius}">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualStateGroup.Transitions>
+                                            <VisualTransition GeneratedDuration="0:0:0.15">
+                                                <VisualTransition.GeneratedEasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </VisualTransition.GeneratedEasingFunction>
+                                            </VisualTransition>
+                                        </VisualStateGroup.Transitions>
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="PointerOver">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgHoverBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0" />
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanTextPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Selected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0" />
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanTextPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                         <VisualState x:Name="PointerOverSelected">
+                                            <Storyboard>
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Background">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanBgSelectedHoverBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                                <DoubleAnimation Storyboard.TargetName="StateOverlay" Storyboard.TargetProperty="Opacity"
+                                                                 To="1" Duration="0" />
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ContentPresenter" Storyboard.TargetProperty="Foreground">
+                                                    <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SpanTextPrimaryBrush}" />
+                                                </ObjectAnimationUsingKeyFrames>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0"
+                                        CornerRadius="{TemplateBinding CornerRadius}" />
+                                <ContentPresenter x:Name="ContentPresenter"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTransitions="{TemplateBinding ContentTransitions}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  Padding="{TemplateBinding Padding}"
+                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  Foreground="{TemplateBinding Foreground}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

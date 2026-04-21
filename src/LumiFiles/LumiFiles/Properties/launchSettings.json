@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "LumiFiles (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "LumiFiles (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
