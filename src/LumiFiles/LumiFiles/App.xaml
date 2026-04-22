@@ -92,30 +92,7 @@
                         <GradientStop Color="Transparent" Offset="1"/>
                     </LinearGradientBrush>
 
-                    <!-- Stage 3: Sidebar floating-glass (Tahoe Liquid Glass) — v3 adjust: lighter tint, stronger edges -->
-                    <AcrylicBrush x:Key="SpanSidebarAcrylicBrush"
-                                  TintColor="#2A2638"
-                                  TintOpacity="0.85"
-                                  TintLuminosityOpacity="0.7"
-                                  FallbackColor="#2A2638"/>
-                    <LinearGradientBrush x:Key="SpanSidebarTopEdgeBrush" StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="Transparent" Offset="0.0"/>
-                        <GradientStop Color="#66FFFFFF" Offset="0.3"/>
-                        <GradientStop Color="#66FFFFFF" Offset="0.7"/>
-                        <GradientStop Color="Transparent" Offset="1.0"/>
-                    </LinearGradientBrush>
-                    <!-- Subtle outer ring for "floating card" definition -->
-                    <SolidColorBrush x:Key="SpanSidebarRingBrush" Color="#1FFFFFFF"/>
-
-                    <!-- Stage 4: Pill capsule background for toolbar button groups -->
-                    <SolidColorBrush x:Key="SpanGlassPillBrush" Color="#0AFFFFFF"/>
-                    <SolidColorBrush x:Key="SpanGlassPillHoverBrush" Color="#14FFFFFF"/>
-
-                    <!-- Stage 5: Active tab amber gradient -->
-                    <LinearGradientBrush x:Key="SpanTabActiveAmberBrush" StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#3DFFB86B" Offset="0.0"/>
-                        <GradientStop Color="#14FFB86B" Offset="1.0"/>
-                    </LinearGradientBrush>
+                    <!-- v0.3b glass brushes moved to theme-invariant root level (see below) — removed duplicates from Dark theme dict -->
                 </ResourceDictionary>
 
                 <!-- ==================== LIGHT THEME ==================== -->
@@ -194,29 +171,7 @@
                         <GradientStop Color="Transparent" Offset="1"/>
                     </LinearGradientBrush>
 
-                    <!-- Stage 3: Sidebar floating-glass (Tahoe Liquid Glass) -->
-                    <AcrylicBrush x:Key="SpanSidebarAcrylicBrush"
-                                  TintColor="#F5F2EA"
-                                  TintOpacity="0.60"
-                                  TintLuminosityOpacity="0.55"
-                                  FallbackColor="#F5F2EA"/>
-                    <LinearGradientBrush x:Key="SpanSidebarTopEdgeBrush" StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="Transparent" Offset="0.0"/>
-                        <GradientStop Color="#38FFFFFF" Offset="0.3"/>
-                        <GradientStop Color="#38FFFFFF" Offset="0.7"/>
-                        <GradientStop Color="Transparent" Offset="1.0"/>
-                    </LinearGradientBrush>
-                    <SolidColorBrush x:Key="SpanSidebarRingBrush" Color="#1F000000"/>
-
-                    <!-- Stage 4: Pill capsule background for toolbar button groups -->
-                    <SolidColorBrush x:Key="SpanGlassPillBrush" Color="#0A000000"/>
-                    <SolidColorBrush x:Key="SpanGlassPillHoverBrush" Color="#14000000"/>
-
-                    <!-- Stage 5: Active tab amber gradient -->
-                    <LinearGradientBrush x:Key="SpanTabActiveAmberBrush" StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#3DFFB86B" Offset="0.0"/>
-                        <GradientStop Color="#14FFB86B" Offset="1.0"/>
-                    </LinearGradientBrush>
+                    <!-- v0.3b glass brushes moved to theme-invariant root level (see below) — removed duplicates from Light theme dict -->
                 </ResourceDictionary>
 
             </ResourceDictionary.ThemeDictionaries>
@@ -224,6 +179,27 @@
             <!-- ============================================================
                  Theme-Independent Resources
                  ============================================================ -->
+
+            <!-- v0.3b: Tahoe Liquid Glass brushes (theme-invariant — custom themes don't override these) -->
+            <AcrylicBrush x:Key="SpanSidebarAcrylicBrush"
+                          TintColor="#3A3048"
+                          TintOpacity="0.88"
+                          TintLuminosityOpacity="0.6"
+                          FallbackColor="#3A3048"/>
+            <LinearGradientBrush x:Key="SpanSidebarTopEdgeBrush" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="Transparent" Offset="0.0"/>
+                <GradientStop Color="#66FFFFFF" Offset="0.3"/>
+                <GradientStop Color="#66FFFFFF" Offset="0.7"/>
+                <GradientStop Color="Transparent" Offset="1.0"/>
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="SpanSidebarRingBrush" Color="#2AFFFFFF"/>
+            <SolidColorBrush x:Key="SpanGlassPillBrush" Color="#33FFFFFF"/>
+            <SolidColorBrush x:Key="SpanGlassPillHoverBrush" Color="#4DFFFFFF"/>
+            <SolidColorBrush x:Key="SpanGlassPillBorderBrush" Color="#1FFFFFFF"/>
+            <LinearGradientBrush x:Key="SpanTabActiveAmberBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#5CFFB86B" Offset="0.0"/>
+                <GradientStop Color="#29FFB86B" Offset="1.0"/>
+            </LinearGradientBrush>
 
             <!-- FontScale: 전역 폰트 스케일 서비스 (Single Source of Truth).
                  모든 XAML의 {Binding Source={StaticResource FontScale}, Path=...} 가 이 인스턴스를 참조.

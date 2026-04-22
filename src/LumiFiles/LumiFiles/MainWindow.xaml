@@ -82,7 +82,7 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <!-- Active tab background: Stage 5 amber gradient -->
-                                    <Border Grid.ColumnSpan="2" Background="{ThemeResource SpanTabActiveAmberBrush}"
+                                    <Border Grid.ColumnSpan="2" Background="{StaticResource SpanTabActiveAmberBrush}"
                                             CornerRadius="6,6,0,0"
                                             Visibility="{x:Bind IsActiveVisible, Mode=OneWay}"/>
                                     <Grid Grid.Column="0" VerticalAlignment="Center" Padding="12,0,0,0">
@@ -160,7 +160,9 @@
             </Grid.ColumnDefinitions>
 
             <!-- Nav Buttons (single mode, hidden in Settings) — Stage 4: pill capsule group -->
-            <Border Background="{ThemeResource SpanGlassPillBrush}"
+            <Border Background="{StaticResource SpanGlassPillBrush}"
+                    BorderBrush="{StaticResource SpanGlassPillBorderBrush}"
+                    BorderThickness="1"
                     CornerRadius="999"
                     Padding="2"
                     Height="30"
@@ -181,20 +183,30 @@
                             RightTapped="OnForwardButtonRightTapped">
                         <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Forward}" FontSize="14"/>
                     </Button>
-                    <Rectangle Width="1" Height="14" Fill="#14FFFFFF" VerticalAlignment="Center"/>
-                    <Button x:Name="UpButton" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
-                            ToolTipService.ToolTip="위로" Click="OnNavigateUpClick">
-                        <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Up}" FontSize="14"/>
-                    </Button>
                 </StackPanel>
             </Border>
+            <!-- Up button moved to More menu (v0.3) — kept for handler binding -->
+            <Button x:Name="UpButton" Style="{StaticResource UnifiedButtonStyle}" Click="OnNavigateUpClick"
+                    Visibility="Collapsed"/>
 
-            <!-- Address Bar (single mode, hidden in Settings) — Fix 2: transparent, breadcrumb shows content only -->
+            <!-- v0.3: Small current folder indicator (left-aligned in Col 1 * width, rest = spacer) -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                        HorizontalAlignment="Left" VerticalAlignment="Center"
+                        Margin="4,0,0,0"
+                        Visibility="{x:Bind IsSingleNonSettingsVisible(ViewModel.IsSplitViewEnabled, ViewModel.CurrentViewMode), Mode=OneWay}">
+                <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Folder}" FontSize="14"
+                          Foreground="{ThemeResource SpanAccentBrush}"/>
+                <TextBlock x:Name="CurrentFolderText" Text="Home" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{ThemeResource SpanTextPrimaryBrush}"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Address Bar Container (v0.3: moved to bottom path bar. Kept here collapsed for x:Name/binding preservation — actual visible instance below in Row 3) -->
             <Grid x:Name="AddressBarContainer" AutomationProperties.AutomationId="AddressBar" Grid.Column="1" Height="30"
                   Background="Transparent"
                   VerticalAlignment="Center"
                   Padding="8,0"
-                  Visibility="{x:Bind IsSingleNonSettingsVisible(ViewModel.IsSplitViewEnabled, ViewModel.CurrentViewMode), Mode=OneWay}">
+                  Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -222,11 +234,7 @@
                               VerticalAlignment="Center" Margin="4,3,2,0"/>
                 </StackPanel>
 
-                <appcontrols:AddressBarControl x:Name="MainAddressBar" Grid.Column="1"
-                    RecentFolders="{x:Bind ViewModel.RecentFolders, Mode=OneWay}"
-                    BreadcrumbSegmentClicked="OnAddressBarBreadcrumbClicked"
-                    BreadcrumbChevronClicked="OnAddressBarChevronClicked"
-                    PathNavigated="OnAddressBarPathNavigated"/>
+                <!-- v0.3: MainAddressBar moved to bottom path bar (Row 3). This placeholder preserves Grid column structure. -->
 
                 <!-- 경로 복사 버튼 -->
                 <Button x:Name="CopyPathButton" AutomationProperties.AutomationId="Button_CopyPath" Grid.Column="2"
@@ -239,69 +247,38 @@
                 </Button>
             </Grid>
 
-            <!-- Commands -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" Margin="8,0,0,0">
+            <!-- Commands (v0.3b: rewrite to match v3_glass mockup — 3 pills + compact search) -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" Margin="8,0,0,0">
                 <!-- ═══ Normal Commands (hidden in RecycleBin/Settings/ActionLog) ═══ -->
-                <StackPanel Orientation="Horizontal" Spacing="2"
+                <StackPanel Orientation="Horizontal" Spacing="6"
                             Visibility="{x:Bind IsNotSpecialMode(ViewModel.CurrentViewMode), Mode=OneWay}">
-                    <StackPanel Orientation="Horizontal" Spacing="0"
-                                Background="Transparent" CornerRadius="4">
-                        <Button x:Name="NewFolderButton" Style="{StaticResource UnifiedButtonStyle}"
-                                ToolTipService.ToolTip="새 폴더 (Ctrl+Shift+N)"
-                                Click="OnNewFolderClick"
-                                Padding="8,4,4,4">
-                            <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_NewFolder}" FontSize="16"/>
+
+                    <!-- VIEW pill — 4 direct mode toggles (Miller / Details / List / Icons) -->
+                    <Border Background="{StaticResource SpanGlassPillBrush}" BorderBrush="{StaticResource SpanGlassPillBorderBrush}" BorderThickness="1" CornerRadius="999"
+                            Padding="2" Height="30" VerticalAlignment="Center"
+                            Visibility="{x:Bind IsNotSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
+                      <StackPanel Orientation="Horizontal" Spacing="0">
+                        <Button x:Name="ViewModeMillerBtn" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                                ToolTipService.ToolTip="Miller Columns" Click="OnViewModeMillerColumns">
+                            <FontIcon Glyph="&#xF0E2;" FontSize="14"/>
                         </Button>
-                        <Button x:Name="NewItemDropdown" AutomationProperties.AutomationId="Button_NewItemDropdown"
-                                Style="{StaticResource UnifiedButtonStyle}"
-                                ToolTipService.ToolTip="새로 만들기..."
-                                Click="OnNewItemDropdownClick"
-                                Padding="2,4,4,4"
-                                MinWidth="0">
-                            <FontIcon Glyph="&#xE70D;" FontSize="8"/>
+                        <Button x:Name="ViewModeDetailsBtn" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                                ToolTipService.ToolTip="Details" Click="OnViewModeDetails">
+                            <FontIcon Glyph="&#xE8EF;" FontSize="14"/>
                         </Button>
-                    </StackPanel>
-                    <!-- Stage 4: File action pill group (cut/copy/paste/rename/delete) -->
-                    <Border Background="{ThemeResource SpanGlassPillBrush}" CornerRadius="999"
-                            Padding="2" Height="30" VerticalAlignment="Center" Margin="4,0">
-                        <StackPanel Orientation="Horizontal" Spacing="0">
-                            <Button x:Name="ToolbarCutButton" AutomationProperties.AutomationId="Button_Cut" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" ToolTipService.ToolTip="잘라내기 (Ctrl+X)" Click="OnCutClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Cut}"/></Button>
-                            <Button x:Name="ToolbarCopyButton" AutomationProperties.AutomationId="Button_Copy" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" ToolTipService.ToolTip="복사 (Ctrl+C)" Click="OnCopyClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Copy}"/></Button>
-                            <Button x:Name="ToolbarPasteButton" AutomationProperties.AutomationId="Button_Paste" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" ToolTipService.ToolTip="붙여넣기 (Ctrl+V)" Click="OnPasteClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Paste}"/></Button>
-                            <Button x:Name="ToolbarRenameButton" AutomationProperties.AutomationId="Button_Rename" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" ToolTipService.ToolTip="이름 바꾸기 (F2)" Click="OnRenameClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Rename}"/></Button>
-                            <Button x:Name="ToolbarDeleteButton" AutomationProperties.AutomationId="Button_Delete" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" ToolTipService.ToolTip="삭제 (Del)" Click="OnDeleteClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Delete}"/></Button>
-                        </StackPanel>
+                        <Button x:Name="ViewModeListBtn" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                                ToolTipService.ToolTip="List" Click="OnViewModeList">
+                            <FontIcon Glyph="&#xE80A;" FontSize="14"/>
+                        </Button>
+                        <Button x:Name="ViewModeIconsBtn" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                                ToolTipService.ToolTip="Icons" Click="OnViewModeIconMedium">
+                            <FontIcon Glyph="&#xE91B;" FontSize="14"/>
+                        </Button>
+                      </StackPanel>
                     </Border>
 
-                <!-- Sort Button with Dropdown -->
-                    <Button x:Name="SortButton" AutomationProperties.AutomationId="Button_Sort" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="정렬"
-                            Visibility="{x:Bind IsNotSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
-                        <Button.Flyout>
-                            <MenuFlyout Placement="Bottom" Opening="OnSortMenuOpening">
-                                <MenuFlyoutItem x:Name="SortByNameItem" Text="이름" Click="OnSortByName"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C1;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
-                                <MenuFlyoutItem x:Name="SortByDateItem" Text="날짜" Click="OnSortByDate"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE787;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
-                                <MenuFlyoutItem x:Name="SortBySizeItem" Text="크기" Click="OnSortBySize"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91B;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
-                                <MenuFlyoutItem x:Name="SortByTypeItem" Text="종류" Click="OnSortByType"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
-                                <MenuFlyoutSeparator/>
-                                <MenuFlyoutItem x:Name="SortAscendingItem" Text="오름차순" Click="OnSortAscending"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74A;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
-                                <MenuFlyoutItem x:Name="SortDescendingItem" Text="내림차순" Click="OnSortDescending"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74B;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
-                                <MenuFlyoutSeparator/>
-                                <MenuFlyoutSubItem x:Name="GroupBySubMenu" Text="그룹화"><MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xF168;"/></MenuFlyoutSubItem.Icon>
-                                    <MenuFlyoutItem x:Name="GroupByNoneItem" Text="없음" Click="OnGroupByNone"/>
-                                    <MenuFlyoutItem x:Name="GroupByNameItem" Text="이름" Click="OnGroupByName"/>
-                                    <MenuFlyoutItem x:Name="GroupByTypeItem" Text="종류" Click="OnGroupByType"/>
-                                    <MenuFlyoutItem x:Name="GroupByDateItem" Text="날짜" Click="OnGroupByDate"/>
-                                    <MenuFlyoutItem x:Name="GroupBySizeItem" Text="크기" Click="OnGroupBySize"/>
-                                </MenuFlyoutSubItem>
-                            </MenuFlyout>
-                        </Button.Flyout>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <FontIcon x:Name="SortIcon" FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Sort}" FontSize="14"/>
-                            <FontIcon x:Name="SortDirectionIcon" Glyph="&#xE74A;" FontSize="10"/>
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="ViewModeButton" AutomationProperties.AutomationId="Button_ViewMode" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="보기 전환"
-                            Visibility="{x:Bind IsNotSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
+                    <!-- Legacy ViewModeButton hidden — Flyout kept for MenuFlyoutItem x:Name bindings (OnMainViewModeMenuOpening/LocalizeViewMenuItems) -->
+                    <Button x:Name="ViewModeButton" AutomationProperties.AutomationId="Button_ViewMode" Visibility="Collapsed">
                         <Button.Flyout>
                             <MenuFlyout Placement="Bottom" Opening="OnMainViewModeMenuOpening">
                                 <MenuFlyoutItem x:Name="MainVm_Miller" Text="Miller Columns" Click="OnViewModeMillerColumns"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xF0E2;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
@@ -317,22 +294,105 @@
                                 </MenuFlyoutSubItem>
                             </MenuFlyout>
                         </Button.Flyout>
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <FontIcon x:Name="ViewModeIcon" Glyph="&#xF0E2;" FontSize="14"/>
-                            <FontIcon Glyph="&#xE70D;" FontSize="10"/>
-                        </StackPanel>
+                        <FontIcon x:Name="ViewModeIcon" Glyph="&#xF0E2;" FontSize="14"/>
                     </Button>
-                    <Button x:Name="PreviewToggleButton" AutomationProperties.AutomationId="Button_PreviewToggle" Style="{StaticResource UnifiedButtonStyle}"
-                            ToolTipService.ToolTip="미리보기 패널 (Ctrl+Shift+P)" Click="OnPreviewToggleClick"
+
+                    <!-- SORT pill — button with text label (matches mockup "↕ Name") -->
+                    <Border Background="{StaticResource SpanGlassPillBrush}" BorderBrush="{StaticResource SpanGlassPillBorderBrush}" BorderThickness="1" CornerRadius="999"
+                            Padding="2" Height="30" VerticalAlignment="Center"
                             Visibility="{x:Bind IsNotSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
+                        <Button x:Name="SortButton" AutomationProperties.AutomationId="Button_Sort" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" Padding="10,4" ToolTipService.ToolTip="정렬">
+                            <Button.Flyout>
+                                <MenuFlyout Placement="Bottom" Opening="OnSortMenuOpening">
+                                    <MenuFlyoutItem x:Name="SortByNameItem" Text="이름" Click="OnSortByName"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C1;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
+                                    <MenuFlyoutItem x:Name="SortByDateItem" Text="날짜" Click="OnSortByDate"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE787;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
+                                    <MenuFlyoutItem x:Name="SortBySizeItem" Text="크기" Click="OnSortBySize"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91B;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
+                                    <MenuFlyoutItem x:Name="SortByTypeItem" Text="종류" Click="OnSortByType"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutItem x:Name="SortAscendingItem" Text="오름차순" Click="OnSortAscending"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74A;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
+                                    <MenuFlyoutItem x:Name="SortDescendingItem" Text="내림차순" Click="OnSortDescending"><MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74B;"/></MenuFlyoutItem.Icon></MenuFlyoutItem>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutSubItem x:Name="GroupBySubMenu" Text="그룹화"><MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xF168;"/></MenuFlyoutSubItem.Icon>
+                                        <MenuFlyoutItem x:Name="GroupByNoneItem" Text="없음" Click="OnGroupByNone"/>
+                                        <MenuFlyoutItem x:Name="GroupByNameItem" Text="이름" Click="OnGroupByName"/>
+                                        <MenuFlyoutItem x:Name="GroupByTypeItem" Text="종류" Click="OnGroupByType"/>
+                                        <MenuFlyoutItem x:Name="GroupByDateItem" Text="날짜" Click="OnGroupByDate"/>
+                                        <MenuFlyoutItem x:Name="GroupBySizeItem" Text="크기" Click="OnGroupBySize"/>
+                                    </MenuFlyoutSubItem>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                            <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <FontIcon x:Name="SortIcon" FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Sort}" FontSize="12"/>
+                                <TextBlock Text="이름" FontSize="11" VerticalAlignment="Center"/>
+                                <FontIcon x:Name="SortDirectionIcon" Glyph="&#xE74A;" FontSize="9"/>
+                            </StackPanel>
+                        </Button>
+                    </Border>
+
+                    <!-- ACTIONS pill — New / Split / More (matches mockup's 4-slot action group) -->
+                    <Border Background="{StaticResource SpanGlassPillBrush}" BorderBrush="{StaticResource SpanGlassPillBorderBrush}" BorderThickness="1" CornerRadius="999"
+                            Padding="2" Height="30" VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal" Spacing="0">
+                        <Button x:Name="NewFolderButton" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                                ToolTipService.ToolTip="새 폴더 (Ctrl+Shift+N)" Click="OnNewFolderClick">
+                            <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_NewFolder}" FontSize="14"/>
+                        </Button>
+                        <Button x:Name="NewItemDropdown" AutomationProperties.AutomationId="Button_NewItemDropdown"
+                                Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                                ToolTipService.ToolTip="새로 만들기..." Click="OnNewItemDropdownClick"
+                                Padding="4,4" MinWidth="0">
+                            <FontIcon Glyph="&#xE70D;" FontSize="8"/>
+                        </Button>
+                        <Rectangle Width="1" Height="14" Fill="#14FFFFFF" VerticalAlignment="Center"/>
+                        <Button x:Name="SplitViewButton" AutomationProperties.AutomationId="Button_SplitView" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                                ToolTipService.ToolTip="Split View (Ctrl+Shift+E)" Click="OnSplitViewToggleClick">
+                            <FontIcon x:Name="SplitViewIcon" FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_SplitView}" FontSize="14"/>
+                        </Button>
+                        <Rectangle Width="1" Height="14" Fill="#14FFFFFF" VerticalAlignment="Center"/>
+                        <Button x:Name="MoreMenuButton" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                                ToolTipService.ToolTip="더 보기">
+                            <FontIcon Glyph="&#xE712;" FontSize="14"/>
+                            <Button.Flyout>
+                                <MenuFlyout Placement="Bottom">
+                                    <MenuFlyoutItem Text="위로" Click="OnNavigateUpClick">
+                                        <MenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Up}"/></MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutItem Text="잘라내기" Click="OnCutClick">
+                                        <MenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Cut}"/></MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="복사" Click="OnCopyClick">
+                                        <MenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Copy}"/></MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="붙여넣기" Click="OnPasteClick">
+                                        <MenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Paste}"/></MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="이름 바꾸기" Click="OnRenameClick">
+                                        <MenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Rename}"/></MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="삭제" Click="OnDeleteClick">
+                                        <MenuFlyoutItem.Icon><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Delete}"/></MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutItem Text="미리보기 패널" Click="OnPreviewToggleClick">
+                                        <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8A0;"/></MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
+                      </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Hidden: legacy file-action buttons (x:Name preserved for any binding/shortcut) -->
+                <StackPanel Orientation="Horizontal" Visibility="Collapsed">
+                    <Button x:Name="ToolbarCutButton" AutomationProperties.AutomationId="Button_Cut" Click="OnCutClick" IsEnabled="False"/>
+                    <Button x:Name="ToolbarCopyButton" AutomationProperties.AutomationId="Button_Copy" Click="OnCopyClick" IsEnabled="False"/>
+                    <Button x:Name="ToolbarPasteButton" AutomationProperties.AutomationId="Button_Paste" Click="OnPasteClick" IsEnabled="False"/>
+                    <Button x:Name="ToolbarRenameButton" AutomationProperties.AutomationId="Button_Rename" Click="OnRenameClick" IsEnabled="False"/>
+                    <Button x:Name="ToolbarDeleteButton" AutomationProperties.AutomationId="Button_Delete" Click="OnDeleteClick" IsEnabled="False"/>
+                    <Button x:Name="PreviewToggleButton" AutomationProperties.AutomationId="Button_PreviewToggle" Click="OnPreviewToggleClick">
                         <FontIcon x:Name="PreviewToggleIcon" Glyph="&#xE8A0;" FontSize="14"/>
-                    </Button>
-                    <Rectangle Width="1" Height="20" Fill="{ThemeResource SpanBorderSubtleBrush}" Margin="4,0"
-                               Visibility="{x:Bind IsNotSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}"/>
-                    <Button x:Name="SplitViewButton" AutomationProperties.AutomationId="Button_SplitView" Style="{StaticResource UnifiedButtonStyle}"
-                            ToolTipService.ToolTip="Split View (Ctrl+Shift+E)" Click="OnSplitViewToggleClick"
-                            Visibility="{x:Bind IsNotSpecialMode(ViewModel.CurrentViewMode), Mode=OneWay}">
-                        <FontIcon x:Name="SplitViewIcon" FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_SplitView}" FontSize="16"/>
                     </Button>
                 </StackPanel>
 
@@ -364,12 +424,25 @@
                     </Button>
                 </StackPanel>
 
-                <!-- ═══ Search Box (always visible) ═══ -->
-                <Rectangle Width="1" Height="20" Fill="{ThemeResource SpanBorderSubtleBrush}" Margin="4,0"/>
-                <TextBox x:Name="SearchBox" AutomationProperties.AutomationId="TextBox_Search" Width="220" Height="28" FontSize="12"
-                         PlaceholderText="Search (kind: size: ext: date:)"
-                         ToolTipService.ToolTip="Enter: Search current folder&#x0a;Ctrl+Enter: Search from root&#x0a;&#x0a;Advanced syntax:&#x0a;  kind:image  kind:video  kind:document&#x0a;  size:&gt;1MB  size:&lt;100KB  size:large&#x0a;  date:today  date:thisweek  date:&gt;2024-01-01&#x0a;  ext:.pdf  ext:.txt&#x0a;Combine: kind:image size:&gt;1MB"
-                         KeyDown="OnSearchBoxKeyDown"/>
+                <!-- Search pill (v0.3b: compact icon, TextBox inside Flyout) -->
+                <Border Background="{StaticResource SpanGlassPillBrush}" BorderBrush="{StaticResource SpanGlassPillBorderBrush}" BorderThickness="1" CornerRadius="999"
+                        Width="32" Height="30" VerticalAlignment="Center" Margin="4,0,0,0">
+                    <Button x:Name="SearchButton" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                            Padding="0" MinWidth="0" MinHeight="0"
+                            ToolTipService.ToolTip="검색 (Ctrl+F)">
+                        <FontIcon Glyph="&#xE721;" FontSize="13"/>
+                        <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedRight" ShouldConstrainToRootBounds="False">
+                                <StackPanel Width="320" Spacing="4" Padding="4">
+                                    <TextBox x:Name="SearchBox" AutomationProperties.AutomationId="TextBox_Search" FontSize="12"
+                                             PlaceholderText="🔍  Search"
+                                             ToolTipService.ToolTip="Enter: Search current folder&#x0a;Ctrl+Enter: Search from root&#x0a;&#x0a;Advanced syntax:&#x0a;  kind:image  kind:video  kind:document&#x0a;  size:&gt;1MB  size:&lt;100KB  size:large&#x0a;  date:today  date:thisweek  date:&gt;2024-01-01&#x0a;  ext:.pdf  ext:.txt&#x0a;Combine: kind:image size:&gt;1MB"
+                                             KeyDown="OnSearchBoxKeyDown"/>
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                </Border>
             </StackPanel>
         </Grid>
 
@@ -383,11 +456,11 @@
 
             <!-- Sidebar - Hybrid 3-Section Layout (Stage 3 adjusted: stronger floating glass) -->
             <Border x:Name="SidebarBorder" AutomationProperties.AutomationId="Sidebar" Grid.Column="0"
-                    Background="{ThemeResource SpanSidebarAcrylicBrush}"
+                    Background="{StaticResource SpanSidebarAcrylicBrush}"
                     CornerRadius="18"
                     Margin="8,8,0,8"
                     BorderThickness="1"
-                    BorderBrush="{ThemeResource SpanSidebarRingBrush}">
+                    BorderBrush="{StaticResource SpanSidebarRingBrush}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>  <!-- Fix 3: Sidebar top with brand -->
@@ -1644,14 +1717,27 @@
 
         </Grid>
 
-        <!-- 4. Status Bar -->
+        <!-- 4. Path Bar (v0.3: full breadcrumb + status, replacing simple Status Bar) -->
         <Grid Grid.Row="3" AutomationProperties.AutomationId="StatusBar" Height="{StaticResource StatusBarHeight}" Background="{ThemeResource SpanBgMicaBrush}" BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="0,1,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            
-            <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center" Margin="12,0">
+
+            <!-- v0.3: Path breadcrumb (left side) — MainAddressBar relocated from top toolbar -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                <appcontrols:AddressBarControl x:Name="MainAddressBar"
+                    RecentFolders="{x:Bind ViewModel.RecentFolders, Mode=OneWay}"
+                    BreadcrumbSegmentClicked="OnAddressBarBreadcrumbClicked"
+                    BreadcrumbChevronClicked="OnAddressBarChevronClicked"
+                    PathNavigated="OnAddressBarPathNavigated"/>
+            </StackPanel>
+
+            <!-- v0.3: Right — all status info merged (selection · disk · view mode) -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" Margin="0,0,12,0"
+                        BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1,0,0,0" Padding="12,0,0,0"
+                        VerticalAlignment="Center">
+                <!-- Item count -->
                 <StackPanel Orientation="Horizontal" Spacing="6"
                             Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusItemCountText), Mode=OneWay}">
                     <FontIcon Glyph="&#xE8A5;" FontSize="12" Foreground="{ThemeResource SpanTextTertiaryBrush}"/>
@@ -1659,22 +1745,22 @@
                 </StackPanel>
                 <Rectangle Width="1" Height="12" Fill="{ThemeResource SpanBorderSubtleBrush}"
                            Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusSelectionText), Mode=OneWay}"/>
+                <!-- Selection -->
                 <TextBlock Text="{x:Bind ViewModel.StatusSelectionText, Mode=OneWay}" FontSize="11" Foreground="{ThemeResource SpanTextSecondaryBrush}"
+                           VerticalAlignment="Center"
                            Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusSelectionText), Mode=OneWay}"/>
-            </StackPanel>
-
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="0,0,12,0">
-                 <!-- Disk space info -->
-                 <StackPanel Orientation="Horizontal" Spacing="6"
-                             Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusDiskSpaceText), Mode=OneWay}">
-                     <FontIcon Glyph="&#xEDA2;" FontSize="12" Foreground="{ThemeResource SpanTextTertiaryBrush}"/>
-                     <TextBlock AutomationProperties.AutomationId="TextBlock_DiskSpace" Text="{x:Bind ViewModel.StatusDiskSpaceText, Mode=OneWay}" FontSize="11" Foreground="{ThemeResource SpanTextSecondaryBrush}" VerticalAlignment="Center"/>
-                 </StackPanel>
-                 <Rectangle Width="1" Height="12" Fill="{ThemeResource SpanBorderSubtleBrush}"
-                            Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusDiskSpaceText), Mode=OneWay}"/>
-                 <!-- View mode -->
-                 <FontIcon Glyph="&#xE8A9;" FontSize="12" Foreground="{ThemeResource SpanTextSecondaryBrush}"/>
-                 <TextBlock Text="{x:Bind ViewModel.StatusViewModeText, Mode=OneWay}" FontSize="11" Foreground="{ThemeResource SpanTextSecondaryBrush}" VerticalAlignment="Center"/>
+                <Rectangle Width="1" Height="12" Fill="{ThemeResource SpanBorderSubtleBrush}"
+                           Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusDiskSpaceText), Mode=OneWay}"/>
+                <!-- Disk space -->
+                <StackPanel Orientation="Horizontal" Spacing="6"
+                            Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusDiskSpaceText), Mode=OneWay}">
+                    <FontIcon Glyph="&#xEDA2;" FontSize="12" Foreground="{ThemeResource SpanTextTertiaryBrush}"/>
+                    <TextBlock AutomationProperties.AutomationId="TextBlock_DiskSpace" Text="{x:Bind ViewModel.StatusDiskSpaceText, Mode=OneWay}" FontSize="11" Foreground="{ThemeResource SpanTextSecondaryBrush}" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Rectangle Width="1" Height="12" Fill="{ThemeResource SpanBorderSubtleBrush}"/>
+                <!-- View mode -->
+                <FontIcon Glyph="&#xE8A9;" FontSize="12" Foreground="{ThemeResource SpanTextSecondaryBrush}"/>
+                <TextBlock Text="{x:Bind ViewModel.StatusViewModeText, Mode=OneWay}" FontSize="11" Foreground="{ThemeResource SpanTextSecondaryBrush}" VerticalAlignment="Center"/>
             </StackPanel>
         </Grid>
 
