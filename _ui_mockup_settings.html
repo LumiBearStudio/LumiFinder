@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Lumi Files — Settings Mockup (Tahoe Liquid Glass)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lumi-amber: #FFB86B;
+    --lumi-amber-soft: #FFD27A;
+    --lumi-amber-deep: #D48028;
+    --text-primary: #EEEEF2;
+    --text-secondary: #92929A;
+    --text-tertiary: #60606A;
+    --divider: rgba(255,255,255,0.06);
+    --divider-soft: rgba(255,255,255,0.035);
+    --window-radius: 24px;
+    --cat-amber:  linear-gradient(135deg, #FFB86B, #D48028);
+    --cat-blue:   linear-gradient(135deg, #6AA8E8, #3E7FC2);
+    --cat-green:  linear-gradient(135deg, #7EC785, #4BA35E);
+    --cat-purple: linear-gradient(135deg, #B08FE8, #7A52C2);
+    --cat-pink:   linear-gradient(135deg, #F08FBF, #C25A8F);
+    --cat-coral:  linear-gradient(135deg, #FF9A6B, #E85A3C);
+    --cat-gray:   linear-gradient(135deg, #7A7368, #504A40);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: "Inter", "Pretendard", -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 13px;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    padding: 40px 32px 60px;
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at 15% 20%, rgba(100, 60, 220, 0.65), transparent 50%),
+      radial-gradient(ellipse at 70% 15%, rgba(200, 60, 140, 0.50), transparent 50%),
+      radial-gradient(ellipse at 45% 85%, rgba(60, 40, 160, 0.60), transparent 55%),
+      radial-gradient(ellipse at 85% 65%, rgba(40, 120, 200, 0.40), transparent 50%),
+      radial-gradient(ellipse at 30% 60%, rgba(80, 50, 180, 0.35), transparent 55%),
+      linear-gradient(160deg, #1A0E30 0%, #0C0818 100%);
+  }
+  .page { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+
+  /* ── WINDOW ── */
+  .window {
+    width: 1100px;
+    height: 740px;
+    border-radius: var(--window-radius);
+    background: linear-gradient(180deg,
+      rgba(18, 18, 24, 0.88) 0%,
+      rgba(12, 12, 16, 0.94) 100%);
+    backdrop-filter: blur(60px) saturate(1.4);
+    -webkit-backdrop-filter: blur(60px) saturate(1.4);
+    box-shadow:
+      0 40px 100px rgba(0,0,0,0.70),
+      0 16px 40px rgba(0,0,0,0.45),
+      0 0 0 0.5px rgba(255,255,255,0.08);
+    display: flex;
+    padding: 6px 0 6px 6px;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR — floating glass card ── */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg,
+      rgba(30, 28, 40, 0.72) 0%,
+      rgba(22, 20, 32, 0.78) 100%);
+    backdrop-filter: blur(80px) saturate(2.0) brightness(1.05);
+    -webkit-backdrop-filter: blur(80px) saturate(2.0) brightness(1.05);
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+    z-index: 2;
+    box-shadow:
+      inset 0 0.5px 0 rgba(255,255,255,0.18),
+      inset 0 -0.5px 0 rgba(255,255,255,0.04),
+      inset 0.5px 0 0 rgba(255,255,255,0.06),
+      inset -0.5px 0 0 rgba(255,255,255,0.06),
+      0 0 0 0.5px rgba(255,255,255,0.08),
+      0 2px 12px rgba(0,0,0,0.25);
+  }
+  .sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 12px; right: 12px;
+    height: 1px;
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.22) 30%,
+      rgba(255,255,255,0.22) 70%,
+      rgba(255,255,255,0) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .sidebar-top {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 7px;
+    flex-shrink: 0;
+  }
+  .sidebar-top .logo {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, var(--lumi-amber), var(--lumi-amber-deep));
+    box-shadow: 0 0 8px rgba(255,184,107,0.4);
+  }
+  .sidebar-top .name {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 11px;
+  }
+
+  .sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 8px 10px;
+  }
+  .sidebar-body::-webkit-scrollbar { width: 5px; }
+  .sidebar-body::-webkit-scrollbar-track { background: transparent; }
+  .sidebar-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+
+  .sb-section { margin-bottom: 4px; }
+  .sb-header {
+    padding: 10px 12px 3px;
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    opacity: 0.8;
+  }
+  .sb-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.15s;
+  }
+  .sb-item:hover { background: rgba(255,255,255,0.04); }
+  .sb-item.active {
+    background: linear-gradient(90deg, rgba(255,184,107,0.28), rgba(255,184,107,0.15));
+    font-weight: 500;
+  }
+  .sb-item.active .sb-ico-stroke { color: #FFF3DC; }
+
+  .sb-ico-stroke {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+  .sb-ico {
+    width: 20px; height: 20px;
+    border-radius: 5.5px;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(0,0,0,0.28);
+  }
+  .sb-ico.amber  { background: var(--cat-amber); }
+  .sb-ico.blue   { background: var(--cat-blue); }
+  .sb-ico.green  { background: var(--cat-green); }
+  .sb-ico.purple { background: var(--cat-purple); }
+  .sb-ico.pink   { background: var(--cat-pink); }
+  .sb-ico.coral  { background: var(--cat-coral); }
+  .sb-ico.gray   { background: var(--cat-gray); }
+
+  .sidebar-bottom {
+    flex-shrink: 0;
+    padding: 6px 8px 8px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .sidebar-bottom .sb-item {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+  }
+
+  /* ── CONTENT — flush with window ── */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 0;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  /* ── TITLEBAR ── */
+  .titlebar {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px 0 12px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .tabs { display: flex; gap: 1px; flex: 1; align-items: center; }
+  .tab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 11px 5px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    max-width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.025); }
+  .tab.active {
+    color: var(--text-primary);
+    background: linear-gradient(180deg, rgba(255,184,107,0.16), rgba(255,184,107,0.06));
+    box-shadow: inset 0 0 0 1px rgba(255,184,107,0.12);
+  }
+  .tab .tab-icon { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; opacity: 0.8; }
+  .tab .tab-close {
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px; margin-left: auto;
+    color: var(--text-tertiary); font-size: 13px; line-height: 1;
+    opacity: 0; transition: opacity 0.12s;
+  }
+  .tab:hover .tab-close, .tab.active .tab-close { opacity: 0.7; }
+  .tab-add {
+    display: flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    color: var(--text-tertiary); border-radius: 6px; font-size: 14px;
+    transition: all 0.15s;
+  }
+  .tab-add:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+
+  .caption { display: flex; gap: 2px; }
+  .caption button {
+    width: 42px; height: 30px;
+    background: none; border: none;
+    color: var(--text-secondary); font-size: 11px;
+    border-radius: 6px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .caption button:hover { background: rgba(255,255,255,0.07); color: var(--text-primary); }
+  .caption button.close:hover { background: #E81123; color: white; }
+
+  /* ── SETTINGS CONTENT ── */
+  .settings-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 36px 36px;
+  }
+  .settings-body::-webkit-scrollbar { width: 6px; }
+  .settings-body::-webkit-scrollbar-track { background: transparent; }
+  .settings-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+
+  .settings-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 24px;
+  }
+
+  /* Setting row */
+  .setting-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    margin-bottom: 8px;
+    gap: 14px;
+    transition: background 0.15s;
+  }
+  .setting-row:hover { background: rgba(255,255,255,0.045); }
+  .setting-row .sr-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+  }
+  .setting-row .sr-text { flex: 1; }
+  .setting-row .sr-label {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+  .setting-row .sr-desc {
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+  .setting-row .sr-right {
+    flex-shrink: 0;
+  }
+
+  /* Toggle switch */
+  .toggle {
+    width: 42px; height: 24px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.10);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    transition: all 0.2s;
+  }
+  .toggle.on {
+    background: linear-gradient(135deg, var(--lumi-amber), var(--lumi-amber-deep));
+  }
+  .toggle.on::after {
+    left: 21px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  /* Dropdown */
+  .dropdown {
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: var(--text-primary);
+    font-size: 12.5px;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .dropdown:hover { background: rgba(255,255,255,0.08); }
+  .dropdown .dd-arrow { color: var(--text-tertiary); font-size: 10px; }
+
+  /* Settings card (grouped) */
+  .settings-card {
+    background: rgba(255,255,255,0.025);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 20px;
+    margin-bottom: 8px;
+  }
+  .settings-card .sc-title {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .settings-card .sc-title .sr-icon {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  .settings-card .sc-title .sr-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .settings-card .sc-title .sr-desc {
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+  }
+
+  /* Split panels inside card */
+  .split-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .split-panel {
+    background: rgba(0,0,0,0.22);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .split-panel .sp-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+  .split-panel .sp-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  /* Radio button */
+  .radio {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.25);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .radio.checked {
+    border-color: var(--lumi-amber);
+  }
+  .radio.checked::after {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--lumi-amber);
+  }
+
+  .sp-view-mode {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .sp-view-mode label {
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+
+  /* Section divider */
+  .section-gap { height: 6px; }
+
+  /* Footer */
+  .settings-footer {
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 14px;
+    border-top: 1px solid var(--divider-soft);
+    background: rgba(0,0,0,0.10);
+    flex-shrink: 0;
+  }
+  .settings-footer span {
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── NOTES ── */
+  .notes {
+    width: 1100px;
+    background: rgba(20,14,8,0.65);
+    border: 1px solid rgba(255,220,160,0.08);
+    border-radius: 16px;
+    padding: 20px 26px;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  .notes h3 {
+    color: var(--lumi-amber);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .notes b { color: var(--text-primary); }
+  .notes ul { margin-left: 20px; }
+  .notes li { margin: 4px 0; }
+  .notes .delta { color: var(--lumi-amber-soft); }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<div class="window">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="logo"></div>
+      <span class="name">Lumi Files</span>
+    </div>
+    <div class="sidebar-body">
+      <div class="sb-section">
+        <div class="sb-header">설정</div>
+        <div class="sb-item active">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </span>
+          <span>일반</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/><line x1="10.88" y1="21.94" x2="15.46" y2="14"/></svg>
+          </span>
+          <span>모양</span>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-header">탐색기</div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <span>탐색</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          </span>
+          <span>사이드바</span>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-header">고급</div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </span>
+          <span>도구</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>
+          </span>
+          <span>단축키</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </span>
+          <span>고급</span>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </span>
+          <span>정보</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico pink">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </span>
+          <span>개발자 후원</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </span>
+          <span>오픈소스</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ CONTENT ============ -->
+  <div class="content">
+
+    <!-- TITLEBAR -->
+    <div class="titlebar">
+      <div class="tabs">
+        <div class="tab">
+          <span class="tab-icon" style="background: var(--cat-amber);"></span>
+          <span>홈</span>
+          <span class="tab-close">×</span>
+        </div>
+        <div class="tab active">
+          <span class="tab-icon" style="background: var(--cat-gray);"></span>
+          <span>설정</span>
+          <span class="tab-close">×</span>
+        </div>
+        <div class="tab-add">+</div>
+      </div>
+      <div class="caption">
+        <button>−</button>
+        <button>☐</button>
+        <button class="close">×</button>
+      </div>
+    </div>
+
+    <!-- SETTINGS BODY -->
+    <div class="settings-body">
+      <div class="settings-title">일반</div>
+
+      <!-- Language -->
+      <div class="setting-row">
+        <div class="sr-icon" style="color: #7EC785;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div class="sr-text">
+          <div class="sr-label">언어 (Language)</div>
+          <div class="sr-desc">앱 인터페이스 표시 언어</div>
+        </div>
+        <div class="sr-right">
+          <div class="dropdown">한국어 <span class="dd-arrow">▾</span></div>
+        </div>
+      </div>
+
+      <!-- Split View -->
+      <div class="settings-card">
+        <div class="sc-title">
+          <div class="sr-icon" style="color: #B08FE8;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+          </div>
+          <div>
+            <div class="sr-label">분할뷰 설정</div>
+            <div class="sr-desc">분할뷰의 왼쪽/오른쪽 탐색기 시작 동작</div>
+          </div>
+        </div>
+        <div class="split-panels">
+          <div class="split-panel">
+            <div class="sp-title">왼쪽 탐색기</div>
+            <div class="sp-option"><span class="radio checked"></span> 내 PC (홈) 열기</div>
+            <div class="sp-option"><span class="radio"></span> 마지막 세션 복원</div>
+            <div class="sp-option"><span class="radio"></span> 시작 경로:</div>
+            <div class="sp-view-mode">
+              <label>시작 뷰 모드:</label>
+              <div class="dropdown">밀러 컬럼 <span class="dd-arrow">▾</span></div>
+            </div>
+          </div>
+          <div class="split-panel">
+            <div class="sp-title">오른쪽 탐색기</div>
+            <div class="sp-option"><span class="radio checked"></span> 내 PC (홈) 열기</div>
+            <div class="sp-option"><span class="radio"></span> 마지막 세션 복원</div>
+            <div class="sp-option"><span class="radio"></span> 시작 경로:</div>
+            <div class="sp-view-mode">
+              <label>시작 뷰 모드:</label>
+              <div class="dropdown">밀러 컬럼 <span class="dd-arrow">▾</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-gap"></div>
+
+      <!-- Preview Panel -->
+      <div class="setting-row">
+        <div class="sr-icon" style="color: #6AA8E8;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="sr-text">
+          <div class="sr-label">미리보기 패널</div>
+          <div class="sr-desc">앱 시작 시 미리보기 패널 활성화 여부</div>
+        </div>
+        <div class="sr-right"><div class="toggle on"></div></div>
+      </div>
+
+      <!-- Shelf Persistence -->
+      <div class="setting-row">
+        <div class="sr-icon" style="color: #B08FE8;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+        <div class="sr-text">
+          <div class="sr-label">Shelf 항목 저장</div>
+          <div class="sr-desc">앱 종료 시 Shelf 항목을 저장하여 다음 실행 시 복원</div>
+        </div>
+        <div class="sr-right"><div class="toggle on"></div></div>
+      </div>
+
+      <!-- System Tray -->
+      <div class="setting-row">
+        <div class="sr-icon" style="color: var(--text-tertiary);">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="sr-text">
+          <div class="sr-label">시스템 트레이</div>
+          <div class="sr-desc">닫기 버튼을 누르면 트레이로 최소화</div>
+        </div>
+        <div class="sr-right"><div class="toggle"></div></div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="settings-footer">
+      <span>v0.9.0 · 설정</span>
+    </div>
+
+  </div><!-- /.content -->
+</div><!-- /.window -->
+
+<!-- NOTES -->
+<div class="notes">
+  <h3>Settings — Tahoe Liquid Glass 적용</h3>
+  <ul>
+    <li><span class="delta">★</span> <b>동일한 이중 글라스 구조</b> — 사이드바: 18px 4면 라운드 플로팅 카드 / 콘텐츠: 윈도우 flush</li>
+    <li><span class="delta">★</span> <b>설정 항목 카드</b> — `setting-row` 14px radius, 미세한 배경(0.03) + hover 효과</li>
+    <li><span class="delta">★</span> <b>분할뷰 카드</b> — `settings-card` 16px radius, 내부에 split-panels 구성</li>
+    <li><span class="delta">★</span> <b>토글 스위치</b> — amber 그라디언트 활성화 상태 / 회색 비활성화</li>
+    <li><span class="delta">★</span> <b>라디오 버튼</b> — amber 체크 스타일 (Span Finder 민트→amber 변환)</li>
+    <li><span class="delta">△</span> 드롭다운: 글래스 스타일 배경 + hover</li>
+    <li><span class="delta">△</span> 아이콘: stroke SVG (SF Symbols 스타일)</li>
+    <li>유지: Span Finder 설정 구조 및 항목 그대로, 스타일만 Tahoe Glass로 전환</li>
+  </ul>
+</div>
+
+</div>
+
+</body>
+</html>

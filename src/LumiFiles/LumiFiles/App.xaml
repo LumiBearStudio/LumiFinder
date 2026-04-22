@@ -19,16 +19,16 @@
                 <!-- ==================== DARK THEME ==================== -->
                 <ResourceDictionary x:Key="Dark">
                     <!-- Backgrounds -->
-                    <Color x:Key="SpanBgMicaColor">#202020</Color>
-                    <Color x:Key="SpanBgLayer1Color">#2d2d2d</Color>
-                    <Color x:Key="SpanBgLayer2Color">#383838</Color>
-                    <Color x:Key="SpanBgLayer3Color">#484848</Color>
-                    <Color x:Key="SpanBgLayer2TransparentColor">#00383838</Color>
+                    <Color x:Key="SpanBgMicaColor">#0A0A0C</Color>
+                    <Color x:Key="SpanBgLayer1Color">#16161A</Color>
+                    <Color x:Key="SpanBgLayer2Color">#1E1E22</Color>
+                    <Color x:Key="SpanBgLayer3Color">#26262B</Color>
+                    <Color x:Key="SpanBgLayer2TransparentColor">#001E1E22</Color>
 
                     <!-- Accent -->
-                    <Color x:Key="SpanAccentColor">#60cdff</Color>
-                    <Color x:Key="SpanAccentHoverColor">#7ed8ff</Color>
-                    <Color x:Key="SpanAccentDimColor">#B360CDFF</Color>
+                    <Color x:Key="SpanAccentColor">#FFB86B</Color>
+                    <Color x:Key="SpanAccentHoverColor">#FFD27A</Color>
+                    <Color x:Key="SpanAccentDimColor">#B3FFB86B</Color>
 
                     <!-- Text -->
                     <Color x:Key="SpanTextPrimaryColor">#ffffff</Color>
@@ -51,20 +51,20 @@
                     <SolidColorBrush x:Key="SpanTextDisabledBrush" Color="{StaticResource SpanTextDisabledColor}" />
 
                     <!-- Translucent Brushes (accent-tinted, Windows Explorer style) -->
-                    <SolidColorBrush x:Key="SpanBgHoverBrush" Color="#0F60CDFF" />
-                    <SolidColorBrush x:Key="SpanBgActiveBrush" Color="#1A60CDFF" />
-                    <SolidColorBrush x:Key="SpanBgSelectedBrush" Color="#2560CDFF" />
-                    <SolidColorBrush x:Key="SpanBgSelectedHoverBrush" Color="#3060CDFF" />
+                    <SolidColorBrush x:Key="SpanBgHoverBrush" Color="#0FFFB86B" />
+                    <SolidColorBrush x:Key="SpanBgActiveBrush" Color="#1AFFB86B" />
+                    <SolidColorBrush x:Key="SpanBgSelectedBrush" Color="#25FFB86B" />
+                    <SolidColorBrush x:Key="SpanBgSelectedHoverBrush" Color="#30FFB86B" />
                     <!-- Path highlight: border line for navigation breadcrumb items (not background fill) -->
-                    <SolidColorBrush x:Key="SpanPathHighlightBrush" Color="#6060CDFF" />
+                    <SolidColorBrush x:Key="SpanPathHighlightBrush" Color="#60FFB86B" />
 
                     <!-- Override WinUI system ListView/GridView selection colors -->
-                    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#2560CDFF" />
-                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#3060CDFF" />
-                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#1A60CDFF" />
-                    <SolidColorBrush x:Key="GridViewItemBackgroundSelected" Color="#2560CDFF" />
-                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPointerOver" Color="#3060CDFF" />
-                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPressed" Color="#1A60CDFF" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#25FFB86B" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#30FFB86B" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#1AFFB86B" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelected" Color="#25FFB86B" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPointerOver" Color="#30FFB86B" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPressed" Color="#1AFFB86B" />
 
                     <!-- Override WinUI TextBox/AutoSuggestBox focus bottom line -->
                     <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource SpanAccentColor}" />
@@ -91,6 +91,31 @@
                         <GradientStop Color="#1C000000" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </LinearGradientBrush>
+
+                    <!-- Stage 3: Sidebar floating-glass (Tahoe Liquid Glass) — v3 adjust: lighter tint, stronger edges -->
+                    <AcrylicBrush x:Key="SpanSidebarAcrylicBrush"
+                                  TintColor="#2A2638"
+                                  TintOpacity="0.85"
+                                  TintLuminosityOpacity="0.7"
+                                  FallbackColor="#2A2638"/>
+                    <LinearGradientBrush x:Key="SpanSidebarTopEdgeBrush" StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="Transparent" Offset="0.0"/>
+                        <GradientStop Color="#66FFFFFF" Offset="0.3"/>
+                        <GradientStop Color="#66FFFFFF" Offset="0.7"/>
+                        <GradientStop Color="Transparent" Offset="1.0"/>
+                    </LinearGradientBrush>
+                    <!-- Subtle outer ring for "floating card" definition -->
+                    <SolidColorBrush x:Key="SpanSidebarRingBrush" Color="#1FFFFFFF"/>
+
+                    <!-- Stage 4: Pill capsule background for toolbar button groups -->
+                    <SolidColorBrush x:Key="SpanGlassPillBrush" Color="#0AFFFFFF"/>
+                    <SolidColorBrush x:Key="SpanGlassPillHoverBrush" Color="#14FFFFFF"/>
+
+                    <!-- Stage 5: Active tab amber gradient -->
+                    <LinearGradientBrush x:Key="SpanTabActiveAmberBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#3DFFB86B" Offset="0.0"/>
+                        <GradientStop Color="#14FFB86B" Offset="1.0"/>
+                    </LinearGradientBrush>
                 </ResourceDictionary>
 
                 <!-- ==================== LIGHT THEME ==================== -->
@@ -103,9 +128,9 @@
                     <Color x:Key="SpanBgLayer2TransparentColor">#00F3F3F3</Color>
 
                     <!-- Accent -->
-                    <Color x:Key="SpanAccentColor">#0078D4</Color>
-                    <Color x:Key="SpanAccentHoverColor">#106EBE</Color>
-                    <Color x:Key="SpanAccentDimColor">#B30078D4</Color>
+                    <Color x:Key="SpanAccentColor">#D48028</Color>
+                    <Color x:Key="SpanAccentHoverColor">#FFB86B</Color>
+                    <Color x:Key="SpanAccentDimColor">#B3D48028</Color>
 
                     <!-- Text -->
                     <Color x:Key="SpanTextPrimaryColor">#1B1B1B</Color>
@@ -128,20 +153,20 @@
                     <SolidColorBrush x:Key="SpanTextDisabledBrush" Color="{StaticResource SpanTextDisabledColor}" />
 
                     <!-- Translucent Brushes (accent-tinted, Windows Explorer style) -->
-                    <SolidColorBrush x:Key="SpanBgHoverBrush" Color="#0F0078D4" />
-                    <SolidColorBrush x:Key="SpanBgActiveBrush" Color="#1A0078D4" />
-                    <SolidColorBrush x:Key="SpanBgSelectedBrush" Color="#250078D4" />
-                    <SolidColorBrush x:Key="SpanBgSelectedHoverBrush" Color="#300078D4" />
+                    <SolidColorBrush x:Key="SpanBgHoverBrush" Color="#0FD48028" />
+                    <SolidColorBrush x:Key="SpanBgActiveBrush" Color="#1AD48028" />
+                    <SolidColorBrush x:Key="SpanBgSelectedBrush" Color="#25D48028" />
+                    <SolidColorBrush x:Key="SpanBgSelectedHoverBrush" Color="#30D48028" />
                     <!-- Path highlight: border line for navigation breadcrumb items (not background fill) -->
-                    <SolidColorBrush x:Key="SpanPathHighlightBrush" Color="#600078D4" />
+                    <SolidColorBrush x:Key="SpanPathHighlightBrush" Color="#60D48028" />
 
                     <!-- Override WinUI system ListView/GridView selection colors -->
-                    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#250078D4" />
-                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#300078D4" />
-                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#1A0078D4" />
-                    <SolidColorBrush x:Key="GridViewItemBackgroundSelected" Color="#250078D4" />
-                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPointerOver" Color="#300078D4" />
-                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPressed" Color="#1A0078D4" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#25D48028" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#30D48028" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#1AD48028" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelected" Color="#25D48028" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPointerOver" Color="#30D48028" />
+                    <SolidColorBrush x:Key="GridViewItemBackgroundSelectedPressed" Color="#1AD48028" />
 
                     <!-- Override WinUI TextBox/AutoSuggestBox focus bottom line -->
                     <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource SpanAccentColor}" />
@@ -168,6 +193,30 @@
                         <GradientStop Color="#0C000000" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </LinearGradientBrush>
+
+                    <!-- Stage 3: Sidebar floating-glass (Tahoe Liquid Glass) -->
+                    <AcrylicBrush x:Key="SpanSidebarAcrylicBrush"
+                                  TintColor="#F5F2EA"
+                                  TintOpacity="0.60"
+                                  TintLuminosityOpacity="0.55"
+                                  FallbackColor="#F5F2EA"/>
+                    <LinearGradientBrush x:Key="SpanSidebarTopEdgeBrush" StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="Transparent" Offset="0.0"/>
+                        <GradientStop Color="#38FFFFFF" Offset="0.3"/>
+                        <GradientStop Color="#38FFFFFF" Offset="0.7"/>
+                        <GradientStop Color="Transparent" Offset="1.0"/>
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="SpanSidebarRingBrush" Color="#1F000000"/>
+
+                    <!-- Stage 4: Pill capsule background for toolbar button groups -->
+                    <SolidColorBrush x:Key="SpanGlassPillBrush" Color="#0A000000"/>
+                    <SolidColorBrush x:Key="SpanGlassPillHoverBrush" Color="#14000000"/>
+
+                    <!-- Stage 5: Active tab amber gradient -->
+                    <LinearGradientBrush x:Key="SpanTabActiveAmberBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#3DFFB86B" Offset="0.0"/>
+                        <GradientStop Color="#14FFB86B" Offset="1.0"/>
+                    </LinearGradientBrush>
                 </ResourceDictionary>
 
             </ResourceDictionary.ThemeDictionaries>
@@ -186,8 +235,8 @@
             <x:Double x:Key="TitleBarHeight">40</x:Double>
             <x:Double x:Key="CommandBarHeight">44</x:Double>
             <x:Double x:Key="AddressBarHeight">38</x:Double>
-            <x:Double x:Key="StatusBarHeight">28</x:Double>
-            <x:Double x:Key="SidebarWidth">200</x:Double>
+            <x:Double x:Key="StatusBarHeight">32</x:Double>
+            <x:Double x:Key="SidebarWidth">228</x:Double>
             <x:Double x:Key="MillerColumnWidth">220</x:Double>
             <x:Double x:Key="PreviewWidth">280</x:Double>
 
@@ -282,21 +331,21 @@
                 <Setter Property="FontWeight" Value="SemiBold"/>
             </Style>
 
-            <!-- Miller Column Item Style -->
+            <!-- Miller Column Item Style (Stage 8: rounded pill selection, compact density) -->
             <Style x:Key="MillerColumnItemStyle" TargetType="ListViewItem">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Padding" Value="0" />
-                <Setter Property="Margin" Value="0,0" />
+                <Setter Property="Margin" Value="4,1" />
                 <!-- 키보드 포커스 시 액센트 1px 테두리 표시 -->
                 <Setter Property="FocusVisualPrimaryBrush" Value="{ThemeResource SpanAccentDimBrush}" />
                 <Setter Property="FocusVisualSecondaryBrush" Value="Transparent" />
                 <Setter Property="FocusVisualPrimaryThickness" Value="1" />
                 <Setter Property="FocusVisualSecondaryThickness" Value="0" />
                 <Setter Property="UseSystemFocusVisuals" Value="True" />
-                <Setter Property="CornerRadius" Value="0" />
+                <Setter Property="CornerRadius" Value="7" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="MinHeight" Value="24" />
+                <Setter Property="MinHeight" Value="26" />
                 <Setter Property="HorizontalAlignment" Value="Stretch" />
                 <Setter Property="Template">
                     <Setter.Value>
@@ -387,7 +436,7 @@
                                         <VisualState x:Name="DragOver" />
                                     </VisualStateGroup>
                                 </VisualStateManager.VisualStateGroups>
-                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0" />
+                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0" CornerRadius="{TemplateBinding CornerRadius}" />
                                 <ContentPresenter x:Name="ContentPresenter"
                                                   Content="{TemplateBinding Content}"
                                                   ContentTemplate="{TemplateBinding ContentTemplate}"
@@ -403,15 +452,15 @@
                 </Setter>
             </Style>
 
-            <!-- Details View Item Style (same selection visuals as Miller) -->
+            <!-- Details View Item Style (Stage 8: same pill selection) -->
             <Style x:Key="DetailsItemStyle" TargetType="ListViewItem">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Padding" Value="0" />
-                <Setter Property="Margin" Value="0" />
-                <Setter Property="CornerRadius" Value="0" />
+                <Setter Property="Margin" Value="4,1" />
+                <Setter Property="CornerRadius" Value="7" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="MinHeight" Value="24" />
+                <Setter Property="MinHeight" Value="26" />
                 <Setter Property="HorizontalAlignment" Value="Stretch" />
                 <Setter Property="Template">
                     <Setter.Value>
@@ -468,7 +517,7 @@
                                         <VisualState x:Name="MultiSelectDisabled" /><VisualState x:Name="MultiSelectEnabled" />
                                     </VisualStateGroup>
                                 </VisualStateManager.VisualStateGroups>
-                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0" />
+                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0" CornerRadius="{TemplateBinding CornerRadius}" />
                                 <ContentPresenter x:Name="ContentPresenter"
                                                   Content="{TemplateBinding Content}"
                                                   ContentTemplate="{TemplateBinding ContentTemplate}"
@@ -483,15 +532,15 @@
                 </Setter>
             </Style>
 
-            <!-- List View Item Style (GridViewItem, same selection visuals as Miller) -->
+            <!-- List View Item Style (Stage 8: pill selection for GridViewItem) -->
             <Style x:Key="ListViewItemStyle" TargetType="GridViewItem">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Padding" Value="0" />
-                <Setter Property="Margin" Value="0" />
-                <Setter Property="CornerRadius" Value="0" />
+                <Setter Property="Margin" Value="4,1" />
+                <Setter Property="CornerRadius" Value="7" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="MinHeight" Value="24" />
+                <Setter Property="MinHeight" Value="26" />
                 <Setter Property="MinWidth" Value="0" />
                 <Setter Property="Template">
                     <Setter.Value>
@@ -548,7 +597,7 @@
                                         <VisualState x:Name="MultiSelectDisabled" /><VisualState x:Name="MultiSelectEnabled" />
                                     </VisualStateGroup>
                                 </VisualStateManager.VisualStateGroups>
-                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0" />
+                                <Border x:Name="StateOverlay" Background="Transparent" Opacity="0" CornerRadius="{TemplateBinding CornerRadius}" />
                                 <ContentPresenter x:Name="ContentPresenter"
                                                   Content="{TemplateBinding Content}"
                                                   ContentTemplate="{TemplateBinding ContentTemplate}"
@@ -563,15 +612,15 @@
                 </Setter>
             </Style>
 
-             <!-- Sidebar Item Style -->
+             <!-- Sidebar Item Style (Stage 8: tighter density, pill selection) -->
             <Style x:Key="SidebarItemStyle" TargetType="ListViewItem">
                 <Setter Property="Background" Value="Transparent" />
-                <Setter Property="Padding" Value="16,6" />
+                <Setter Property="Padding" Value="10,5" />
                 <Setter Property="Margin" Value="4,0" />
-                <Setter Property="CornerRadius" Value="{StaticResource RadiusSm}" />
+                <Setter Property="CornerRadius" Value="8" />
                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="MinHeight" Value="28" />
                 <Setter Property="Foreground" Value="{ThemeResource SpanTextSecondaryBrush}" />
                 <Setter Property="Template">
                     <Setter.Value>

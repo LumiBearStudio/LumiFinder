@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Lumi Files — Action Log Mockup (Tahoe Liquid Glass)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --lumi-amber: #FFB86B;
+    --lumi-amber-soft: #FFD27A;
+    --lumi-amber-deep: #D48028;
+    --text-primary: #EEEEF2;
+    --text-secondary: #92929A;
+    --text-tertiary: #60606A;
+    --divider: rgba(255,255,255,0.06);
+    --divider-soft: rgba(255,255,255,0.035);
+    --window-radius: 24px;
+    --cat-amber:  linear-gradient(135deg, #FFB86B, #D48028);
+    --cat-blue:   linear-gradient(135deg, #6AA8E8, #3E7FC2);
+    --cat-green:  linear-gradient(135deg, #7EC785, #4BA35E);
+    --cat-purple: linear-gradient(135deg, #B08FE8, #7A52C2);
+    --cat-pink:   linear-gradient(135deg, #F08FBF, #C25A8F);
+    --cat-coral:  linear-gradient(135deg, #FF9A6B, #E85A3C);
+    --cat-gray:   linear-gradient(135deg, #7A7368, #504A40);
+    --status-success: #7EC785;
+    --status-error: #F06868;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: "Inter", "Pretendard", -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 13px;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    padding: 40px 32px 60px;
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at 15% 20%, rgba(100, 60, 220, 0.65), transparent 50%),
+      radial-gradient(ellipse at 70% 15%, rgba(200, 60, 140, 0.50), transparent 50%),
+      radial-gradient(ellipse at 45% 85%, rgba(60, 40, 160, 0.60), transparent 55%),
+      radial-gradient(ellipse at 85% 65%, rgba(40, 120, 200, 0.40), transparent 50%),
+      radial-gradient(ellipse at 30% 60%, rgba(80, 50, 180, 0.35), transparent 55%),
+      linear-gradient(160deg, #1A0E30 0%, #0C0818 100%);
+  }
+  .page { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+
+  /* ── WINDOW ── */
+  .window {
+    width: 1180px;
+    height: 780px;
+    border-radius: var(--window-radius);
+    background: linear-gradient(180deg,
+      rgba(18, 18, 24, 0.88) 0%,
+      rgba(12, 12, 16, 0.94) 100%);
+    backdrop-filter: blur(60px) saturate(1.4);
+    -webkit-backdrop-filter: blur(60px) saturate(1.4);
+    box-shadow:
+      0 40px 100px rgba(0,0,0,0.70),
+      0 16px 40px rgba(0,0,0,0.45),
+      0 0 0 0.5px rgba(255,255,255,0.08);
+    display: flex;
+    padding: 6px 0 6px 6px;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 180px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg,
+      rgba(30, 28, 40, 0.72) 0%,
+      rgba(22, 20, 32, 0.78) 100%);
+    backdrop-filter: blur(80px) saturate(2.0) brightness(1.05);
+    -webkit-backdrop-filter: blur(80px) saturate(2.0) brightness(1.05);
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+    z-index: 2;
+    box-shadow:
+      inset 0 0.5px 0 rgba(255,255,255,0.18),
+      inset 0 -0.5px 0 rgba(255,255,255,0.04),
+      inset 0.5px 0 0 rgba(255,255,255,0.06),
+      inset -0.5px 0 0 rgba(255,255,255,0.06),
+      0 0 0 0.5px rgba(255,255,255,0.08),
+      0 2px 12px rgba(0,0,0,0.25);
+  }
+  .sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 12px; right: 12px;
+    height: 1px;
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.22) 30%,
+      rgba(255,255,255,0.22) 70%,
+      rgba(255,255,255,0) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .sidebar-top {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .sidebar-top .sb-ico-stroke { color: var(--text-secondary); }
+  .sidebar-top .title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 8px 10px;
+  }
+
+  .sb-section { margin-bottom: 6px; }
+  .sb-header {
+    padding: 10px 12px 3px;
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    opacity: 0.8;
+  }
+  .sb-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.15s;
+  }
+  .sb-item:hover { background: rgba(255,255,255,0.04); }
+  .sb-item.active {
+    background: linear-gradient(90deg, rgba(255,184,107,0.28), rgba(255,184,107,0.15));
+    font-weight: 500;
+  }
+  .sb-item.active .sb-ico-stroke { color: #FFF3DC; }
+
+  .sb-ico-stroke {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+
+  .sb-badge {
+    margin-left: auto;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 600;
+    background: rgba(240, 104, 104, 0.18);
+    color: var(--status-error);
+  }
+
+  .sb-divider {
+    height: 1px;
+    margin: 6px 12px;
+    background: rgba(255,255,255,0.04);
+  }
+
+  /* ── CONTENT ── */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 0;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  /* ── TITLEBAR ── */
+  .titlebar {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px 0 12px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .tabs { display: flex; gap: 1px; flex: 1; align-items: center; }
+  .tab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 11px 5px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    max-width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.025); }
+  .tab.active {
+    color: var(--text-primary);
+    background: linear-gradient(180deg, rgba(255,184,107,0.16), rgba(255,184,107,0.06));
+    box-shadow: inset 0 0 0 1px rgba(255,184,107,0.12);
+  }
+  .tab .tab-icon { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; opacity: 0.8; }
+  .tab .tab-close {
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px; margin-left: auto;
+    color: var(--text-tertiary); font-size: 13px; line-height: 1;
+    opacity: 0; transition: opacity 0.12s;
+  }
+  .tab:hover .tab-close, .tab.active .tab-close { opacity: 0.7; }
+  .tab-add {
+    display: flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    color: var(--text-tertiary); border-radius: 6px; font-size: 14px;
+  }
+  .caption { display: flex; gap: 2px; }
+  .caption button {
+    width: 42px; height: 30px;
+    background: none; border: none;
+    color: var(--text-secondary); font-size: 11px;
+    border-radius: 6px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .caption button:hover { background: rgba(255,255,255,0.07); color: var(--text-primary); }
+  .caption button.close:hover { background: #E81123; color: white; }
+
+  /* ── LOG TOOLBAR ── */
+  .log-toolbar {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--divider-soft);
+  }
+  .log-toolbar .spacer { flex: 1; }
+  .log-toolbar .clear-btn {
+    padding: 4px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .log-toolbar .clear-btn:hover {
+    background: rgba(255,255,255,0.07);
+    color: var(--text-primary);
+  }
+
+  /* ── LOG LIST ── */
+  .log-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+  .log-list::-webkit-scrollbar { width: 6px; }
+  .log-list::-webkit-scrollbar-track { background: transparent; }
+  .log-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+
+  .log-entry {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 16px;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.025);
+    transition: background 0.12s;
+  }
+  .log-entry:hover { background: rgba(255,255,255,0.02); }
+
+  .log-entry .le-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary);
+    margin-top: 1px;
+  }
+  .le-icon.move { color: #6AA8E8; }
+  .le-icon.copy { color: #7EC785; }
+  .le-icon.delete { color: #F08FBF; }
+  .le-icon.rename { color: var(--lumi-amber); }
+  .le-icon.zip { color: #B08FE8; }
+  .le-icon.error { color: var(--status-error); }
+
+  .log-entry .le-body { flex: 1; min-width: 0; }
+  .log-entry .le-title {
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .log-entry .le-error {
+    font-size: 11.5px;
+    color: var(--status-error);
+    margin-top: 3px;
+    opacity: 0.85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .log-entry .le-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .log-entry .le-time {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+  .log-entry .le-status {
+    width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .le-status.success { color: var(--status-success); }
+  .le-status.fail { color: var(--status-error); }
+
+  .log-entry .le-undo {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 5px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.12s;
+    font-size: 12px;
+  }
+  .log-entry .le-undo:hover {
+    background: rgba(255,255,255,0.06);
+    color: var(--text-primary);
+  }
+
+  /* ── FOOTER ── */
+  .log-footer {
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 14px;
+    border-top: 1px solid var(--divider-soft);
+    background: rgba(0,0,0,0.10);
+    flex-shrink: 0;
+    gap: 6px;
+  }
+  .log-footer .footer-icon {
+    color: var(--text-tertiary);
+    display: flex; align-items: center;
+  }
+  .log-footer span {
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+  }
+
+  /* ── NOTES ── */
+  .notes {
+    width: 1180px;
+    background: rgba(20,14,8,0.65);
+    border: 1px solid rgba(255,220,160,0.08);
+    border-radius: 16px;
+    padding: 20px 26px;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  .notes h3 {
+    color: var(--lumi-amber);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .notes b { color: var(--text-primary); }
+  .notes ul { margin-left: 20px; }
+  .notes li { margin: 4px 0; }
+  .notes .delta { color: var(--lumi-amber-soft); }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<div class="window">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <span class="sb-ico-stroke">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 8 12 12 14 14"/><circle cx="12" cy="12" r="10"/></svg>
+      </span>
+      <span class="title">작업 로그</span>
+    </div>
+    <div class="sidebar-body">
+      <div class="sb-section">
+        <div class="sb-item active">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
+          </span>
+          <span>전체</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </span>
+          <span>복사</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          </span>
+          <span>이동</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </span>
+          <span>삭제</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </span>
+          <span>이름 바꾸기</span>
+        </div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <div class="sb-section">
+        <div class="sb-item">
+          <span class="sb-ico-stroke" style="color: var(--status-error);">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </span>
+          <span>오류</span>
+          <span class="sb-badge">7</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ CONTENT ============ -->
+  <div class="content">
+
+    <!-- TITLEBAR -->
+    <div class="titlebar">
+      <div class="tabs">
+        <div class="tab">
+          <span class="tab-icon" style="background: var(--cat-amber);"></span>
+          <span>홈</span>
+          <span class="tab-close">×</span>
+        </div>
+        <div class="tab">
+          <span class="tab-icon" style="background: var(--cat-gray);"></span>
+          <span>설정</span>
+          <span class="tab-close">×</span>
+        </div>
+        <div class="tab active">
+          <span class="tab-icon" style="background: var(--cat-purple);"></span>
+          <span>작업 로그</span>
+          <span class="tab-close">×</span>
+        </div>
+        <div class="tab-add">+</div>
+      </div>
+      <div class="caption">
+        <button>−</button>
+        <button>☐</button>
+        <button class="close">×</button>
+      </div>
+    </div>
+
+    <!-- LOG TOOLBAR -->
+    <div class="log-toolbar">
+      <div class="spacer"></div>
+      <button class="clear-btn">지우기</button>
+    </div>
+
+    <!-- LOG LIST -->
+    <div class="log-list">
+
+      <!-- Entry: Move success -->
+      <div class="log-entry">
+        <div class="le-icon move">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">Move "LICENSE" to src</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">어제 15:45</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Delete 3 items -->
+      <div class="log-entry">
+        <div class="le-icon delete">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">Delete 3 item(s)</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">어제 15:44</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Delete zip -->
+      <div class="log-entry">
+        <div class="le-icon delete">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">Delete "I.BITLEADER_DEVOPS (1).zip"</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">어제 15:43</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Copy LICENSE -->
+      <div class="log-entry">
+        <div class="le-icon copy">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">Copy "LICENSE" to Span</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">어제 15:42</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Copy LICENSE 2 -->
+      <div class="log-entry">
+        <div class="le-icon copy">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">Copy "LICENSE" to Span</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">어제 15:42</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Delete SystemAgent log -->
+      <div class="log-entry">
+        <div class="le-icon delete">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">Delete "SystemAgent-20260211.log"</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">어제 15:42</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Move to MS Store -->
+      <div class="log-entry">
+        <div class="le-icon move">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">Move "SystemAgent-20260211.log" to MS Store</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">어제 15:42</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Delete "ref" -->
+      <div class="log-entry">
+        <div class="le-icon delete">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">"ref" 삭제</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">04-14 09:32</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Delete %TEMP% — ERROR -->
+      <div class="log-entry">
+        <div class="le-icon error">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">"%TEMP%" 삭제</div>
+          <div class="le-error">관리자 권한으로도 삭제 실패: exit=0x0: %TEMP%</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">04-14 09:31</span>
+          <span class="le-status fail">✗</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Delete "design" -->
+      <div class="log-entry">
+        <div class="le-icon delete">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">"design" 삭제</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">04-14 09:31</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Delete source.zip -->
+      <div class="log-entry">
+        <div class="le-icon delete">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">"source.zip" 삭제</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">04-14 09:31</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Move to Program Files — ERROR -->
+      <div class="log-entry">
+        <div class="le-icon error">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">"ClipFlow_v1.0.0_x64"을(를) Program Files(으)로 이동</div>
+          <div class="le-error">ClipFlow_v1.0.0_x64 이동 실패: Access to the path 'C:\Program Files\ClipFlow_v1.0.0_x64' is denied.</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">04-13 16:41</span>
+          <span class="le-status fail">✗</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Extract zip -->
+      <div class="log-entry">
+        <div class="le-icon zip">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">ClipFlow_v1.0.0_x64.zip 압축 풀기</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">04-13 16:41</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Delete zip file -->
+      <div class="log-entry">
+        <div class="le-icon delete">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">"ClipFlow_v1.0.0_x64 (1).zip" 삭제</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">04-13 16:41</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+      <!-- Entry: Compress -->
+      <div class="log-entry">
+        <div class="le-icon zip">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+        </div>
+        <div class="le-body">
+          <div class="le-title">ClipFlow_v1.0.0_x64 (1).zip(으)로 압축</div>
+        </div>
+        <div class="le-meta">
+          <span class="le-time">04-13 16:40</span>
+          <span class="le-status success">✓</span>
+          <span class="le-undo">↩</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="log-footer">
+      <span class="footer-icon">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      </span>
+      <span>ActionLog</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- NOTES -->
+<div class="notes">
+  <h3>Action Log — Tahoe Liquid Glass 적용</h3>
+  <ul>
+    <li><span class="delta">★</span> <b>동일한 이중 글라스 구조</b> — 사이드바: 18px 4면 라운드 플로팅 카드 / 콘텐츠: 윈도우 flush</li>
+    <li><span class="delta">★</span> <b>컬러 코드 아이콘</b> — 이동(파랑), 복사(초록), 삭제(핑크), 이름변경(앰버), 압축(보라), 오류(빨강)</li>
+    <li><span class="delta">★</span> <b>오류 표시</b> — 오류 항목은 아이콘 빨강 + 하단 오류 메시지 표시 + ✗ 마크</li>
+    <li><span class="delta">★</span> <b>오류 뱃지</b> — 사이드바 오류 항목에 빨강 뱃지(7)</li>
+    <li><span class="delta">△</span> 각 로그 항목: hover 효과, 타임스탬프, 실행취소(↩) 버튼</li>
+    <li><span class="delta">△</span> 지우기 버튼: 툴바 우측 상단</li>
+    <li>유지: Span Finder 로그 구조 및 항목 그대로, 스타일만 Tahoe Glass로 전환</li>
+  </ul>
+</div>
+
+</div>
+
+</body>
+</html>

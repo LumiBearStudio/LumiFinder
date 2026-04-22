@@ -14,7 +14,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid x:Name="RootGrid" Background="{ThemeResource SpanBgMicaBrush}">
+    <!-- RootGrid transparent so MicaBackdrop (set in MainWindow.xaml.cs:423) shows through -->
+    <Grid x:Name="RootGrid" Background="Transparent">
         <Grid.Resources>
             <!-- FileIconConverter removed: icons are now in ViewModels -->
             <helpers:BoolToBrushConverter x:Key="BoolToBrushConverter"
@@ -47,12 +48,13 @@
                 <ColumnDefinition x:Name="RightPaddingColumn" Width="0"/> <!-- 캡션 버튼 여백 (코드에서 설정) -->
             </Grid.ColumnDefinitions>
 
-            <!-- Bottom border line: spans full width, active tab background covers it -->
-            <Rectangle Grid.ColumnSpan="3" Height="1" VerticalAlignment="Bottom"
-                       Fill="{ThemeResource SpanAccentDimBrush}"/>
+            <!-- Stage 5: Removed full-width accent line. Tab amber gradient provides grounding. -->
+            <!--<Rectangle Grid.ColumnSpan="3" Height="1" VerticalAlignment="Bottom"
+                       Fill="{ThemeResource SpanAccentDimBrush}"/>-->
 
-            <!-- App Icon & Title -->
-            <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center" Margin="16,0,16,0" Spacing="8">
+            <!-- Fix 3: App Icon & Title — kept minimal, brand also shown in sidebar top. Hidden via opacity for drag region consistency -->
+            <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center" Margin="16,0,16,0" Spacing="8"
+                        Visibility="Collapsed">
                 <Image Source="/Assets/Square44x44Logo.png" Height="16" Width="16"/>
                 <TextBlock x:Name="AppTitleText" Text="Lumi Files" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource SpanTextSecondaryBrush}"/>
             </StackPanel>
@@ -79,8 +81,8 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <!-- Active tab background: fills tab and covers title bar bottom line -->
-                                    <Border Grid.ColumnSpan="2" Background="{ThemeResource SpanBgLayer1Brush}"
+                                    <!-- Active tab background: Stage 5 amber gradient -->
+                                    <Border Grid.ColumnSpan="2" Background="{ThemeResource SpanTabActiveAmberBrush}"
                                             CornerRadius="6,6,0,0"
                                             Visibility="{x:Bind IsActiveVisible, Mode=OneWay}"/>
                                     <Grid Grid.Column="0" VerticalAlignment="Center" Padding="12,0,0,0">
@@ -116,12 +118,9 @@
                                             Click="OnTabCloseClick" Tag="{x:Bind}">
                                         <FontIcon Glyph="&#xE711;" FontSize="9"/>
                                     </Button>
-                                    <!-- Inactive tab: full box border -->
-                                    <Border Grid.ColumnSpan="2" BorderBrush="{ThemeResource SpanAccentDimBrush}"
-                                            BorderThickness="1" CornerRadius="6,6,0,0" IsHitTestVisible="False"
-                                            Visibility="{x:Bind IsInactiveVisible, Mode=OneWay}"/>
-                                    <!-- Active tab: no bottom border → connects seamlessly to toolbar -->
-                                    <Border Grid.ColumnSpan="2" BorderBrush="{ThemeResource SpanAccentDimBrush}"
+                                    <!-- Fix: inactive tab has no border (fully transparent) — Tahoe style -->
+                                    <!-- Active tab: very subtle amber inset 1px (mockup style) -->
+                                    <Border Grid.ColumnSpan="2" BorderBrush="#1FFFB86B"
                                             BorderThickness="1,1,1,0" CornerRadius="6,6,0,0" IsHitTestVisible="False"
                                             Visibility="{x:Bind IsActiveVisible, Mode=OneWay}"/>
                                 </Grid>
@@ -160,29 +159,41 @@
                 <ColumnDefinition Width="Auto"/> <!-- Commands -->
             </Grid.ColumnDefinitions>
 
-            <!-- Nav Buttons (single mode, hidden in Settings) -->
-            <StackPanel Orientation="Horizontal" Spacing="2" Margin="0,0,8,0"
-                        Visibility="{x:Bind IsSingleNonSettingsVisible(ViewModel.IsSplitViewEnabled, ViewModel.CurrentViewMode), Mode=OneWay}">
-                <Button x:Name="BackButton" AutomationProperties.AutomationId="Button_Back" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="뒤로 (Alt+Left)"
-                        IsEnabled="{x:Bind ViewModel.CanGoBack, Mode=OneWay}" Click="OnGoBackClick"
-                        RightTapped="OnBackButtonRightTapped">
-                    <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Back}" FontSize="14"/>
-                </Button>
-                <Button x:Name="ForwardButton" AutomationProperties.AutomationId="Button_Forward" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="앞으로 (Alt+Right)"
-                        IsEnabled="{x:Bind ViewModel.CanGoForward, Mode=OneWay}" Click="OnGoForwardClick"
-                        RightTapped="OnForwardButtonRightTapped">
-                    <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Forward}" FontSize="14"/>
-                </Button>
-                <Button x:Name="UpButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="위로" Click="OnNavigateUpClick">
-                    <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Up}" FontSize="14"/>
-                </Button>
-            </StackPanel>
+            <!-- Nav Buttons (single mode, hidden in Settings) — Stage 4: pill capsule group -->
+            <Border Background="{ThemeResource SpanGlassPillBrush}"
+                    CornerRadius="999"
+                    Padding="2"
+                    Height="30"
+                    VerticalAlignment="Center"
+                    Margin="0,0,8,0"
+                    Visibility="{x:Bind IsSingleNonSettingsVisible(ViewModel.IsSplitViewEnabled, ViewModel.CurrentViewMode), Mode=OneWay}">
+                <StackPanel Orientation="Horizontal" Spacing="0">
+                    <Button x:Name="BackButton" AutomationProperties.AutomationId="Button_Back" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                            ToolTipService.ToolTip="뒤로 (Alt+Left)"
+                            IsEnabled="{x:Bind ViewModel.CanGoBack, Mode=OneWay}" Click="OnGoBackClick"
+                            RightTapped="OnBackButtonRightTapped">
+                        <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Back}" FontSize="14"/>
+                    </Button>
+                    <Rectangle Width="1" Height="14" Fill="#14FFFFFF" VerticalAlignment="Center"/>
+                    <Button x:Name="ForwardButton" AutomationProperties.AutomationId="Button_Forward" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                            ToolTipService.ToolTip="앞으로 (Alt+Right)"
+                            IsEnabled="{x:Bind ViewModel.CanGoForward, Mode=OneWay}" Click="OnGoForwardClick"
+                            RightTapped="OnForwardButtonRightTapped">
+                        <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Forward}" FontSize="14"/>
+                    </Button>
+                    <Rectangle Width="1" Height="14" Fill="#14FFFFFF" VerticalAlignment="Center"/>
+                    <Button x:Name="UpButton" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999"
+                            ToolTipService.ToolTip="위로" Click="OnNavigateUpClick">
+                        <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Up}" FontSize="14"/>
+                    </Button>
+                </StackPanel>
+            </Border>
 
-            <!-- Address Bar (single mode, hidden in Settings) -->
-            <Grid x:Name="AddressBarContainer" AutomationProperties.AutomationId="AddressBar" Grid.Column="1" Height="32"
-                  Background="{ThemeResource SpanBgLayer2Brush}"
-                  CornerRadius="4" VerticalAlignment="Center"
-                  Padding="4,0"
+            <!-- Address Bar (single mode, hidden in Settings) — Fix 2: transparent, breadcrumb shows content only -->
+            <Grid x:Name="AddressBarContainer" AutomationProperties.AutomationId="AddressBar" Grid.Column="1" Height="30"
+                  Background="Transparent"
+                  VerticalAlignment="Center"
+                  Padding="8,0"
                   Visibility="{x:Bind IsSingleNonSettingsVisible(ViewModel.IsSplitViewEnabled, ViewModel.CurrentViewMode), Mode=OneWay}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -250,13 +261,17 @@
                             <FontIcon Glyph="&#xE70D;" FontSize="8"/>
                         </Button>
                     </StackPanel>
-                    <Rectangle Width="1" Height="20" Fill="{ThemeResource SpanBorderSubtleBrush}" Margin="4,0"/>
-                    <Button x:Name="ToolbarCutButton" AutomationProperties.AutomationId="Button_Cut" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="잘라내기 (Ctrl+X)" Click="OnCutClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Cut}"/></Button>
-                    <Button x:Name="ToolbarCopyButton" AutomationProperties.AutomationId="Button_Copy" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="복사 (Ctrl+C)" Click="OnCopyClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Copy}"/></Button>
-                    <Button x:Name="ToolbarPasteButton" AutomationProperties.AutomationId="Button_Paste" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="붙여넣기 (Ctrl+V)" Click="OnPasteClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Paste}"/></Button>
-                    <Button x:Name="ToolbarRenameButton" AutomationProperties.AutomationId="Button_Rename" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="이름 바꾸기 (F2)" Click="OnRenameClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Rename}"/></Button>
-                    <Button x:Name="ToolbarDeleteButton" AutomationProperties.AutomationId="Button_Delete" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="삭제 (Del)" Click="OnDeleteClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Delete}"/></Button>
-                    <Rectangle Width="1" Height="20" Fill="{ThemeResource SpanBorderSubtleBrush}" Margin="4,0"/>
+                    <!-- Stage 4: File action pill group (cut/copy/paste/rename/delete) -->
+                    <Border Background="{ThemeResource SpanGlassPillBrush}" CornerRadius="999"
+                            Padding="2" Height="30" VerticalAlignment="Center" Margin="4,0">
+                        <StackPanel Orientation="Horizontal" Spacing="0">
+                            <Button x:Name="ToolbarCutButton" AutomationProperties.AutomationId="Button_Cut" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" ToolTipService.ToolTip="잘라내기 (Ctrl+X)" Click="OnCutClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Cut}"/></Button>
+                            <Button x:Name="ToolbarCopyButton" AutomationProperties.AutomationId="Button_Copy" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" ToolTipService.ToolTip="복사 (Ctrl+C)" Click="OnCopyClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Copy}"/></Button>
+                            <Button x:Name="ToolbarPasteButton" AutomationProperties.AutomationId="Button_Paste" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" ToolTipService.ToolTip="붙여넣기 (Ctrl+V)" Click="OnPasteClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Paste}"/></Button>
+                            <Button x:Name="ToolbarRenameButton" AutomationProperties.AutomationId="Button_Rename" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" ToolTipService.ToolTip="이름 바꾸기 (F2)" Click="OnRenameClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Rename}"/></Button>
+                            <Button x:Name="ToolbarDeleteButton" AutomationProperties.AutomationId="Button_Delete" Style="{StaticResource UnifiedButtonStyle}" CornerRadius="999" ToolTipService.ToolTip="삭제 (Del)" Click="OnDeleteClick" IsEnabled="False"><FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Delete}"/></Button>
+                        </StackPanel>
+                    </Border>
 
                 <!-- Sort Button with Dropdown -->
                     <Button x:Name="SortButton" AutomationProperties.AutomationId="Button_Sort" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="정렬"
@@ -361,19 +376,42 @@
         <!-- 3. Main Area (Sidebar + Splitter + Content) -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="SidebarCol" Width="200"/> <!-- Sidebar -->
+                <ColumnDefinition x:Name="SidebarCol" Width="228"/> <!-- Sidebar (Stage 3: widened for floating glass + bottom settings) -->
                 <ColumnDefinition x:Name="SidebarSplitterCol" Width="Auto"/> <!-- Splitter -->
                 <ColumnDefinition Width="*"/>   <!-- Content -->
             </Grid.ColumnDefinitions>
 
-            <!-- Sidebar - Hybrid 3-Section Layout -->
-            <Border x:Name="SidebarBorder" AutomationProperties.AutomationId="Sidebar" Grid.Column="0" Background="{ThemeResource SpanBgLayer1Brush}">
+            <!-- Sidebar - Hybrid 3-Section Layout (Stage 3 adjusted: stronger floating glass) -->
+            <Border x:Name="SidebarBorder" AutomationProperties.AutomationId="Sidebar" Grid.Column="0"
+                    Background="{ThemeResource SpanSidebarAcrylicBrush}"
+                    CornerRadius="18"
+                    Margin="8,8,0,8"
+                    BorderThickness="1"
+                    BorderBrush="{ThemeResource SpanSidebarRingBrush}">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>  <!-- Fix 3: Sidebar top with brand -->
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+
+                <!-- Fix 3: Sidebar top with brand (matches mockup .sidebar-top) -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8"
+                            Padding="16,10,16,8" VerticalAlignment="Center">
+                    <Border Width="14" Height="14" CornerRadius="4">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="{ThemeResource SpanAccentColor}" Offset="0"/>
+                                <GradientStop Color="#D48028" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+                    <TextBlock Text="Lumi Files" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{ThemeResource SpanTextSecondaryBrush}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                               RightTapped="OnSidebarEmptyRightTapped">
                     <StackPanel Padding="0,12">
 
@@ -690,8 +728,8 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Sidebar bottom bar: Help, Log (left) | Settings (right) -->
-                <Grid Grid.Row="1"
+                <!-- Sidebar bottom bar: Help, Log (left) | Settings (right) — Row 2 after brand+scroll -->
+                <Grid Grid.Row="2"
                       BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="0,1,0,0"
                       Padding="8,4">
                     <StackPanel Orientation="Horizontal" Spacing="0" HorizontalAlignment="Left">
@@ -722,10 +760,9 @@
                 </Grid>
             </Border>
 
-            <!-- Sidebar Resize Splitter: 6px drag area, visually 1px right border -->
+            <!-- Sidebar Resize Splitter: 6px drag area (Stage 3: transparent bg — Mica shows through, preserves floating effect) -->
             <Border x:Name="SidebarSplitter" Grid.Column="1" Width="6"
-                    Background="{ThemeResource SpanBgLayer1Brush}"
-                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="0,0,1,0"
+                    Background="Transparent"
                     ManipulationMode="TranslateX" ManipulationStarted="OnSidebarSplitterManipulationStarted"
                     ManipulationDelta="OnSidebarSplitterManipulationDelta"
                     PointerEntered="OnSidebarSplitterPointerEntered" PointerExited="OnSidebarSplitterPointerExited"/>

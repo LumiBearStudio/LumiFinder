@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>LumiFiles — Logo Concepts</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px;
+    font-family: -apple-system, "Segoe UI", Pretendard, system-ui, sans-serif;
+    background: #0e0e10;
+    color: #e8e4df;
+  }
+  h1 { margin: 0 0 8px; font-weight: 600; letter-spacing: -0.02em; }
+  h2 { margin: 48px 0 16px; font-weight: 500; font-size: 15px; color: #9a948a; text-transform: uppercase; letter-spacing: 0.08em; }
+  .caption { color: #9a948a; font-size: 13px; margin-bottom: 24px; line-height: 1.6; }
+  .row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  .concept-card { background: #181818; border: 1px solid #262626; border-radius: 16px; padding: 28px; }
+  .concept-card h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .concept-card .sub { color: #9a948a; font-size: 12px; margin-bottom: 20px; }
+  .concept-card .full { width: 240px; height: 240px; display: block; margin-bottom: 20px; border-radius: 40px; }
+  .sizes { display: flex; align-items: flex-end; gap: 16px; }
+  .sizes > div { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #6c665e; font-size: 10px; }
+  .taskbar {
+    background: linear-gradient(to top, #1b1b1e 0%, #232327 100%);
+    border-top: 1px solid #303035;
+    padding: 6px 12px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    border-radius: 0 0 12px 12px;
+    margin-top: 12px;
+  }
+  .taskbar.light {
+    background: linear-gradient(to top, #ebebeb 0%, #f5f5f5 100%);
+    border-top: 1px solid #d8d8d8;
+  }
+  .taskbar .ti { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .taskbar .ti.placeholder { background: #2a2a2e; color: #444; font-size: 10px; }
+  .taskbar.light .ti.placeholder { background: #d0d0d0; color: #999; }
+  .divider { height: 1px; background: #262626; margin: 48px 0; }
+  .notes { background: #1a1a1a; border-left: 3px solid #FFB86B; padding: 16px 20px; border-radius: 0 8px 8px 0; font-size: 13px; line-height: 1.7; color: #c5bfb6; }
+  .notes b { color: #FFB86B; }
+</style>
+</head>
+<body>
+
+<h1>Lumi Files — Logo Concepts</h1>
+<p class="caption">3 directions · Pure SVG · scales 16→1024px</p>
+
+<!-- =========================================================
+     All defs + symbols in ONE hidden SVG (required)
+     ========================================================= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Dark warm bg -->
+    <linearGradient id="bgDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a1f16"/>
+      <stop offset="100%" stop-color="#15100b"/>
+    </linearGradient>
+    <radialGradient id="glowAmber" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFB86B" stop-opacity="0.45"/>
+      <stop offset="70%" stop-color="#FFB86B" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#FFB86B" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Folder -->
+    <linearGradient id="folderBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF5E1"/>
+      <stop offset="100%" stop-color="#EBD9B5"/>
+    </linearGradient>
+    <linearGradient id="folderTab" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F0DFBA"/>
+      <stop offset="100%" stop-color="#D4BC8D"/>
+    </linearGradient>
+
+    <!-- Prism -->
+    <linearGradient id="prismFace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE8C5" stop-opacity="0.95"/>
+      <stop offset="50%" stop-color="#FFB86B" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#FF7A3D" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="prismSide" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Pearl L -->
+    <linearGradient id="pearlL" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF8E9"/>
+      <stop offset="100%" stop-color="#F3E3C3"/>
+    </linearGradient>
+
+    <!-- Beams -->
+    <linearGradient id="beam1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFD27A" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#FFD27A" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="beam2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFB86B" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#FFB86B" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="beam3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF9D56" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#FF9D56" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Inner warm light (concept C) -->
+    <radialGradient id="innerLight" cx="50%" cy="55%" r="55%">
+      <stop offset="0%" stop-color="#FFE4A3" stop-opacity="1"/>
+      <stop offset="50%" stop-color="#FFB86B" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#FF8A3D" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+
+  <!-- ===== Concept A — Prism Folder ===== -->
+  <symbol id="logoA" viewBox="0 0 1024 1024">
+    <rect width="1024" height="1024" rx="184" fill="url(#bgDark)"/>
+    <circle cx="560" cy="500" r="360" fill="url(#glowAmber)"/>
+
+    <!-- Folder -->
+    <g>
+      <path d="M 202,360 L 452,360 L 500,432 L 202,432 Z" fill="url(#folderTab)"/>
+      <rect x="192" y="420" width="640" height="380" rx="44" fill="url(#folderBody)"/>
+      <rect x="192" y="420" width="640" height="6" rx="3" fill="#FFFBEF" opacity="0.7"/>
+    </g>
+
+    <!-- Prism -->
+    <ellipse cx="520" cy="540" rx="200" ry="140" fill="#FFB86B" opacity="0.35" filter="url(#softGlow)"/>
+    <polygon points="520,320 680,620 360,620" fill="url(#prismFace)" stroke="#FFDCA5" stroke-width="4" stroke-linejoin="round"/>
+    <polygon points="520,320 520,620 360,620" fill="url(#prismSide)"/>
+    <circle cx="520" cy="320" r="14" fill="#FFFBEF"/>
+
+    <!-- Beams -->
+    <g stroke-linecap="round">
+      <line x1="700" y1="440" x2="940" y2="380" stroke="url(#beam1)" stroke-width="18"/>
+      <line x1="700" y1="500" x2="950" y2="500" stroke="url(#beam2)" stroke-width="16"/>
+      <line x1="700" y1="570" x2="930" y2="620" stroke="url(#beam3)" stroke-width="14"/>
+    </g>
+  </symbol>
+
+  <!-- ===== Concept B — Monogram L ===== -->
+  <symbol id="logoB" viewBox="0 0 1024 1024">
+    <rect width="1024" height="1024" rx="184" fill="url(#bgDark)"/>
+    <circle cx="512" cy="512" r="360" fill="url(#glowAmber)"/>
+
+    <g>
+      <!-- L vertical -->
+      <rect x="300" y="220" width="140" height="560" rx="20" fill="url(#pearlL)"/>
+      <rect x="312" y="234" width="22" height="530" rx="11" fill="#FFFBEF" opacity="0.55"/>
+      <!-- L horizontal (bottom) -->
+      <rect x="300" y="660" width="380" height="140" rx="20" fill="url(#pearlL)"/>
+      <!-- File rows -->
+      <rect x="480" y="400" width="260" height="40" rx="14" fill="#F3E3C3" opacity="0.75"/>
+      <rect x="480" y="480" width="200" height="40" rx="14" fill="#E8D6B0" opacity="0.55"/>
+      <rect x="480" y="560" width="140" height="40" rx="14" fill="#D4BE90" opacity="0.4"/>
+    </g>
+
+    <!-- Lumi spark -->
+    <circle cx="770" cy="230" r="36" fill="#FFD27A" opacity="0.25"/>
+    <circle cx="770" cy="230" r="18" fill="#FFD27A"/>
+  </symbol>
+
+  <!-- ===== Concept C — Lantern Folder (folder + inner warm light) ===== -->
+  <symbol id="logoC" viewBox="0 0 1024 1024">
+    <rect width="1024" height="1024" rx="184" fill="url(#bgDark)"/>
+
+    <!-- Back body -->
+    <rect x="170" y="360" width="680" height="420" rx="48" fill="#A38757"/>
+    <!-- Inner warm light spilling out -->
+    <ellipse cx="510" cy="380" rx="320" ry="140" fill="url(#innerLight)" filter="url(#softGlow)"/>
+
+    <!-- Front flap -->
+    <g>
+      <path d="M 190,460 L 830,460 L 850,740 Q 850,760 830,760 L 190,760 Q 170,760 170,740 Z" fill="url(#folderBody)"/>
+      <rect x="190" y="460" width="640" height="6" rx="3" fill="#FFFBEF" opacity="0.8"/>
+      <rect x="240" y="540" width="360" height="18" rx="9" fill="#E8D6B0"/>
+      <rect x="240" y="590" width="480" height="18" rx="9" fill="#D4BE90"/>
+      <rect x="240" y="640" width="260" height="18" rx="9" fill="#C6AE7C"/>
+    </g>
+
+    <!-- Escaping light rays -->
+    <g fill="#FFD27A" opacity="0.85">
+      <polygon points="400,440 412,440 440,220 424,216"/>
+      <polygon points="510,430 522,430 528,190 510,186"/>
+      <polygon points="620,440 632,440 660,230 640,226"/>
+    </g>
+
+    <circle cx="700" cy="280" r="14" fill="#FFD27A"/>
+    <circle cx="700" cy="280" r="28" fill="#FFD27A" opacity="0.3"/>
+    <circle cx="310" cy="240" r="8" fill="#FFF0C8"/>
+  </symbol>
+
+  <!-- ===== Mono variants ===== -->
+  <symbol id="logoA-mono" viewBox="0 0 1024 1024">
+    <path d="M 202,360 L 452,360 L 500,432 L 202,432 Z" fill="#FFFFFF"/>
+    <rect x="192" y="420" width="640" height="380" rx="44" fill="#FFFFFF"/>
+    <polygon points="520,320 680,620 360,620" fill="#FFFFFF"/>
+    <g stroke="#FFFFFF" stroke-linecap="round" stroke-width="24">
+      <line x1="700" y1="440" x2="920" y2="380"/>
+      <line x1="700" y1="500" x2="940" y2="500"/>
+      <line x1="700" y1="570" x2="910" y2="620"/>
+    </g>
+  </symbol>
+  <symbol id="logoB-mono" viewBox="0 0 1024 1024">
+    <rect x="300" y="220" width="140" height="560" rx="20" fill="#FFFFFF"/>
+    <rect x="300" y="660" width="380" height="140" rx="20" fill="#FFFFFF"/>
+    <circle cx="770" cy="230" r="26" fill="#FFFFFF"/>
+  </symbol>
+  <symbol id="logoC-mono" viewBox="0 0 1024 1024">
+    <path d="M 190,460 L 830,460 L 850,740 Q 850,760 830,760 L 190,760 Q 170,760 170,740 Z" fill="#FFFFFF"/>
+    <g fill="#FFFFFF">
+      <polygon points="400,440 412,440 440,220 424,216"/>
+      <polygon points="510,430 522,430 528,190 510,186"/>
+      <polygon points="620,440 632,440 660,230 640,226"/>
+    </g>
+  </symbol>
+</svg>
+
+<!-- ============= FULL SIZE ============= -->
+<h2>Full size · 240px</h2>
+<div class="row">
+  <div class="concept-card">
+    <h3>A — Prism Folder</h3>
+    <div class="sub">폴더 + 유리 프리즘 → 빛 분광</div>
+    <svg class="full" viewBox="0 0 1024 1024"><use href="#logoA"/></svg>
+  </div>
+  <div class="concept-card">
+    <h3>B — Monogram L</h3>
+    <div class="sub">Raycast/Linear 스타일 워드마크</div>
+    <svg class="full" viewBox="0 0 1024 1024"><use href="#logoB"/></svg>
+  </div>
+  <div class="concept-card">
+    <h3>C — Lantern Folder</h3>
+    <div class="sub">폴더에서 따뜻한 빛이 새어나옴</div>
+    <svg class="full" viewBox="0 0 1024 1024"><use href="#logoC"/></svg>
+  </div>
+</div>
+
+<!-- ============= SCALE TEST ============= -->
+<h2>Scale test · 16/24/32/44/64/128 px</h2>
+<p class="caption">16px에서 살아있는 놈이 승자.</p>
+
+<div class="concept-card" style="margin-bottom:20px">
+  <h3>A — Prism Folder</h3>
+  <div class="sizes">
+    <div><svg width="16" height="16" viewBox="0 0 1024 1024"><use href="#logoA"/></svg><span>16</span></div>
+    <div><svg width="24" height="24" viewBox="0 0 1024 1024"><use href="#logoA"/></svg><span>24</span></div>
+    <div><svg width="32" height="32" viewBox="0 0 1024 1024"><use href="#logoA"/></svg><span>32</span></div>
+    <div><svg width="44" height="44" viewBox="0 0 1024 1024"><use href="#logoA"/></svg><span>44</span></div>
+    <div><svg width="64" height="64" viewBox="0 0 1024 1024"><use href="#logoA"/></svg><span>64</span></div>
+    <div><svg width="128" height="128" viewBox="0 0 1024 1024"><use href="#logoA"/></svg><span>128</span></div>
+  </div>
+</div>
+<div class="concept-card" style="margin-bottom:20px">
+  <h3>B — Monogram L</h3>
+  <div class="sizes">
+    <div><svg width="16" height="16" viewBox="0 0 1024 1024"><use href="#logoB"/></svg><span>16</span></div>
+    <div><svg width="24" height="24" viewBox="0 0 1024 1024"><use href="#logoB"/></svg><span>24</span></div>
+    <div><svg width="32" height="32" viewBox="0 0 1024 1024"><use href="#logoB"/></svg><span>32</span></div>
+    <div><svg width="44" height="44" viewBox="0 0 1024 1024"><use href="#logoB"/></svg><span>44</span></div>
+    <div><svg width="64" height="64" viewBox="0 0 1024 1024"><use href="#logoB"/></svg><span>64</span></div>
+    <div><svg width="128" height="128" viewBox="0 0 1024 1024"><use href="#logoB"/></svg><span>128</span></div>
+  </div>
+</div>
+<div class="concept-card">
+  <h3>C — Lantern Folder</h3>
+  <div class="sizes">
+    <div><svg width="16" height="16" viewBox="0 0 1024 1024"><use href="#logoC"/></svg><span>16</span></div>
+    <div><svg width="24" height="24" viewBox="0 0 1024 1024"><use href="#logoC"/></svg><span>24</span></div>
+    <div><svg width="32" height="32" viewBox="0 0 1024 1024"><use href="#logoC"/></svg><span>32</span></div>
+    <div><svg width="44" height="44" viewBox="0 0 1024 1024"><use href="#logoC"/></svg><span>44</span></div>
+    <div><svg width="64" height="64" viewBox="0 0 1024 1024"><use href="#logoC"/></svg><span>64</span></div>
+    <div><svg width="128" height="128" viewBox="0 0 1024 1024"><use href="#logoC"/></svg><span>128</span></div>
+  </div>
+</div>
+
+<!-- ============= MONOCHROME ============= -->
+<h2>Monochrome (Win11 unplated)</h2>
+<div class="row">
+  <div class="concept-card" style="background:#0a0a0a">
+    <h3>A mono</h3>
+    <svg width="120" height="120" viewBox="0 0 1024 1024"><use href="#logoA-mono"/></svg>
+    <div style="display:flex;gap:14px;margin-top:14px;align-items:flex-end">
+      <svg width="16" height="16" viewBox="0 0 1024 1024"><use href="#logoA-mono"/></svg>
+      <svg width="24" height="24" viewBox="0 0 1024 1024"><use href="#logoA-mono"/></svg>
+      <svg width="32" height="32" viewBox="0 0 1024 1024"><use href="#logoA-mono"/></svg>
+      <svg width="48" height="48" viewBox="0 0 1024 1024"><use href="#logoA-mono"/></svg>
+    </div>
+  </div>
+  <div class="concept-card" style="background:#0a0a0a">
+    <h3>B mono</h3>
+    <svg width="120" height="120" viewBox="0 0 1024 1024"><use href="#logoB-mono"/></svg>
+    <div style="display:flex;gap:14px;margin-top:14px;align-items:flex-end">
+      <svg width="16" height="16" viewBox="0 0 1024 1024"><use href="#logoB-mono"/></svg>
+      <svg width="24" height="24" viewBox="0 0 1024 1024"><use href="#logoB-mono"/></svg>
+      <svg width="32" height="32" viewBox="0 0 1024 1024"><use href="#logoB-mono"/></svg>
+      <svg width="48" height="48" viewBox="0 0 1024 1024"><use href="#logoB-mono"/></svg>
+    </div>
+  </div>
+  <div class="concept-card" style="background:#0a0a0a">
+    <h3>C mono</h3>
+    <svg width="120" height="120" viewBox="0 0 1024 1024"><use href="#logoC-mono"/></svg>
+    <div style="display:flex;gap:14px;margin-top:14px;align-items:flex-end">
+      <svg width="16" height="16" viewBox="0 0 1024 1024"><use href="#logoC-mono"/></svg>
+      <svg width="24" height="24" viewBox="0 0 1024 1024"><use href="#logoC-mono"/></svg>
+      <svg width="32" height="32" viewBox="0 0 1024 1024"><use href="#logoC-mono"/></svg>
+      <svg width="48" height="48" viewBox="0 0 1024 1024"><use href="#logoC-mono"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- ============= TASKBAR ============= -->
+<h2>Taskbar · Dark</h2>
+<div class="taskbar">
+  <div class="ti placeholder">Win</div>
+  <div class="ti placeholder">🔍</div>
+  <div class="ti placeholder">E</div>
+  <div class="ti placeholder">Ch</div>
+  <div class="ti"><svg width="26" height="26" viewBox="0 0 1024 1024" style="border-radius:5px"><use href="#logoA"/></svg></div>
+  <div class="ti"><svg width="26" height="26" viewBox="0 0 1024 1024" style="border-radius:5px"><use href="#logoB"/></svg></div>
+  <div class="ti"><svg width="26" height="26" viewBox="0 0 1024 1024" style="border-radius:5px"><use href="#logoC"/></svg></div>
+  <div class="ti placeholder">N</div>
+  <div class="ti placeholder">Sl</div>
+</div>
+
+<h2>Taskbar · Light</h2>
+<div class="taskbar light">
+  <div class="ti placeholder">Win</div>
+  <div class="ti placeholder">🔍</div>
+  <div class="ti placeholder">E</div>
+  <div class="ti placeholder">Ch</div>
+  <div class="ti"><svg width="26" height="26" viewBox="0 0 1024 1024" style="border-radius:5px"><use href="#logoA"/></svg></div>
+  <div class="ti"><svg width="26" height="26" viewBox="0 0 1024 1024" style="border-radius:5px"><use href="#logoB"/></svg></div>
+  <div class="ti"><svg width="26" height="26" viewBox="0 0 1024 1024" style="border-radius:5px"><use href="#logoC"/></svg></div>
+  <div class="ti placeholder">N</div>
+  <div class="ti placeholder">Sl</div>
+</div>
+
+<div class="divider"></div>
+<div class="notes">
+  <b>보는 법</b><br>
+  1. 풀 사이즈보다 <b>16/24px</b>에서 뭐가 뭔지 구분되는지가 핵심.<br>
+  2. taskbar에서 옆 아이콘들과 나란히 놓았을 때 <b>먼저 눈에 들어오는</b> 게 좋은 것.<br>
+  3. Monochrome variant는 Windows 11 unplated 타일용 — 너무 초라하면 그 컨셉은 탈락.
+</div>
+
+</body>
+</html>

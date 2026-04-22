@@ -174,7 +174,7 @@ internal sealed class ThumbnailDiskCache
     private static string ComputeSha1Hex(string input)
     {
         var bytes = Encoding.UTF8.GetBytes(input);
-        LumiFiles<byte> hash = stackalloc byte[20]; // SHA1 = 160bit
+        Span<byte> hash = stackalloc byte[20]; // SHA1 = 160bit
         SHA1.HashData(bytes, hash);
         var sb = new StringBuilder(40);
         foreach (var b in hash) sb.Append(b.ToString("x2"));

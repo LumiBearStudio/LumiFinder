@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Lumi Files — UI Mockup v3 (Tahoe Liquid Glass)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Lumi accent */
+    --lumi-amber: #FFB86B;
+    --lumi-amber-soft: #FFD27A;
+    --lumi-amber-deep: #D48028;
+
+    /* Neutral dark surfaces */
+    --bg-0: #0A0A0C;
+    --bg-1: #16161A;
+    --bg-2: #1E1E22;
+    --bg-3: #26262B;
+
+    /* Text */
+    --text-primary: #EEEEF2;
+    --text-secondary: #92929A;
+    --text-tertiary: #60606A;
+
+    /* ── Liquid Glass layers ── */
+    --glass-sidebar: rgba(255, 255, 255, 0.06);
+    --glass-sidebar-strong: rgba(255, 255, 255, 0.09);
+    --glass-content: rgba(16, 16, 20, 0.88);
+    --glass-content-strong: rgba(10, 10, 14, 0.94);
+    --glass-pill: rgba(255, 255, 255, 0.025);
+    --glass-pill-hover: rgba(255, 255, 255, 0.055);
+
+    /* Glass edge highlights */
+    --edge-top: rgba(255, 255, 255, 0.14);
+    --edge-subtle: rgba(255, 255, 255, 0.06);
+    --edge-border: rgba(255, 255, 255, 0.08);
+
+    /* Dividers */
+    --divider: rgba(255, 255, 255, 0.06);
+    --divider-soft: rgba(255, 255, 255, 0.035);
+
+    /* Selection */
+    --sel-bg: linear-gradient(90deg, rgba(255, 184, 107, 0.22), rgba(255, 184, 107, 0.12));
+    --sel-border: rgba(255, 184, 107, 0.22);
+
+    /* Category icon containers */
+    --cat-amber:  linear-gradient(135deg, #FFB86B, #D48028);
+    --cat-coral:  linear-gradient(135deg, #FF9A6B, #E85A3C);
+    --cat-gold:   linear-gradient(135deg, #F0CE5A, #C29A28);
+    --cat-green:  linear-gradient(135deg, #7EC785, #4BA35E);
+    --cat-blue:   linear-gradient(135deg, #6AA8E8, #3E7FC2);
+    --cat-purple: linear-gradient(135deg, #B08FE8, #7A52C2);
+    --cat-pink:   linear-gradient(135deg, #F08FBF, #C25A8F);
+    --cat-gray:   linear-gradient(135deg, #7A7368, #504A40);
+
+    /* Window geometry */
+    --window-radius: 24px;
+    --panel-radius-inner: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: "Inter", "Pretendard", -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 13px;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    padding: 40px 32px 60px;
+    min-height: 100vh;
+    /* Vivid wallpaper — Tahoe-style colorful gradient so glass shows through */
+    background:
+      radial-gradient(ellipse at 15% 20%, rgba(100, 60, 220, 0.65), transparent 50%),
+      radial-gradient(ellipse at 70% 15%, rgba(200, 60, 140, 0.50), transparent 50%),
+      radial-gradient(ellipse at 45% 85%, rgba(60, 40, 160, 0.60), transparent 55%),
+      radial-gradient(ellipse at 85% 65%, rgba(40, 120, 200, 0.40), transparent 50%),
+      radial-gradient(ellipse at 30% 60%, rgba(80, 50, 180, 0.35), transparent 55%),
+      linear-gradient(160deg, #1A0E30 0%, #0C0818 100%);
+  }
+  .page { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+
+  /* =========================================================
+     WINDOW — opaque frame that holds:
+       • Floating sidebar glass card (Layer 2, high transparency)
+       • Flush content area (Layer 1, built into window frame)
+     Sidebar floats with own radius; content is flush to frame edges.
+     This creates DEPTH CONTRAST — sidebar "above" the content.
+     ========================================================= */
+  .window {
+    width: 1280px;
+    height: 820px;
+    border-radius: var(--window-radius);
+    /* Window frame BG — the content area shares this layer */
+    background: linear-gradient(180deg,
+      rgba(18, 18, 24, 0.88) 0%,
+      rgba(12, 12, 16, 0.94) 100%);
+    backdrop-filter: blur(60px) saturate(1.4);
+    -webkit-backdrop-filter: blur(60px) saturate(1.4);
+    box-shadow:
+      0 40px 100px rgba(0,0,0,0.70),
+      0 16px 40px rgba(0,0,0,0.45),
+      0 0 0 0.5px var(--edge-border);
+    display: flex;
+    /* Padding only LEFT/TOP/BOTTOM — sidebar floats inside.
+       RIGHT has NO padding — content is flush to window edge. */
+    padding: 6px 0 6px 6px;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* =========================================================
+     SIDEBAR — independent floating glass card (Layer 2)
+     High transparency: wallpaper shows through strongly.
+     Has its OWN border-radius on ALL 4 sides.
+     "Floats above" the content — creates depth.
+     ========================================================= */
+  .sidebar {
+    width: 228px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    /* HIGH transparency — wallpaper shows through */
+    /* Darker glass — still translucent but with dark base */
+    background: linear-gradient(180deg,
+      rgba(30, 28, 40, 0.72) 0%,
+      rgba(22, 20, 32, 0.78) 100%);
+    backdrop-filter: blur(80px) saturate(2.0) brightness(1.05);
+    -webkit-backdrop-filter: blur(80px) saturate(2.0) brightness(1.05);
+    /* ALL 4 corners rounded — independent floating card */
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+    z-index: 2;
+    /* Glass edge highlights on all sides */
+    box-shadow:
+      inset 0 0.5px 0 rgba(255,255,255,0.18),
+      inset 0 -0.5px 0 rgba(255,255,255,0.04),
+      inset 0.5px 0 0 rgba(255,255,255,0.06),
+      inset -0.5px 0 0 rgba(255,255,255,0.06),
+      0 0 0 0.5px rgba(255,255,255,0.08),
+      0 2px 12px rgba(0,0,0,0.25);
+  }
+
+  /* Top edge light streak */
+  .sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 12px; right: 12px;
+    height: 1px;
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.22) 30%,
+      rgba(255,255,255,0.22) 70%,
+      rgba(255,255,255,0) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Bottom edge light streak */
+  .sidebar::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 12px; right: 12px;
+    height: 1px;
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.06) 30%,
+      rgba(255,255,255,0.06) 70%,
+      rgba(255,255,255,0) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* =========================================================
+     CONTENT — flush with window frame (Layer 1)
+     NO own border-radius. Clipped by window's overflow:hidden.
+     Darker and more opaque — acts as the "base" layer.
+     Sidebar floats ABOVE this, creating depth difference.
+     ========================================================= */
+  .content {
+    flex: 1;
+    display: grid;
+    grid-template-rows: 36px 44px 1fr 30px;
+    min-height: 0;
+    min-width: 0;
+    /* Content shares window's background — no separate BG needed,
+       but we add a subtle overlay for depth */
+    background: rgba(0, 0, 0, 0.12);
+    /* NO border-radius — flush to window edges,
+       clipped by window's border-radius + overflow:hidden */
+    border-radius: 0;
+    /* No border/line between sidebar and content */
+    box-shadow: none;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* =========================================================
+     SIDEBAR INTERNALS
+     ========================================================= */
+  .sidebar-top {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 7px;
+    flex-shrink: 0;
+    -webkit-app-region: drag;
+  }
+  .sidebar-top .logo {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, var(--lumi-amber), var(--lumi-amber-deep));
+    box-shadow: 0 0 8px rgba(255,184,107,0.4);
+  }
+  .sidebar-top .name {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.01em;
+  }
+
+  .sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 8px 10px;
+  }
+  .sidebar-body::-webkit-scrollbar { width: 5px; }
+  .sidebar-body::-webkit-scrollbar-track { background: transparent; }
+  .sidebar-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+
+  .sidebar-bottom {
+    flex-shrink: 0;
+    padding: 6px 8px 8px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .sidebar-bottom .sb-settings {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+  }
+  .sidebar-bottom .sb-settings:hover {
+    color: var(--text-primary);
+  }
+
+  .sb-section { margin-bottom: 6px; }
+  .sb-header {
+    padding: 10px 12px 3px;
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    opacity: 0.8;
+  }
+
+  .sb-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    margin: 0;
+    line-height: 1;
+    transition: background 0.15s;
+  }
+  .sb-item:hover { background: rgba(255,255,255,0.04); }
+  .sb-item.active {
+    background: linear-gradient(90deg, rgba(255,184,107,0.28), rgba(255,184,107,0.15));
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+  .sb-item.active .sb-ico-stroke { color: #FFF3DC; }
+
+  /* Stroke-style icons (Tahoe default — using text symbols as stand-in for SF Symbols) */
+  .sb-ico-stroke {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+
+  /* Colored container icons (only for system collections) */
+  .sb-ico {
+    width: 20px; height: 20px;
+    border-radius: 5.5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 1px 2px rgba(0,0,0,0.28);
+  }
+  .sb-ico.amber  { background: var(--cat-amber); }
+  .sb-ico.coral  { background: var(--cat-coral); }
+  .sb-ico.gold   { background: var(--cat-gold); }
+  .sb-ico.green  { background: var(--cat-green); }
+  .sb-ico.blue   { background: var(--cat-blue); }
+  .sb-ico.purple { background: var(--cat-purple); }
+  .sb-ico.pink   { background: var(--cat-pink); }
+  .sb-ico.gray   { background: var(--cat-gray); }
+
+  .sb-item .tag-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin: 0 4px 0 5px;
+    flex-shrink: 0;
+  }
+
+  /* =========================================================
+     TITLE BAR
+     ========================================================= */
+  .titlebar {
+    display: flex;
+    align-items: center;
+    padding: 0 6px 0 12px;
+    gap: 8px;
+  }
+  .tabs { display: flex; gap: 1px; flex: 1; align-items: center; overflow: hidden; min-width: 0; }
+  .tab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 11px 5px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    max-width: 170px;
+    min-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.025); }
+  .tab.active {
+    color: var(--text-primary);
+    background: linear-gradient(180deg, rgba(255,184,107,0.16), rgba(255,184,107,0.06));
+    box-shadow: inset 0 0 0 1px rgba(255,184,107,0.12);
+  }
+  .tab .tab-icon {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+    opacity: 0.8;
+  }
+  .tab .tab-close {
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    margin-left: auto;
+    color: var(--text-tertiary);
+    font-size: 13px; line-height: 1;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .tab:hover .tab-close, .tab.active .tab-close { opacity: 0.7; }
+  .tab .tab-close:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); opacity: 1; }
+  .tab-add {
+    display: flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    color: var(--text-tertiary);
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+  .tab-add:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+
+  .caption { display: flex; gap: 2px; }
+  .caption button {
+    width: 42px; height: 30px;
+    background: none; border: none;
+    color: var(--text-secondary);
+    font-size: 11px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .caption button:hover { background: rgba(255,255,255,0.07); color: var(--text-primary); }
+  .caption button.close:hover { background: #E81123; color: white; }
+
+  /* =========================================================
+     TOOLBAR — pill/capsule (more subtle glass)
+     ========================================================= */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 8px;
+    background: transparent;
+  }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 2px;
+    border-radius: 999px;
+    background: var(--glass-pill);
+    transition: background 0.15s;
+  }
+  .pill > button,
+  .pill > .pill-btn {
+    height: 28px;
+    padding: 0 9px;
+    min-width: 32px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none;
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 999px;
+    position: relative;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  .pill > button.disabled { color: var(--text-tertiary); opacity: 0.5; }
+  .pill > button:hover:not(.disabled) { background: var(--glass-pill-hover); }
+  .pill > button.active {
+    background: linear-gradient(180deg, rgba(255,184,107,0.22), rgba(255,184,107,0.12));
+    color: var(--lumi-amber-soft);
+  }
+  .pill-divider {
+    width: 1px; height: 14px;
+    background: rgba(255,255,255,0.08);
+    align-self: center;
+    margin: 0 -1px;
+  }
+
+  .addr-folder {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 28px;
+    padding: 0 12px 0 10px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .addr-folder .folder-icon { font-size: 14px; color: var(--lumi-amber); }
+
+  .spacer { flex: 1; }
+
+  .search-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 28px;
+    border-radius: 999px;
+    background: var(--glass-pill);
+    color: var(--text-tertiary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .search-compact:hover { background: var(--glass-pill-hover); color: var(--text-primary); }
+
+  /* =========================================================
+     MILLER COLUMNS
+     ========================================================= */
+  .columns-wrap {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .columns-wrap::-webkit-scrollbar { height: 8px; }
+  .columns-wrap::-webkit-scrollbar-track { background: transparent; }
+  .columns-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
+
+  .column {
+    width: 260px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--divider-soft);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .col-header {
+    padding: 8px 14px 6px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .col-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2px 6px 10px;
+  }
+  .col-body::-webkit-scrollbar { width: 5px; }
+  .col-body::-webkit-scrollbar-track { background: transparent; }
+  .col-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+
+  /* File rows — more compact (Tahoe density) */
+  .file-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: 7px;
+    margin: 0.5px 0;
+    transition: background 0.12s;
+  }
+  .file-row:hover { background: rgba(255,255,255,0.04); }
+  .file-row.selected {
+    background: var(--sel-bg);
+    box-shadow: inset 0 0 0 1px var(--sel-border);
+  }
+  .file-row.focused {
+    background: linear-gradient(90deg, rgba(255,184,107,0.22), rgba(255,184,107,0.12));
+  }
+  .file-row.dim { color: var(--text-tertiary); }
+
+  .file-icon {
+    width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  /* Folder icon colors */
+  .ico-folder { color: #6AA8E8; }         /* Default blue (Tahoe standard) */
+  .ico-folder-amber { color: var(--lumi-amber); }
+  .ico-folder-coral { color: #FF9A6B; }
+  .ico-folder-gold { color: #F0CE5A; }
+  .ico-folder-green { color: #7EC785; }
+  .ico-folder-purple { color: #B08FE8; }
+  .ico-folder-pink { color: #F08FBF; }
+  .ico-file { color: var(--text-tertiary); }
+  .ico-doc { color: var(--text-secondary); }
+
+  .file-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .file-row .ext { color: var(--text-tertiary); font-size: 11.5px; margin-left: 2px; }
+  .chev { color: var(--text-tertiary); font-size: 10px; flex-shrink: 0; opacity: 0.6; }
+
+  /* =========================================================
+     PREVIEW COLUMN
+     ========================================================= */
+  .preview-column {
+    width: 300px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    background: rgba(255,255,255,0.015);
+    border-left: 1px solid var(--divider-soft);
+  }
+  .preview-thumb {
+    height: 180px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 56px;
+    color: rgba(255,255,255,0.30);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), inset 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .preview-title { font-size: 14px; font-weight: 600; word-break: break-all; }
+
+  .pv-card {
+    background: rgba(0,0,0,0.25);
+    border-radius: 11px;
+    overflow: hidden;
+  }
+  .pv-card .pv-row {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    padding: 8px 12px;
+    font-size: 12px;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .pv-card .pv-row:last-child { border-bottom: none; }
+  .pv-card .pv-row dt { color: var(--text-tertiary); }
+  .pv-card .pv-row dd { color: var(--text-primary); word-break: break-all; }
+
+  .pv-section-title {
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+    padding-left: 2px;
+    font-weight: 600;
+  }
+  .preview-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .pt-chip {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    background: rgba(255,184,107,0.14);
+    color: var(--lumi-amber-soft);
+  }
+  .pt-chip.green { background: rgba(126,199,133,0.14); color: #A6DFAC; }
+
+  .pv-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+  .pv-actions button {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    border: 1px solid rgba(255,255,255,0.07);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pv-actions button:hover { background: rgba(255,255,255,0.08); }
+  .pv-actions button.primary {
+    background: linear-gradient(180deg, rgba(255,184,107,0.3), rgba(255,184,107,0.15));
+    color: var(--lumi-amber-soft);
+    border-color: var(--sel-border);
+  }
+
+  /* =========================================================
+     PATH BAR
+     ========================================================= */
+  .pathbar {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    border-top: 1px solid var(--divider-soft);
+    background: rgba(0,0,0,0.20);
+    font-size: 11px;
+    color: var(--text-secondary);
+    gap: 0;
+    border-radius: 0;
+  }
+  .pb-path {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .pb-seg {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: 5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.12s;
+  }
+  .pb-seg:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+  .pb-seg.current { color: var(--text-primary); font-weight: 500; }
+  .pb-seg .ico { font-size: 11px; }
+  .pb-sep { color: var(--text-tertiary); font-size: 9px; padding: 0 1px; user-select: none; opacity: 0.5; }
+
+  .pb-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+    padding-left: 12px;
+    border-left: 1px solid var(--divider);
+  }
+  .pb-status .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-tertiary); }
+
+  /* =========================================================
+     NOTES (design documentation)
+     ========================================================= */
+  .notes {
+    width: 1280px;
+    background: rgba(20,14,8,0.65);
+    border: 1px solid rgba(255,220,160,0.08);
+    border-radius: 16px;
+    padding: 20px 26px;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  .notes h3 {
+    color: var(--lumi-amber);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .notes b { color: var(--text-primary); }
+  .notes ul { margin-left: 20px; }
+  .notes li { margin: 4px 0; }
+  .notes .delta { color: var(--lumi-amber-soft); }
+
+  /* SVG icon inline sizing */
+  .i { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; }
+  .i svg { width: 16px; height: 16px; }
+  .i-sm svg { width: 14px; height: 14px; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<div class="window">
+
+  <!-- ============ SIDEBAR — Liquid Glass panel ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="logo"></div>
+      <span class="name">Lumi Files</span>
+    </div>
+    <div class="sidebar-body">
+      <div class="sb-section">
+        <div class="sb-header">Favorites</div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </span>
+          <span>Recent</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </span>
+          <span>Desktop</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </span>
+          <span>Documents</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </span>
+          <span>Downloads</span>
+        </div>
+        <div class="sb-item active">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </span>
+          <span>Projects</span>
+        </div>
+        <div class="sb-item"><span class="sb-ico purple"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span><span>Pictures</span></div>
+        <div class="sb-item"><span class="sb-ico pink"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><span>Music</span></div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-header">Locations</div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          </span>
+          <span>Local Disk (C:)</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-ico-stroke">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          </span>
+          <span>Data (D:)</span>
+        </div>
+        <div class="sb-item"><span class="sb-ico blue"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span><span>OneDrive</span></div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-header">Tags</div>
+        <div class="sb-item"><span class="tag-dot" style="background:#F0CE5A;"></span><span>Important</span></div>
+        <div class="sb-item"><span class="tag-dot" style="background:#7EC785;"></span><span>Work</span></div>
+        <div class="sb-item"><span class="tag-dot" style="background:#6AA8E8;"></span><span>Personal</span></div>
+        <div class="sb-item"><span class="tag-dot" style="background:#FF7A5C;"></span><span>Urgent</span></div>
+      </div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="sb-item sb-settings">
+        <span class="sb-ico-stroke">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </span>
+        <span>Settings</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ CONTENT — opaque glass panel ============ -->
+  <div class="content">
+
+  <!-- TITLE BAR -->
+  <div class="titlebar">
+    <div class="tabs">
+      <div class="tab">
+        <span class="tab-icon" style="background: var(--cat-amber);"></span>
+        <span>Projects</span>
+        <span class="tab-close">×</span>
+      </div>
+      <div class="tab active">
+        <span class="tab-icon" style="background: var(--cat-blue);"></span>
+        <span>LumiFiles</span>
+        <span class="tab-close">×</span>
+      </div>
+      <div class="tab">
+        <span class="tab-icon" style="background: var(--cat-green);"></span>
+        <span>Downloads</span>
+        <span class="tab-close">×</span>
+      </div>
+      <div class="tab-add">+</div>
+    </div>
+    <div class="caption">
+      <button>−</button>
+      <button>☐</button>
+      <button class="close">×</button>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="pill">
+      <button title="Back">‹</button>
+      <div class="pill-divider"></div>
+      <button class="disabled" title="Forward">›</button>
+    </div>
+
+    <div class="addr-folder">
+      <span class="folder-icon">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--lumi-amber)"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </span>
+      <span>LumiFiles</span>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="pill">
+      <button title="Icons">⊞</button>
+      <button title="List">≡</button>
+      <button class="active" title="Columns (Miller)">▦</button>
+      <button title="Gallery">⊟</button>
+    </div>
+
+    <div class="pill">
+      <button class="pill-btn" title="Sort">
+        <span>↕</span>
+        <span style="font-size:11px; color: var(--text-secondary);">Name</span>
+      </button>
+    </div>
+
+    <div class="pill">
+      <button title="New">＋</button>
+      <button title="Share">↗</button>
+      <button title="Tags">⏚</button>
+      <button title="More">⋯</button>
+    </div>
+
+    <div class="search-compact" title="Search  ⌃F">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </div>
+  </div>
+
+    <!-- MILLER COLUMNS -->
+    <div class="columns-wrap">
+
+      <div class="column">
+        <div class="col-header"><span>LumiFiles</span><span>12</span></div>
+        <div class="col-body">
+          <div class="file-row"><span class="file-icon ico-folder">▸</span><span class="file-name">.github</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-folder-amber">▸</span><span class="file-name">src</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-folder-green">▸</span><span class="file-name">AppPackages</span><span class="chev">›</span></div>
+          <div class="file-row dim"><span class="file-icon ico-file">─</span><span class="file-name dim">.gitignore</span></div>
+          <div class="file-row"><span class="file-icon ico-doc">≡</span><span class="file-name">CODE_OF_CONDUCT<span class="ext">.md</span></span></div>
+          <div class="file-row"><span class="file-icon ico-doc">≡</span><span class="file-name">CONTRIBUTING<span class="ext">.md</span></span></div>
+          <div class="file-row"><span class="file-icon ico-file">§</span><span class="file-name">LICENSE</span></div>
+          <div class="file-row selected"><span class="file-icon ico-folder-amber">▸</span><span class="file-name">LumiFiles<span class="ext">.sln</span></span></div>
+          <div class="file-row"><span class="file-icon ico-doc">≡</span><span class="file-name">PRIVACY<span class="ext">.md</span></span></div>
+          <div class="file-row"><span class="file-icon ico-doc">≡</span><span class="file-name">SECURITY<span class="ext">.md</span></span></div>
+          <div class="file-row"><span class="file-icon ico-file">⚙</span><span class="file-name">build-msix<span class="ext">.bat</span></span></div>
+          <div class="file-row"><span class="file-icon ico-file">{}</span><span class="file-name">global<span class="ext">.json</span></span></div>
+        </div>
+      </div>
+
+      <div class="column">
+        <div class="col-header"><span>src</span><span>1</span></div>
+        <div class="col-body">
+          <div class="file-row focused"><span class="file-icon ico-folder-amber">▸</span><span class="file-name">LumiFiles</span><span class="chev">›</span></div>
+        </div>
+      </div>
+
+      <div class="column">
+        <div class="col-header"><span>LumiFiles</span><span>3</span></div>
+        <div class="col-body">
+          <div class="file-row selected"><span class="file-icon ico-folder-coral">▸</span><span class="file-name">LumiFiles</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-folder-purple">▸</span><span class="file-name">LumiFiles.Thumbs</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-file">─</span><span class="file-name">LumiFiles<span class="ext">.slnx</span></span></div>
+        </div>
+      </div>
+
+      <div class="column">
+        <div class="col-header"><span>LumiFiles</span><span>24</span></div>
+        <div class="col-body">
+          <div class="file-row"><span class="file-icon ico-folder">▸</span><span class="file-name">Assets</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-folder-green">▸</span><span class="file-name">Controls</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-folder-amber">▸</span><span class="file-name">Helpers</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-folder-gold">▸</span><span class="file-name">Models</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-folder-pink">▸</span><span class="file-name">Properties</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-folder-coral">▸</span><span class="file-name">Services</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-folder-purple">▸</span><span class="file-name">ViewModels</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-folder">▸</span><span class="file-name">Views</span><span class="chev">›</span></div>
+          <div class="file-row"><span class="file-icon ico-file" style="color:#B08FE8;">◆</span><span class="file-name">App<span class="ext">.xaml</span></span></div>
+          <div class="file-row"><span class="file-icon ico-file">#</span><span class="file-name">App.xaml<span class="ext">.cs</span></span></div>
+          <div class="file-row focused"><span class="file-icon ico-file" style="color:#FFB86B;">⛋</span><span class="file-name">LumiFiles_Dev<span class="ext">.pfx</span></span></div>
+          <div class="file-row"><span class="file-icon ico-file">⚙</span><span class="file-name">LumiFiles<span class="ext">.csproj</span></span></div>
+          <div class="file-row"><span class="file-icon ico-file" style="color:#6AA8E8;">▣</span><span class="file-name">Package<span class="ext">.appxmanifest</span></span></div>
+          <div class="file-row"><span class="file-icon ico-file">#</span><span class="file-name">MainWindow<span class="ext">.xaml</span></span></div>
+          <div class="file-row"><span class="file-icon ico-file">#</span><span class="file-name">MainWindow.xaml<span class="ext">.cs</span></span></div>
+          <div class="file-row"><span class="file-icon ico-file">{}</span><span class="file-name">icons<span class="ext">.json</span></span></div>
+        </div>
+      </div>
+
+      <!-- Preview column -->
+      <div class="column preview-column">
+        <div class="preview-thumb">⛋</div>
+        <div class="preview-title">LumiFiles_Dev.pfx</div>
+
+        <div class="pv-card">
+          <dl class="pv-row"><dt>Kind</dt><dd>Personal Info Exchange</dd></dl>
+          <dl class="pv-row"><dt>Size</dt><dd>2.64 KB · 2,710 bytes</dd></dl>
+          <dl class="pv-row"><dt>Created</dt><dd>Today, 12:55 PM</dd></dl>
+          <dl class="pv-row"><dt>Modified</dt><dd>Today, 12:55 PM</dd></dl>
+          <dl class="pv-row"><dt>Path</dt><dd style="color:var(--text-secondary);font-size:11px;">D:\…\LumiFiles\</dd></dl>
+        </div>
+
+        <div>
+          <div class="pv-section-title">Tags</div>
+          <div class="preview-tags">
+            <span class="pt-chip">cert</span>
+            <span class="pt-chip green">dev-only</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="pv-section-title">Quick Actions</div>
+          <div class="pv-actions">
+            <button class="primary">Open ↗</button>
+            <button>Copy Path</button>
+            <button>Reveal</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.columns-wrap -->
+
+    <!-- Bottom path bar -->
+    <div class="pathbar">
+      <div class="pb-path">
+        <span class="pb-seg"><span class="ico">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </span>D:</span>
+        <span class="pb-sep">›</span>
+        <span class="pb-seg">11.AI</span>
+        <span class="pb-sep">›</span>
+        <span class="pb-seg"><span class="ico" style="color:var(--lumi-amber);">
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        </span>LumiFiles</span>
+        <span class="pb-sep">›</span>
+        <span class="pb-seg">src</span>
+        <span class="pb-sep">›</span>
+        <span class="pb-seg">LumiFiles</span>
+        <span class="pb-sep">›</span>
+        <span class="pb-seg">LumiFiles</span>
+        <span class="pb-sep">›</span>
+        <span class="pb-seg current"><span class="ico" style="color:var(--lumi-amber);">⛋</span> LumiFiles_Dev.pfx</span>
+      </div>
+      <div class="pb-status">
+        <span><b style="color:var(--text-secondary);">1</b> of 17 · 2.64 KB</span>
+        <span class="dot"></span>
+        <span>Free: 842 GB</span>
+      </div>
+    </div>
+
+  </div><!-- /.content -->
+</div><!-- /.window -->
+
+<!-- ============ NOTES ============ -->
+<div class="notes">
+  <h3>v3 — Tahoe Liquid Glass 적용</h3>
+  <ul>
+    <li><span class="delta">★</span> <b>이중 글라스 패널 구조</b> — 사이드바/콘텐츠가 각각 독립 글라스 레이어. 사이드바는 높은 투명도(배경 비침), 콘텐츠는 낮은 투명도(가독성 확보)</li>
+    <li><span class="delta">★</span> <b>사이드바 투명도 대폭 증가</b> — rgba(255,255,255,0.06~0.09) + blur(80px) + saturate(2.0). 배경 월페이퍼가 강하게 비침</li>
+    <li><span class="delta">★</span> <b>윈도우 코너 24px</b> — Tahoe 기본 ~24px 반영. 사이드바/콘텐츠도 매칭 라운드</li>
+    <li><span class="delta">★</span> 이모지 → <b>SVG stroke 아이콘</b> (SF Symbols 스타일). 시스템 폴더만 컬러 컨테이너 유지</li>
+    <li><span class="delta">★</span> <b>글라스 엣지 하이라이트</b> — 사이드바 상단/우측 경계에 빛줄기 (::before, ::after)</li>
+    <li><span class="delta">★</span> <b>검색 축소형</b> — 아이콘만 표시, 클릭 시 확장 (Tahoe 방식)</li>
+    <li><span class="delta">△</span> Pill 배경 더 미묘하게: 0.04 → 0.025</li>
+    <li><span class="delta">△</span> 파일 행 높이 컴팩트: 30px → 26px</li>
+    <li><span class="delta">△</span> 툴바 높이 48 → 44px, 하단 패스바 32 → 30px</li>
+    <li>유지: warm amber accent, Miller Columns 4단(+preview), Windows 캡션 버튼, 브랜드 아이덴티티</li>
+  </ul>
+
+  <h3 style="margin-top:18px;">구조 비교 (v2 → v3)</h3>
+  <ul>
+    <li><b>v2:</b> <code>.window { grid 2-col, overflow:hidden }</code> — 사이드바/콘텐츠 flush, 라운드 없음</li>
+    <li><b>v3:</b> <code>.window { flex, 투명 프레임 }</code> — 사이드바(24px 좌측 라운드) + 콘텐츠(24px 우측 라운드) 독립</li>
+    <li>사이드바↔콘텐츠: 경계선 대신 <b>글래스 엣지 빛줄기</b>로 자연스러운 구분</li>
+    <li><b>배경:</b> 더 vivid한 보라/파랑 그라디언트로 유리 효과 극대화</li>
+  </ul>
+</div>
+
+</div>
+
+</body>
+</html>
