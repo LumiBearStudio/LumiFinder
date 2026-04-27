@@ -1,0 +1,8 @@
+{
+  "detectedAt": "2026-04-27T01:50:30.387Z",
+  "toplevel": "D:/11.AI/LumiFiles/.claude/worktrees/adoring-margulis-de0aae",
+  "gitDir": "D:\\11.AI\\LumiFiles\\.git\\worktrees\\adoring-margulis-de0aae",
+  "gitCommonDir": "D:\\11.AI\\LumiFiles\\.git",
+  "issue": "https://github.com/anthropics/claude-code/issues/46808",
+  "message": "git worktree detected — Claude Code hooks may not fire (issue #46808). Run bkit from the primary repository if hook-driven automation is required."
+}

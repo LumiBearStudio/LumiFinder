@@ -92,7 +92,7 @@ namespace LumiFiles
             // 모든 작업 유형(Copy/Move/Link)을 허용.
             // AcceptedOperation이 RequestedOperation의 부분집합이어야 WinUI가 수용하므로,
             // Shift=Move, Alt=Link, 기본(같은 드라이브)=Move가 동작하려면 모두 포함해야 한다.
-            // 참고: Lumi Files→외부앱(Explorer) 드롭 시 Explorer가 자체 규칙으로 Move/Copy 결정.
+            // 참고: LumiFiles→외부앱(Explorer) 드롭 시 Explorer가 자체 규칙으로 Move/Copy 결정.
             e.Data.RequestedOperation = DataPackageOperation.Copy | DataPackageOperation.Move | DataPackageOperation.Link;
 
             // LumiFiles→외부 앱: StorageItems를 지연 로딩 (외부 앱이 요청할 때만 로드)
@@ -729,7 +729,7 @@ namespace LumiFiles
         /// <summary>
         /// 드래그 오버레이를 갱신한다.
         /// 내부 드래그: 항목의 실제 아이콘을 반투명 스택으로 표시 + 파일명/개수 + 뱃지.
-        /// 외부 드래그(Explorer→Lumi Files): 작업 텍스트만 표시.
+        /// 외부 드래그(Explorer→LumiFiles): 작업 텍스트만 표시.
         /// </summary>
         private void UpdateDragTooltip(string opText, DragEventArgs e, UIElement relativeTo)
         {

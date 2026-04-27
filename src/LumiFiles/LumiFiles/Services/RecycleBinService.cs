@@ -270,7 +270,7 @@ namespace LumiFiles.Services
 
         /// <summary>
         /// SHEmptyRecycleBin P/Invoke로 휴지통 전체 비우기.
-        /// Lumi Files 자체 확인 다이얼로그 사용 -> SHERB_NOCONFIRMATION 플래그.
+        /// LumiFiles 자체 확인 다이얼로그 사용 -> SHERB_NOCONFIRMATION 플래그.
         /// </summary>
         /// <param name="hwnd">부모 창 핸들 (진행 UI용, IntPtr.Zero 가능)</param>
         public Task<bool> EmptyAsync(IntPtr hwnd)

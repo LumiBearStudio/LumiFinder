@@ -23,7 +23,7 @@ public sealed class CrashReportingService : IDisposable
     // Note: Sentry DSN은 이벤트 전송 전용 (읽기 불가)이므로 클라이언트 앱에 포함해도 안전
     private const string DefaultDsn = "https://a7e1e9d16763c38024a495176e723b2a@o4510949994266624.ingest.de.sentry.io/4510950010191952";
     private static readonly string? SentryDsn =
-        Environment.GetEnvironmentVariable("Lumi Files_SENTRY_DSN")
+        Environment.GetEnvironmentVariable("LUMIFILES_SENTRY_DSN")
         ?? GetDsnFromAppSettings()
         ?? DefaultDsn;
 
@@ -67,7 +67,7 @@ public sealed class CrashReportingService : IDisposable
         }
         if (string.IsNullOrEmpty(SentryDsn))
         {
-            Helpers.DebugLogger.Log("[CrashReporting] Skipped — DSN not configured (set Lumi Files_SENTRY_DSN env var)");
+            Helpers.DebugLogger.Log("[CrashReporting] Skipped — DSN not configured (set LUMIFILES_SENTRY_DSN env var)");
             return;
         }
 
@@ -231,7 +231,7 @@ public sealed class CrashReportingService : IDisposable
                     scope.SetTag("crash.context", "post-mortem.abnormal-exit");
                     scope.SetExtra("prev.log.fileName", Path.GetFileName(prevLogPath));
                     scope.SetFingerprint(new[] { "post-mortem.abnormal-exit" });
-                    AttachSpecificLogFile(scope, prevLogPath, "LumiFiles_PreviousSession.log");
+                    AttachSpecificLogFile(scope, prevLogPath, "Span_PreviousSession.log");
                 });
         }
         catch (Exception ex) { Helpers.DebugLogger.Log($"[CrashReporting] post-mortem capture failed: {ex.Message}"); }

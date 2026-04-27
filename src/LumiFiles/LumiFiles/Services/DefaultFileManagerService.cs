@@ -79,7 +79,7 @@ namespace LumiFiles.Services
         // AppExecutionAlias 경로 (WindowsApps에 등록됨)
         private static readonly string AliasPath =
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Microsoft", "WindowsApps", "lumifiles.exe");
+                "Microsoft", "WindowsApps", "LumiFiles.exe");
 
         /// <summary>
         /// regedit /s + runas로 기본 파일 관리자 등록.
@@ -133,7 +133,7 @@ namespace LumiFiles.Services
             try
             {
                 var regContent = GenerateRestoreReg();
-                var tempPath = Path.Combine(Path.GetTempPath(), "LumiFilesRestoreDefault.reg");
+                var tempPath = Path.Combine(Path.GetTempPath(), "SpanRestoreDefault.reg");
                 await File.WriteAllTextAsync(tempPath, regContent);
 
                 var process = Process.Start(new ProcessStartInfo
@@ -166,8 +166,8 @@ namespace LumiFiles.Services
         }
 
         /// <summary>
-        /// 현재 Lumi Files이 기본 파일 관리자인지 확인.
-        /// HKCU에서 Folder\shell\open\command를 읽어 lumifiles.exe 포함 여부 확인.
+        /// 현재 LumiFiles가 기본 파일 관리자인지 확인.
+        /// HKCU에서 Folder\shell\open\command를 읽어 LumiFiles.exe 포함 여부 확인.
         /// </summary>
         public bool IsDefault()
         {
@@ -176,7 +176,7 @@ namespace LumiFiles.Services
                 using var key = Registry.CurrentUser.OpenSubKey(FolderOpenCommandKey);
                 var command = key?.GetValue("")?.ToString();
                 return !string.IsNullOrEmpty(command)
-                    && command.Contains("lumifiles.exe", StringComparison.OrdinalIgnoreCase);
+                    && command.Contains("LumiFiles.exe", StringComparison.OrdinalIgnoreCase);
             }
             catch
             {
@@ -203,7 +203,7 @@ namespace LumiFiles.Services
         /// <summary>등록용 .reg 내용 생성</summary>
         private string GenerateSetDefaultReg()
         {
-            // %LOCALAPPDATA%\Microsoft\WindowsApps\lumifiles.exe 전체 경로 사용 (안정성)
+            // %LOCALAPPDATA%\Microsoft\WindowsApps\LumiFiles.exe 전체 경로 사용 (안정성)
             var exePath = AliasPath.Replace("\\", "\\\\");
             //
             // ⚠ DelegateExecute는 반드시 "" (빈 문자열). "-" (삭제) 아님.

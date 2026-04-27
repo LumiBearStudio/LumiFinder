@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -289,6 +289,10 @@ namespace LumiFiles
         private readonly Dictionary<string, (ScrollViewer scroller, ItemsControl items)> _tabMillerPanels = new();
         private string? _activeMillerTabId;
 
+        // PathIndicator 중복 호출 차단용 캐시 (pane별 last applied).
+        // 동일 highlight map 연속 호출을 스킵하여 native visual tree 접근 surface 축소.
+        private readonly Dictionary<string, string> _lastPathIndicatorSignature = new();
+
         // ── Per-Tab Details/Icon/List Panels (Show/Hide pattern — Miller와 동일 패턴) ──
         private readonly Dictionary<string, Views.DetailsModeView> _tabDetailsPanels = new();
         private readonly Dictionary<string, Views.IconModeView> _tabIconPanels = new();
@@ -405,6 +409,14 @@ namespace LumiFiles
             _loc = App.Current.Services.GetRequiredService<Services.LocalizationService>();
             _settings = App.Current.Services.GetRequiredService<Services.SettingsService>();
 
+            // Folder custom icon service: UI dispatcher 주입 (설정 OFF이면 호출 없으니 무시됨)
+            try
+            {
+                var folderIconSvc = App.Current.Services.GetService(typeof(Services.FolderIconService)) as Services.FolderIconService;
+                folderIconSvc?.Initialize(this.DispatcherQueue);
+            }
+            catch (Exception ex) { Helpers.DebugLogger.Log($"[MainWindow] FolderIconService init failed: {ex.Message}"); }
+
             // Workspace button
             WorkspaceButton.Click += async (s, e) => await ShowWorkspacePaletteAsync();
 
@@ -419,8 +431,10 @@ namespace LumiFiles
             // File Shelf initialization
             InitializeShelf();
 
-            // Mica
-            SystemBackdrop = new Microsoft.UI.Xaml.Media.MicaBackdrop();
+            // Tahoe Liquid Glass — disable Mica/Acrylic so our custom wallpaper
+            // (5 radial gradients + base linear) is the only visible backdrop.
+            // The 24px rounded WindowFrame Border sits on top of the wallpaper.
+            SystemBackdrop = null;
 
             // Close-to-Tray policy:
             //   - Setting OFF  → always real close (existing behavior)
@@ -1679,9 +1693,13 @@ namespace LumiFiles
 
         /// <summary>
         /// 새 컬럼 요소를 즉시 숨긴 뒤 다음 프레임에서 슬라이드-인 애니메이션을 시작한다.
+        /// AnimationsEnabled=OFF 시 Opacity=0 설정 자체를 스킵하여 컬럼이 기본 상태로 즉시 표시되도록 한다.
         /// </summary>
         private void HideAndAnimateColumn(UIElement element)
         {
+            // 애니메이션 OFF: 슬라이드/페이드 전 과정 스킵 — 컬럼은 기본 상태(Opacity=1)로 즉시 노출
+            if (!_settings.AnimationsEnabled) return;
+
             var visual = ElementCompositionPreview.GetElementVisual(element);
             visual.Opacity = 0f;
 
@@ -1817,7 +1835,7 @@ namespace LumiFiles
 
         /// <summary>
         /// shell: 가상 폴더 또는 CLSID 경로를 감지하여 explorer.exe에 위임.
-        /// 제어판, 네트워크, 프린터 등 LumiFiles이 탐색할 수 없는 가상 폴더 처리.
+        /// 제어판, 네트워크, 프린터 등 Span이 탐색할 수 없는 가상 폴더 처리.
         /// </summary>
         /// <returns>위임 성공 시 true (호출측에서 창 닫기 처리 필요)</returns>
         private bool TryDelegateVirtualFolder(string? arg)
@@ -1830,7 +1848,7 @@ namespace LumiFiles
             // 1. shell: 프로토콜 처리
             if (arg.StartsWith("shell:", StringComparison.OrdinalIgnoreCase))
             {
-                // 실제 파일 시스템 경로로 변환 가능하면 LumiFiles이 직접 처리 (위임 안 함)
+                // 실제 파일 시스템 경로로 변환 가능하면 Span이 직접 처리 (위임 안 함)
                 var resolved = ResolveShellPath(arg);
                 if (resolved != null && System.IO.Directory.Exists(resolved))
                     return false;
@@ -4774,6 +4792,19 @@ namespace LumiFiles
                 control = MillerColumnsControl;
                 paneLabel = "Left(fallback)";
             }
+            // v1.4.3: dedup — 동일 highlight state면 visual tree 재접근 스킵.
+            // native 접근 race surface 축소 (기능 개선, 진단 아님).
+            // Signature: "col1=vmHash|col2=vmHash|..."
+            var signature = string.Join("|",
+                highlightMap.OrderBy(kv => kv.Key)
+                            .Select(kv => $"{kv.Key}={(kv.Value == null ? "null" : kv.Value.GetHashCode().ToString())}"));
+            if (_lastPathIndicatorSignature.TryGetValue(paneLabel, out var prevSig) && prevSig == signature)
+            {
+                // 중복 호출 — 스킵
+                return;
+            }
+            _lastPathIndicatorSignature[paneLabel] = signature;
+
             Helpers.DebugLogger.Log($"[PathIndicator] ApplyPathIndicators pane={paneLabel}, controlNull={control == null}, highlightCount={highlightMap.Count}, controlName={control?.Name}");
             if (control == null) return;
 
@@ -4803,9 +4834,12 @@ namespace LumiFiles
                 // Get or create indicator for this content grid
                 var indicator = GetOrCreateIndicator(contentGrid);
 
+                bool animationsEnabled = _settings.AnimationsEnabled;
+
                 if (onPathItem == null)
                 {
-                    AnimateIndicator(indicator, 0, null, null);
+                    if (animationsEnabled) AnimateIndicator(indicator, 0, null, null);
+                    else SetIndicatorImmediate(indicator, 0, null);
                     continue;
                 }
 
@@ -4814,7 +4848,8 @@ namespace LumiFiles
                 if (itemContainer == null)
                 {
                     Helpers.DebugLogger.Log($"[PathIndicator] col={colIndex}: ContainerFromItem returned NULL for '{onPathItem.Name}', listView.Items.Count={listView.Items.Count}");
-                    AnimateIndicator(indicator, 0, null, null);
+                    if (animationsEnabled) AnimateIndicator(indicator, 0, null, null);
+                    else SetIndicatorImmediate(indicator, 0, null);
                     continue;
                 }
                 Helpers.DebugLogger.Log($"[PathIndicator] col={colIndex}: indicator SHOWN for '{onPathItem.Name}' at pane={paneLabel}");
@@ -4834,7 +4869,8 @@ namespace LumiFiles
                 double? fromY = _prevIndicatorY.TryGetValue(key, out var prev) ? prev : null;
                 _prevIndicatorY[key] = targetY;
 
-                AnimateIndicator(indicator, 1, targetY, fromY);
+                if (animationsEnabled) AnimateIndicator(indicator, 1, targetY, fromY);
+                else SetIndicatorImmediate(indicator, 1, targetY);
             }
         }
 
@@ -4931,6 +4967,37 @@ namespace LumiFiles
             catch (Exception ex)
             {
                 Helpers.DebugLogger.Log($"[PathIndicator] AnimateIndicator error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// AnimationsEnabled=OFF 경로. 애니메이션 없이 인디케이터의 최종 상태를 즉시 적용.
+        /// 진행 중인 애니메이션을 명시적으로 중단(StopAnimation)하여 후속 대입이 덮이지 않도록 보장.
+        /// </summary>
+        private static void SetIndicatorImmediate(Border indicator, double opacity, double? targetY)
+        {
+            try
+            {
+                var visual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(indicator);
+
+                // 진행 중 애니메이션이 남아있으면 직접 대입 값을 덮을 수 있음 → 중단 선행
+                visual.StopAnimation("Offset");
+                visual.StopAnimation("Opacity");
+
+                if (opacity <= 0)
+                {
+                    visual.Opacity = 0f;
+                    return;
+                }
+
+                if (targetY == null) return;
+
+                visual.Offset = new System.Numerics.Vector3(3, (float)targetY.Value, 0);
+                visual.Opacity = 1f;
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[PathIndicator] SetIndicatorImmediate error: {ex.Message}");
             }
         }
 
@@ -5821,7 +5888,7 @@ namespace LumiFiles
                 using var stream = await reader.OpenEntryAsync(archiveFilePath, internalPath);
 
                 var fileName = System.IO.Path.GetFileName(internalPath);
-                var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "LumiFiles_Archive");
+                var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Span_Archive");
                 System.IO.Directory.CreateDirectory(tempDir);
                 var tempFile = System.IO.Path.Combine(tempDir, fileName);
 

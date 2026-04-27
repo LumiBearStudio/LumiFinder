@@ -27,7 +27,7 @@ class Program
 
     private static bool DecideRedirection()
     {
-        var appInstance = AppInstance.FindOrRegisterForKey("Lumi Files_FINDER_MAIN");
+        var appInstance = AppInstance.FindOrRegisterForKey("LUMIFILES_MAIN");
 
         if (appInstance.IsCurrent)
             return false; // 첫 인스턴스 — 정상 실행

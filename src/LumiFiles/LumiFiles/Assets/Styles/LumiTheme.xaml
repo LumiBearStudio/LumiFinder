@@ -1,0 +1,290 @@
+<!--
+  Lumi Files — Tahoe Liquid Glass Theme Tokens
+  Source of truth: _ui_mockup_v3_glass.html + _DESIGN_TOKENS.md
+  All values match the mockup. Do not edit without updating the token table.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ============================================================
+         1. LUMI ACCENT
+         ============================================================ -->
+    <Color x:Key="LumiAmberColor">#FFFFB86B</Color>
+    <Color x:Key="LumiAmberSoftColor">#FFFFD27A</Color>
+    <Color x:Key="LumiAmberDeepColor">#FFD48028</Color>
+    <SolidColorBrush x:Key="LumiAmberBrush" Color="{StaticResource LumiAmberColor}" />
+    <SolidColorBrush x:Key="LumiAmberSoftBrush" Color="{StaticResource LumiAmberSoftColor}" />
+    <SolidColorBrush x:Key="LumiAmberDeepBrush" Color="{StaticResource LumiAmberDeepColor}" />
+
+    <!-- ============================================================
+         2. DARK SURFACES
+         ============================================================ -->
+    <Color x:Key="LumiBg0Color">#FF0A0A0C</Color>
+    <Color x:Key="LumiBg1Color">#FF16161A</Color>
+    <Color x:Key="LumiBg2Color">#FF1E1E22</Color>
+    <Color x:Key="LumiBg3Color">#FF26262B</Color>
+    <SolidColorBrush x:Key="LumiBg0Brush" Color="{StaticResource LumiBg0Color}" />
+    <SolidColorBrush x:Key="LumiBg1Brush" Color="{StaticResource LumiBg1Color}" />
+    <SolidColorBrush x:Key="LumiBg2Brush" Color="{StaticResource LumiBg2Color}" />
+    <SolidColorBrush x:Key="LumiBg3Brush" Color="{StaticResource LumiBg3Color}" />
+
+    <!-- ============================================================
+         3. TEXT
+         ============================================================ -->
+    <Color x:Key="LumiTextPrimaryColor">#FFEEEEF2</Color>
+    <Color x:Key="LumiTextSecondaryColor">#FF92929A</Color>
+    <Color x:Key="LumiTextTertiaryColor">#FF60606A</Color>
+    <SolidColorBrush x:Key="LumiTextPrimaryBrush" Color="{StaticResource LumiTextPrimaryColor}" />
+    <SolidColorBrush x:Key="LumiTextSecondaryBrush" Color="{StaticResource LumiTextSecondaryColor}" />
+    <SolidColorBrush x:Key="LumiTextTertiaryBrush" Color="{StaticResource LumiTextTertiaryColor}" />
+
+    <!-- ============================================================
+         4. GLASS LAYERS
+         (mockup HTML rgba alpha → #AARRGGBB)
+         ============================================================ -->
+    <!-- Window frame: rgba(18,18,24,0.88) → rgba(12,12,16,0.94) -->
+    <LinearGradientBrush x:Key="LumiWindowFrameBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#E0121218" />
+        <GradientStop Offset="1" Color="#F00C0C10" />
+    </LinearGradientBrush>
+
+    <!-- Sidebar (Layer 2, floating glass): rgba(30,28,40,0.72) → rgba(22,20,32,0.78) -->
+    <LinearGradientBrush x:Key="LumiSidebarBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Offset="0" Color="#B81E1C28" />
+        <GradientStop Offset="1" Color="#C7161420" />
+    </LinearGradientBrush>
+
+    <!-- Content overlay: rgba(0,0,0,0.12) -->
+    <SolidColorBrush x:Key="LumiContentOverlayBrush" Color="#1F000000" />
+
+    <!-- Pill (toolbar capsule): rgba(255,255,255,0.025) / hover 0.055 -->
+    <SolidColorBrush x:Key="LumiPillBrush" Color="#06FFFFFF" />
+    <SolidColorBrush x:Key="LumiPillHoverBrush" Color="#0EFFFFFF" />
+
+    <!-- Path bar bg: rgba(0,0,0,0.20) -->
+    <SolidColorBrush x:Key="LumiPathBarBrush" Color="#33000000" />
+
+    <!-- Hover bg (sidebar item / file row): rgba(255,255,255,0.04) -->
+    <SolidColorBrush x:Key="LumiHoverBrush" Color="#0AFFFFFF" />
+
+    <!-- ============================================================
+         5. EDGE / DIVIDER
+         ============================================================ -->
+    <SolidColorBrush x:Key="LumiDividerBrush" Color="#0FFFFFFF" />
+    <SolidColorBrush x:Key="LumiDividerSoftBrush" Color="#09FFFFFF" />
+
+    <!-- Sidebar inner edges: top highlight 0.18, bottom 0.04, side 0.06 -->
+    <SolidColorBrush x:Key="LumiEdgeTopBrush" Color="#2EFFFFFF" />
+    <SolidColorBrush x:Key="LumiEdgeBottomBrush" Color="#0AFFFFFF" />
+    <SolidColorBrush x:Key="LumiEdgeSideBrush" Color="#0FFFFFFF" />
+
+    <!-- Window outer hairline: rgba(255,255,255,0.08) -->
+    <SolidColorBrush x:Key="LumiWindowHairlineBrush" Color="#14FFFFFF" />
+
+    <!-- ============================================================
+         6. SELECTION / ACTIVE GRADIENTS
+         ============================================================ -->
+    <!-- File row selected: amber 22% → 12% (90deg) -->
+    <LinearGradientBrush x:Key="LumiSelectionBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Offset="0" Color="#38FFB86B" />
+        <GradientStop Offset="1" Color="#1FFFB86B" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="LumiSelectionBorderBrush" Color="#38FFB86B" />
+
+    <!-- Sidebar item active: amber 28% → 15% (90deg) -->
+    <LinearGradientBrush x:Key="LumiSidebarActiveBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Offset="0" Color="#47FFB86B" />
+        <GradientStop Offset="1" Color="#26FFB86B" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="LumiSidebarActiveTextBrush" Color="#FFFFF3DC" />
+
+    <!-- Tab active: amber 16% → 6% (180deg, top→bottom) -->
+    <LinearGradientBrush x:Key="LumiTabActiveBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+        <GradientStop Offset="0" Color="#29FFB86B" />
+        <GradientStop Offset="1" Color="#0FFFB86B" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="LumiTabActiveBorderBrush" Color="#1FFFB86B" />
+
+    <!-- View pill active (toolbar): amber 22% → 12% (180deg) -->
+    <LinearGradientBrush x:Key="LumiPillActiveBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+        <GradientStop Offset="0" Color="#38FFB86B" />
+        <GradientStop Offset="1" Color="#1FFFB86B" />
+    </LinearGradientBrush>
+
+    <!-- Preview action button primary: amber 30% → 15% (180deg) -->
+    <LinearGradientBrush x:Key="LumiPrimaryButtonBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+        <GradientStop Offset="0" Color="#4DFFB86B" />
+        <GradientStop Offset="1" Color="#26FFB86B" />
+    </LinearGradientBrush>
+
+    <!-- ============================================================
+         7. CATEGORY ICON GRADIENTS (135deg ≈ 0,0 → 1,1)
+         ============================================================ -->
+    <LinearGradientBrush x:Key="LumiCatAmberBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#FFFFB86B" />
+        <GradientStop Offset="1" Color="#FFD48028" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LumiCatCoralBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#FFFF9A6B" />
+        <GradientStop Offset="1" Color="#FFE85A3C" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LumiCatGoldBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#FFF0CE5A" />
+        <GradientStop Offset="1" Color="#FFC29A28" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LumiCatGreenBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#FF7EC785" />
+        <GradientStop Offset="1" Color="#FF4BA35E" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LumiCatBlueBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#FF6AA8E8" />
+        <GradientStop Offset="1" Color="#FF3E7FC2" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LumiCatPurpleBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#FFB08FE8" />
+        <GradientStop Offset="1" Color="#FF7A52C2" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LumiCatPinkBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#FFF08FBF" />
+        <GradientStop Offset="1" Color="#FFC25A8F" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LumiCatGrayBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#FF7A7368" />
+        <GradientStop Offset="1" Color="#FF504A40" />
+    </LinearGradientBrush>
+
+    <!-- ============================================================
+         8. TAG DOTS / FOLDER ICON COLORS
+         ============================================================ -->
+    <SolidColorBrush x:Key="LumiTagImportantBrush" Color="#FFF0CE5A" />
+    <SolidColorBrush x:Key="LumiTagWorkBrush" Color="#FF7EC785" />
+    <SolidColorBrush x:Key="LumiTagPersonalBrush" Color="#FF6AA8E8" />
+    <SolidColorBrush x:Key="LumiTagUrgentBrush" Color="#FFFF7A5C" />
+
+    <SolidColorBrush x:Key="LumiFolderDefaultBrush" Color="#FF6AA8E8" />
+    <SolidColorBrush x:Key="LumiFolderAmberBrush" Color="#FFFFB86B" />
+    <SolidColorBrush x:Key="LumiFolderCoralBrush" Color="#FFFF9A6B" />
+    <SolidColorBrush x:Key="LumiFolderGoldBrush" Color="#FFF0CE5A" />
+    <SolidColorBrush x:Key="LumiFolderGreenBrush" Color="#FF7EC785" />
+    <SolidColorBrush x:Key="LumiFolderPurpleBrush" Color="#FFB08FE8" />
+    <SolidColorBrush x:Key="LumiFolderPinkBrush" Color="#FFF08FBF" />
+
+    <!-- ============================================================
+         9. WALLPAPER (window inner background, behind sidebar+content)
+         mockup: 5 radial gradients + base linear (160deg, #1A0E30 → #0C0818)
+         WinUI 3 supports RadialGradientBrush — composed in Code-behind
+         or by stacking multiple Rectangles with brushes at the lowest z.
+         Base linear here; radials applied as separate brushes below.
+         ============================================================ -->
+    <LinearGradientBrush x:Key="LumiWallpaperBaseBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Offset="0" Color="#FF1A0E30" />
+        <GradientStop Offset="1" Color="#FF0C0818" />
+    </LinearGradientBrush>
+
+    <!-- Radial gradient brushes — five layers stacked over base.
+         Origin/center expressed as relative 0..1 within paint area. -->
+    <RadialGradientBrush x:Key="LumiWallpaperRadial1Brush"
+                         Center="0.15,0.20" RadiusX="0.55" RadiusY="0.55"
+                         GradientOrigin="0.15,0.20"
+                         MappingMode="RelativeToBoundingBox">
+        <GradientStop Offset="0"   Color="#A6643CDC" />
+        <GradientStop Offset="1"   Color="#00643CDC" />
+    </RadialGradientBrush>
+
+    <RadialGradientBrush x:Key="LumiWallpaperRadial2Brush"
+                         Center="0.70,0.15" RadiusX="0.55" RadiusY="0.55"
+                         GradientOrigin="0.70,0.15"
+                         MappingMode="RelativeToBoundingBox">
+        <GradientStop Offset="0"   Color="#80C83C8C" />
+        <GradientStop Offset="1"   Color="#00C83C8C" />
+    </RadialGradientBrush>
+
+    <RadialGradientBrush x:Key="LumiWallpaperRadial3Brush"
+                         Center="0.45,0.85" RadiusX="0.60" RadiusY="0.60"
+                         GradientOrigin="0.45,0.85"
+                         MappingMode="RelativeToBoundingBox">
+        <GradientStop Offset="0"   Color="#993C28A0" />
+        <GradientStop Offset="1"   Color="#003C28A0" />
+    </RadialGradientBrush>
+
+    <RadialGradientBrush x:Key="LumiWallpaperRadial4Brush"
+                         Center="0.85,0.65" RadiusX="0.55" RadiusY="0.55"
+                         GradientOrigin="0.85,0.65"
+                         MappingMode="RelativeToBoundingBox">
+        <GradientStop Offset="0"   Color="#662878C8" />
+        <GradientStop Offset="1"   Color="#002878C8" />
+    </RadialGradientBrush>
+
+    <RadialGradientBrush x:Key="LumiWallpaperRadial5Brush"
+                         Center="0.30,0.60" RadiusX="0.60" RadiusY="0.60"
+                         GradientOrigin="0.30,0.60"
+                         MappingMode="RelativeToBoundingBox">
+        <GradientStop Offset="0"   Color="#595032B4" />
+        <GradientStop Offset="1"   Color="#005032B4" />
+    </RadialGradientBrush>
+
+    <!-- ============================================================
+         10. CAPTION / CLOSE
+         ============================================================ -->
+    <SolidColorBrush x:Key="LumiCaptionCloseHoverBrush" Color="#FFE81123" />
+
+    <!-- ============================================================
+         11. GEOMETRY
+         ============================================================ -->
+    <CornerRadius x:Key="LumiWindowCornerRadius">24</CornerRadius>
+    <CornerRadius x:Key="LumiSidebarCornerRadius">18</CornerRadius>
+    <CornerRadius x:Key="LumiPanelInnerCornerRadius">16</CornerRadius>
+    <CornerRadius x:Key="LumiPillCornerRadius">999</CornerRadius>
+    <CornerRadius x:Key="LumiSidebarItemCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="LumiTabCornerRadius">8</CornerRadius>
+    <CornerRadius x:Key="LumiFileRowCornerRadius">7</CornerRadius>
+    <CornerRadius x:Key="LumiSidebarIconCornerRadius">5.5</CornerRadius>
+    <CornerRadius x:Key="LumiCaptionButtonCornerRadius">6</CornerRadius>
+    <CornerRadius x:Key="LumiPathSegmentCornerRadius">5</CornerRadius>
+    <CornerRadius x:Key="LumiPreviewThumbCornerRadius">12</CornerRadius>
+    <CornerRadius x:Key="LumiPreviewCardCornerRadius">11</CornerRadius>
+
+    <!-- Window padding: 6 left/top/bottom, 0 right (content flush right) -->
+    <Thickness x:Key="LumiWindowPadding">6,6,0,6</Thickness>
+    <!-- Sidebar margin from content: 6 right -->
+    <Thickness x:Key="LumiSidebarMargin">0,0,6,0</Thickness>
+
+    <x:Double x:Key="LumiSidebarWidth">228</x:Double>
+    <x:Double x:Key="LumiColumnWidth">260</x:Double>
+    <x:Double x:Key="LumiPreviewColumnWidth">300</x:Double>
+
+    <!-- Heights -->
+    <x:Double x:Key="LumiTitleBarHeight">36</x:Double>
+    <x:Double x:Key="LumiToolbarHeight">44</x:Double>
+    <x:Double x:Key="LumiPathBarHeight">30</x:Double>
+    <x:Double x:Key="LumiCaptionButtonWidth">42</x:Double>
+    <x:Double x:Key="LumiCaptionButtonHeight">30</x:Double>
+    <x:Double x:Key="LumiPillButtonHeight">28</x:Double>
+
+    <!-- Sidebar internals -->
+    <x:Double x:Key="LumiSidebarTopHeight">36</x:Double>
+    <x:Double x:Key="LumiSidebarItemPaddingLeft">10</x:Double>
+    <x:Double x:Key="LumiSidebarItemPaddingTop">5</x:Double>
+    <x:Double x:Key="LumiSidebarIconSize">20</x:Double>
+    <x:Double x:Key="LumiTabIconSize">8</x:Double>
+    <x:Double x:Key="LumiTagDotSize">10</x:Double>
+
+    <!-- ============================================================
+         12. TYPOGRAPHY
+         ============================================================ -->
+    <x:String x:Key="LumiFontFamilyValue">Inter, Segoe UI Variable Display, Segoe UI</x:String>
+    <FontFamily x:Key="LumiFontFamily">Inter, Segoe UI Variable Display, Segoe UI</FontFamily>
+
+    <x:Double x:Key="LumiFontSizeBase">13</x:Double>
+    <x:Double x:Key="LumiFontSizeTab">12</x:Double>
+    <x:Double x:Key="LumiFontSizeSbHeader">10.5</x:Double>
+    <x:Double x:Key="LumiFontSizeSbName">11</x:Double>
+    <x:Double x:Key="LumiFontSizePathBar">11</x:Double>
+    <x:Double x:Key="LumiFontSizePathStatus">10.5</x:Double>
+    <x:Double x:Key="LumiFontSizeFileExt">11.5</x:Double>
+    <x:Double x:Key="LumiFontSizeColHeader">11</x:Double>
+    <x:Double x:Key="LumiFontSizePreviewTitle">14</x:Double>
+    <x:Double x:Key="LumiFontSizePreviewRow">12</x:Double>
+
+</ResourceDictionary>

@@ -1,0 +1,20 @@
+{
+  "version": "1.0",
+  "currentLevel": 2,
+  "previousLevel": null,
+  "levelChangedAt": null,
+  "levelChangeReason": null,
+  "trustScore": 40,
+  "sessionStats": {
+    "approvals": 0,
+    "rejections": 0,
+    "modifications": 0,
+    "destructiveBlocked": 1,
+    "checkpointsCreated": 0,
+    "rollbacksPerformed": 0
+  },
+  "emergencyStop": false,
+  "cooldownUntil": null,
+  "lastEscalation": null,
+  "lastDowngrade": null
+}

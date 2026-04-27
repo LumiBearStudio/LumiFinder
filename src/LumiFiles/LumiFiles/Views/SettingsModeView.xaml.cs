@@ -222,6 +222,9 @@ public sealed partial class SettingsModeView : UserControl
                 _ => 0
             };
 
+            FolderCustomIconsToggle.IsOn = _settings.FolderCustomIconsEnabled;
+            AnimationsEnabledToggle.IsOn = _settings.AnimationsEnabled;
+
             var font = _settings.FontFamily;
             var fontIdx = Array.IndexOf(FontOptions, font);
             FontCombo.SelectedIndex = fontIdx >= 0 ? fontIdx : 0;
@@ -407,6 +410,9 @@ public sealed partial class SettingsModeView : UserControl
             var idx = FontCombo.SelectedIndex;
             _settings.FontFamily = idx >= 0 && idx < FontOptions.Length ? FontOptions[idx] : FontOptions[0];
         };
+
+        FolderCustomIconsToggle.Toggled += (s, e) => { if (!_isLoading) _settings.FolderCustomIconsEnabled = FolderCustomIconsToggle.IsOn; };
+        AnimationsEnabledToggle.Toggled += (s, e) => { if (!_isLoading) _settings.AnimationsEnabled = AnimationsEnabledToggle.IsOn; };
 
         ShowHiddenToggle.Toggled += (s, e) => { if (!_isLoading) _settings.ShowHiddenFiles = ShowHiddenToggle.IsOn; };
         ShowExtensionsToggle.Toggled += (s, e) => { if (!_isLoading) _settings.ShowFileExtensions = ShowExtensionsToggle.IsOn; };
@@ -683,6 +689,10 @@ public sealed partial class SettingsModeView : UserControl
             IconPackLabel.Text = _loc.Get("Settings_IconPack");
             IconPackDesc.Text = _loc.Get("Settings_IconPackDesc");
             IconPackRestartText.Text = _loc.Get("Settings_IconPackRestart");
+            FolderCustomIconsLabel.Text = _loc.Get("Settings_FolderCustomIcons");
+            FolderCustomIconsDesc.Text = _loc.Get("Settings_FolderCustomIconsDesc");
+            AnimationsEnabledLabel.Text = _loc.Get("Settings_Animations");
+            AnimationsEnabledDesc.Text = _loc.Get("Settings_AnimationsDesc");
             FontLabel.Text = _loc.Get("Settings_Font");
             FontDesc.Text = _loc.Get("Settings_FontDesc");
             // Custom themes
@@ -1815,7 +1825,7 @@ public sealed partial class SettingsModeView : UserControl
             var picker = new Windows.Storage.Pickers.FileSavePicker();
             picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.Desktop;
             picker.FileTypeChoices.Add("Registry File", new[] { ".reg" });
-            picker.SuggestedFileName = "LumiFilesRestoreDefault";
+            picker.SuggestedFileName = "SpanRestoreDefault";
 
             var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(
                 ((App)App.Current).GetRegisteredWindows().FirstOrDefault());

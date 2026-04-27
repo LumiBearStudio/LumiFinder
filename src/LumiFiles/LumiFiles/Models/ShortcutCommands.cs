@@ -6,147 +6,147 @@ namespace LumiFiles.Models
 {
     /// <summary>
     /// 커스텀 키보드 단축키 리매핑을 위한 Command ID 상수 클래스.
-    /// 각 상수는 "lumifiles.카테고리.액션" 형식의 문자열.
+    /// 각 상수는 "LumiFiles.카테고리.액션" 형식의 문자열.
     /// </summary>
     public static class ShortcutCommands
     {
         // ── Navigation ──────────────────────────────────────────
-        public const string NavigateBack = "lumifiles.navigate.back";
-        public const string NavigateForward = "lumifiles.navigate.forward";
-        public const string NavigateUp = "lumifiles.navigate.up";
-        public const string AddressBarFocus = "lumifiles.navigate.addressBar";
-        public const string Search = "lumifiles.navigate.search";
-        public const string FilterBar = "lumifiles.navigate.filterBar";
+        public const string NavigateBack = "LumiFiles.navigate.back";
+        public const string NavigateForward = "LumiFiles.navigate.forward";
+        public const string NavigateUp = "LumiFiles.navigate.up";
+        public const string AddressBarFocus = "LumiFiles.navigate.addressBar";
+        public const string Search = "LumiFiles.navigate.search";
+        public const string FilterBar = "LumiFiles.navigate.filterBar";
 
         // ── Edit ────────────────────────────────────────────────
-        public const string Copy = "lumifiles.edit.copy";
-        public const string Cut = "lumifiles.edit.cut";
-        public const string Paste = "lumifiles.edit.paste";
-        public const string PasteAsShortcut = "lumifiles.edit.pasteAsShortcut";
-        public const string Delete = "lumifiles.edit.delete";
-        public const string PermanentDelete = "lumifiles.edit.permanentDelete";
-        public const string Rename = "lumifiles.edit.rename";
-        public const string Duplicate = "lumifiles.edit.duplicate";
-        public const string NewFolder = "lumifiles.edit.newFolder";
-        public const string Undo = "lumifiles.edit.undo";
-        public const string Redo = "lumifiles.edit.redo";
+        public const string Copy = "LumiFiles.edit.copy";
+        public const string Cut = "LumiFiles.edit.cut";
+        public const string Paste = "LumiFiles.edit.paste";
+        public const string PasteAsShortcut = "LumiFiles.edit.pasteAsShortcut";
+        public const string Delete = "LumiFiles.edit.delete";
+        public const string PermanentDelete = "LumiFiles.edit.permanentDelete";
+        public const string Rename = "LumiFiles.edit.rename";
+        public const string Duplicate = "LumiFiles.edit.duplicate";
+        public const string NewFolder = "LumiFiles.edit.newFolder";
+        public const string Undo = "LumiFiles.edit.undo";
+        public const string Redo = "LumiFiles.edit.redo";
 
         // ── Selection ───────────────────────────────────────────
-        public const string SelectAll = "lumifiles.selection.selectAll";
-        public const string SelectNone = "lumifiles.selection.selectNone";
-        public const string InvertSelection = "lumifiles.selection.invert";
+        public const string SelectAll = "LumiFiles.selection.selectAll";
+        public const string SelectNone = "LumiFiles.selection.selectNone";
+        public const string InvertSelection = "LumiFiles.selection.invert";
 
         // ── View ────────────────────────────────────────────────
-        public const string ViewMiller = "lumifiles.view.miller";
-        public const string ViewDetails = "lumifiles.view.details";
-        public const string ViewList = "lumifiles.view.list";
-        public const string ViewIcon = "lumifiles.view.icon";
-        public const string ToggleSplitView = "lumifiles.view.splitView";
-        public const string TogglePreview = "lumifiles.view.preview";
-        public const string EqualizeColumns = "lumifiles.view.equalizeColumns";
-        public const string AutoFitColumns = "lumifiles.view.autoFitColumns";
-        public const string Refresh = "lumifiles.view.refresh";
-        public const string ToggleHidden = "lumifiles.view.toggleHidden";
-        public const string ToggleExtensions = "lumifiles.view.toggleExtensions";
-        public const string Fullscreen = "lumifiles.view.fullscreen";
+        public const string ViewMiller = "LumiFiles.view.miller";
+        public const string ViewDetails = "LumiFiles.view.details";
+        public const string ViewList = "LumiFiles.view.list";
+        public const string ViewIcon = "LumiFiles.view.icon";
+        public const string ToggleSplitView = "LumiFiles.view.splitView";
+        public const string TogglePreview = "LumiFiles.view.preview";
+        public const string EqualizeColumns = "LumiFiles.view.equalizeColumns";
+        public const string AutoFitColumns = "LumiFiles.view.autoFitColumns";
+        public const string Refresh = "LumiFiles.view.refresh";
+        public const string ToggleHidden = "LumiFiles.view.toggleHidden";
+        public const string ToggleExtensions = "LumiFiles.view.toggleExtensions";
+        public const string Fullscreen = "LumiFiles.view.fullscreen";
 
         // ── Tab ─────────────────────────────────────────────────
-        public const string NewTab = "lumifiles.tab.new";
-        public const string CloseTab = "lumifiles.tab.close";
-        public const string NextTab = "lumifiles.tab.next";
-        public const string PrevTab = "lumifiles.tab.prev";
-        public const string OpenInNewTab = "lumifiles.tab.openSelectedInNew";
-        public const string SwitchPane = "lumifiles.view.switchPane";
+        public const string NewTab = "LumiFiles.tab.new";
+        public const string CloseTab = "LumiFiles.tab.close";
+        public const string NextTab = "LumiFiles.tab.next";
+        public const string PrevTab = "LumiFiles.tab.prev";
+        public const string OpenInNewTab = "LumiFiles.tab.openSelectedInNew";
+        public const string SwitchPane = "LumiFiles.view.switchPane";
 
         // ── Window ──────────────────────────────────────────────
-        public const string NewWindow = "lumifiles.window.new";
-        public const string OpenTerminal = "lumifiles.window.terminal";
-        public const string OpenSettings = "lumifiles.window.settings";
-        public const string ShowProperties = "lumifiles.window.properties";
-        public const string ShowHelp = "lumifiles.window.help";
-        public const string OpenHelp = "lumifiles.help.open";
-        public const string QuickLook = "lumifiles.quickLook.toggle";
+        public const string NewWindow = "LumiFiles.window.new";
+        public const string OpenTerminal = "LumiFiles.window.terminal";
+        public const string OpenSettings = "LumiFiles.window.settings";
+        public const string ShowProperties = "LumiFiles.window.properties";
+        public const string ShowHelp = "LumiFiles.window.help";
+        public const string OpenHelp = "LumiFiles.help.open";
+        public const string QuickLook = "LumiFiles.quickLook.toggle";
 
         // ── Workspace ──────────────────────────────────────────
-        public const string SaveWorkspace = "lumifiles.workspace.save";
-        public const string OpenWorkspacePalette = "lumifiles.workspace.open";
+        public const string SaveWorkspace = "LumiFiles.workspace.save";
+        public const string OpenWorkspacePalette = "LumiFiles.workspace.open";
 
         // ── Shelf ───────────────────────────────────────────────
-        public const string ShelfAdd = "lumifiles.shelf.add";
-        public const string ShelfToggle = "lumifiles.shelf.toggle";
-        public const string ShelfMoveHere = "lumifiles.shelf.moveHere";
-        public const string ShelfCopyHere = "lumifiles.shelf.copyHere";
-        public const string ShelfClear = "lumifiles.shelf.clear";
+        public const string ShelfAdd = "LumiFiles.shelf.add";
+        public const string ShelfToggle = "LumiFiles.shelf.toggle";
+        public const string ShelfMoveHere = "LumiFiles.shelf.moveHere";
+        public const string ShelfCopyHere = "LumiFiles.shelf.copyHere";
+        public const string ShelfClear = "LumiFiles.shelf.clear";
 
         // ── Command Palette (HIDDEN) ────────────────────────────
         // 2026-04-10: 파일 탐색기 워크플로우와 부합하지 않아 숨김 처리됨.
         // 상수와 카테고리 등록은 모두 유지 (사용자가 키 재할당 시 즉시 동작).
         // 자세한 사유는 MainWindow.CommandPaletteHandler.cs 상단 주석 참조.
-        public const string OpenCommandPalette = "lumifiles.commandPalette.open";
+        public const string OpenCommandPalette = "LumiFiles.commandPalette.open";
 
         // ── Settings: Toggle (즉시 적용 boolean) ────────────────
-        public const string SettingsToggleHidden = "lumifiles.settings.toggle.hidden";
-        public const string SettingsToggleExtensions = "lumifiles.settings.toggle.extensions";
-        public const string SettingsToggleCheckboxes = "lumifiles.settings.toggle.checkboxes";
-        public const string SettingsToggleThumbnails = "lumifiles.settings.toggle.thumbnails";
-        public const string SettingsToggleQuickLook = "lumifiles.settings.toggle.quickLook";
-        public const string SettingsToggleWasd = "lumifiles.settings.toggle.wasd";
-        public const string SettingsToggleConfirmDelete = "lumifiles.settings.toggle.confirmDelete";
-        public const string SettingsTogglePreviewFolderInfo = "lumifiles.settings.toggle.previewFolderInfo";
-        public const string SettingsToggleDefaultPreview = "lumifiles.settings.toggle.defaultPreview";
-        public const string SettingsToggleFavoritesTree = "lumifiles.settings.toggle.favoritesTree";
-        public const string SettingsToggleShelf = "lumifiles.settings.toggle.shelf";
-        public const string SettingsToggleShelfSave = "lumifiles.settings.toggle.shelfSave";
-        public const string SettingsToggleContextMenu = "lumifiles.settings.toggle.contextMenu";
-        public const string SettingsToggleTray = "lumifiles.settings.toggle.tray";
-        public const string SettingsToggleWindowPosition = "lumifiles.settings.toggle.windowPosition";
-        public const string SettingsToggleGitIntegration = "lumifiles.settings.toggle.git";
-        public const string SettingsToggleHexPreview = "lumifiles.settings.toggle.hexPreview";
-        public const string SettingsToggleFileHash = "lumifiles.settings.toggle.fileHash";
-        public const string SettingsToggleShellExtensions = "lumifiles.settings.toggle.shellExt";
-        public const string SettingsToggleWindowsShellExtras = "lumifiles.settings.toggle.shellExtras";
-        public const string SettingsToggleCopilotMenu = "lumifiles.settings.toggle.copilot";
+        public const string SettingsToggleHidden = "LumiFiles.settings.toggle.hidden";
+        public const string SettingsToggleExtensions = "LumiFiles.settings.toggle.extensions";
+        public const string SettingsToggleCheckboxes = "LumiFiles.settings.toggle.checkboxes";
+        public const string SettingsToggleThumbnails = "LumiFiles.settings.toggle.thumbnails";
+        public const string SettingsToggleQuickLook = "LumiFiles.settings.toggle.quickLook";
+        public const string SettingsToggleWasd = "LumiFiles.settings.toggle.wasd";
+        public const string SettingsToggleConfirmDelete = "LumiFiles.settings.toggle.confirmDelete";
+        public const string SettingsTogglePreviewFolderInfo = "LumiFiles.settings.toggle.previewFolderInfo";
+        public const string SettingsToggleDefaultPreview = "LumiFiles.settings.toggle.defaultPreview";
+        public const string SettingsToggleFavoritesTree = "LumiFiles.settings.toggle.favoritesTree";
+        public const string SettingsToggleShelf = "LumiFiles.settings.toggle.shelf";
+        public const string SettingsToggleShelfSave = "LumiFiles.settings.toggle.shelfSave";
+        public const string SettingsToggleContextMenu = "LumiFiles.settings.toggle.contextMenu";
+        public const string SettingsToggleTray = "LumiFiles.settings.toggle.tray";
+        public const string SettingsToggleWindowPosition = "LumiFiles.settings.toggle.windowPosition";
+        public const string SettingsToggleGitIntegration = "LumiFiles.settings.toggle.git";
+        public const string SettingsToggleHexPreview = "LumiFiles.settings.toggle.hexPreview";
+        public const string SettingsToggleFileHash = "LumiFiles.settings.toggle.fileHash";
+        public const string SettingsToggleShellExtensions = "LumiFiles.settings.toggle.shellExt";
+        public const string SettingsToggleWindowsShellExtras = "LumiFiles.settings.toggle.shellExtras";
+        public const string SettingsToggleCopilotMenu = "LumiFiles.settings.toggle.copilot";
 
         // Sidebar sections
-        public const string SettingsSidebarHome = "lumifiles.settings.sidebar.home";
-        public const string SettingsSidebarFavorites = "lumifiles.settings.sidebar.favorites";
-        public const string SettingsSidebarDrives = "lumifiles.settings.sidebar.drives";
-        public const string SettingsSidebarCloud = "lumifiles.settings.sidebar.cloud";
-        public const string SettingsSidebarNetwork = "lumifiles.settings.sidebar.network";
-        public const string SettingsSidebarRecycleBin = "lumifiles.settings.sidebar.recycleBin";
+        public const string SettingsSidebarHome = "LumiFiles.settings.sidebar.home";
+        public const string SettingsSidebarFavorites = "LumiFiles.settings.sidebar.favorites";
+        public const string SettingsSidebarDrives = "LumiFiles.settings.sidebar.drives";
+        public const string SettingsSidebarCloud = "LumiFiles.settings.sidebar.cloud";
+        public const string SettingsSidebarNetwork = "LumiFiles.settings.sidebar.network";
+        public const string SettingsSidebarRecycleBin = "LumiFiles.settings.sidebar.recycleBin";
 
         // ── Settings: Select (선택형) ───────────────────────────
-        public const string SettingsThemeSystem = "lumifiles.settings.theme.system";
-        public const string SettingsThemeLight = "lumifiles.settings.theme.light";
-        public const string SettingsThemeDark = "lumifiles.settings.theme.dark";
+        public const string SettingsThemeSystem = "LumiFiles.settings.theme.system";
+        public const string SettingsThemeLight = "LumiFiles.settings.theme.light";
+        public const string SettingsThemeDark = "LumiFiles.settings.theme.dark";
 
-        public const string SettingsDensityCompact = "lumifiles.settings.density.compact";
-        public const string SettingsDensityComfortable = "lumifiles.settings.density.comfortable";
-        public const string SettingsDensitySpacious = "lumifiles.settings.density.spacious";
+        public const string SettingsDensityCompact = "LumiFiles.settings.density.compact";
+        public const string SettingsDensityComfortable = "LumiFiles.settings.density.comfortable";
+        public const string SettingsDensitySpacious = "LumiFiles.settings.density.spacious";
 
-        public const string SettingsLanguageSystem = "lumifiles.settings.language.system";
-        public const string SettingsLanguageEn = "lumifiles.settings.language.en";
-        public const string SettingsLanguageKo = "lumifiles.settings.language.ko";
-        public const string SettingsLanguageJa = "lumifiles.settings.language.ja";
-        public const string SettingsLanguageZhHans = "lumifiles.settings.language.zh-Hans";
-        public const string SettingsLanguageZhHant = "lumifiles.settings.language.zh-Hant";
-        public const string SettingsLanguageDe = "lumifiles.settings.language.de";
-        public const string SettingsLanguageEs = "lumifiles.settings.language.es";
-        public const string SettingsLanguageFr = "lumifiles.settings.language.fr";
-        public const string SettingsLanguagePtBr = "lumifiles.settings.language.pt-BR";
+        public const string SettingsLanguageSystem = "LumiFiles.settings.language.system";
+        public const string SettingsLanguageEn = "LumiFiles.settings.language.en";
+        public const string SettingsLanguageKo = "LumiFiles.settings.language.ko";
+        public const string SettingsLanguageJa = "LumiFiles.settings.language.ja";
+        public const string SettingsLanguageZhHans = "LumiFiles.settings.language.zh-Hans";
+        public const string SettingsLanguageZhHant = "LumiFiles.settings.language.zh-Hant";
+        public const string SettingsLanguageDe = "LumiFiles.settings.language.de";
+        public const string SettingsLanguageEs = "LumiFiles.settings.language.es";
+        public const string SettingsLanguageFr = "LumiFiles.settings.language.fr";
+        public const string SettingsLanguagePtBr = "LumiFiles.settings.language.pt-BR";
 
-        public const string SettingsIconPackRemix = "lumifiles.settings.iconPack.remix";
-        public const string SettingsIconPackPhosphor = "lumifiles.settings.iconPack.phosphor";
-        public const string SettingsIconPackTabler = "lumifiles.settings.iconPack.tabler";
+        public const string SettingsIconPackRemix = "LumiFiles.settings.iconPack.remix";
+        public const string SettingsIconPackPhosphor = "LumiFiles.settings.iconPack.phosphor";
+        public const string SettingsIconPackTabler = "LumiFiles.settings.iconPack.tabler";
 
         // ── Settings: Open Section (점프) ───────────────────────
-        public const string SettingsOpenGeneral = "lumifiles.settings.open.general";
-        public const string SettingsOpenAppearance = "lumifiles.settings.open.appearance";
-        public const string SettingsOpenBrowsing = "lumifiles.settings.open.browsing";
-        public const string SettingsOpenSidebar = "lumifiles.settings.open.sidebar";
-        public const string SettingsOpenTools = "lumifiles.settings.open.tools";
-        public const string SettingsOpenShortcuts = "lumifiles.settings.open.shortcuts";
-        public const string SettingsOpenAdvanced = "lumifiles.settings.open.advanced";
+        public const string SettingsOpenGeneral = "LumiFiles.settings.open.general";
+        public const string SettingsOpenAppearance = "LumiFiles.settings.open.appearance";
+        public const string SettingsOpenBrowsing = "LumiFiles.settings.open.browsing";
+        public const string SettingsOpenSidebar = "LumiFiles.settings.open.sidebar";
+        public const string SettingsOpenTools = "LumiFiles.settings.open.tools";
+        public const string SettingsOpenShortcuts = "LumiFiles.settings.open.shortcuts";
+        public const string SettingsOpenAdvanced = "LumiFiles.settings.open.advanced";
 
         // ── 내부 레지스트리 ─────────────────────────────────────
 

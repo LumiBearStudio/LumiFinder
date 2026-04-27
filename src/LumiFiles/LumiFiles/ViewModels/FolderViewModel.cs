@@ -285,6 +285,112 @@ namespace LumiFiles.ViewModels
         public override string IconGlyph => Services.IconService.Current?.FolderIcon ?? "\uED53";
         public override Microsoft.UI.Xaml.Media.Brush IconBrush => Services.IconService.Current?.FolderBrush;
 
+        private bool _customIconRequested;
+
+        /// <summary>
+        /// 설정이 ON이고 폴더에 Read-Only/System 속성이 있으면 커스텀 아이콘 비동기 로드.
+        /// 중복 호출 방지 (_customIconRequested 플래그).
+        /// 실패 시 CustomIcon은 null로 유지되어 기본 글리프 표시.
+        /// </summary>
+        public void RequestCustomIconLoad()
+        {
+            if (_customIconRequested) { Helpers.DebugLogger.Log($"[CustomIcon] SKIP already-requested: {Path}"); return; }
+            if (!_folderModel.MaybeHasCustomIcon) { return; /* 대부분 폴더 — 로그 노이즈 방지 */ }
+            if (string.IsNullOrEmpty(Path)) return;
+
+            try
+            {
+                var settings = App.Current.Services.GetService(typeof(SettingsService)) as SettingsService;
+                if (settings == null || !settings.FolderCustomIconsEnabled)
+                {
+                    Helpers.DebugLogger.Log($"[CustomIcon] SKIP setting-off: {Path}");
+                    return;
+                }
+
+                var iconSvc = App.Current.Services.GetService(typeof(FolderIconService)) as FolderIconService;
+                if (iconSvc == null)
+                {
+                    Helpers.DebugLogger.Log($"[CustomIcon] SKIP no-service: {Path}");
+                    return;
+                }
+
+                _customIconRequested = true;
+                Helpers.DebugLogger.Log($"[CustomIcon] REQUEST: {Path}");
+
+                _ = LoadCustomIconAsync(iconSvc);
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[CustomIcon] RequestCustomIconLoad failed: {ex.Message}");
+            }
+        }
+
+        private async Task LoadCustomIconAsync(FolderIconService iconSvc)
+        {
+            try
+            {
+                var icon = await iconSvc.GetCustomIconAsync(Path).ConfigureAwait(false);
+                if (icon == null)
+                {
+                    Helpers.DebugLogger.Log($"[CustomIcon] RESULT-null: {Path}");
+                    return;
+                }
+
+                // 레이스 방지: 로드 중 설정이 OFF로 바뀌었거나 ClearCustomIcon 호출된 경우 무시
+                var settings = App.Current.Services.GetService(typeof(SettingsService)) as SettingsService;
+                if (settings == null || !settings.FolderCustomIconsEnabled)
+                {
+                    Helpers.DebugLogger.Log($"[CustomIcon] DISCARD setting-off-during-load: {Path}");
+                    return;
+                }
+                if (!_customIconRequested)
+                {
+                    Helpers.DebugLogger.Log($"[CustomIcon] DISCARD requested-false: {Path}");
+                    return;
+                }
+
+                // ★ 핵심 수정: 생성자가 백그라운드 스레드에서 호출된 경우 continuation도 백그라운드.
+                // WinUI는 ObservableProperty PropertyChanged를 UI 스레드에서만 처리 가능 → 명시 마샬링 필수.
+                var iconSvcAsService = App.Current.Services.GetService(typeof(FolderIconService)) as FolderIconService;
+                var dispatcher = iconSvcAsService?.GetUiDispatcher();
+                if (dispatcher == null)
+                {
+                    Helpers.DebugLogger.Log($"[CustomIcon] DISCARD no-dispatcher: {Path}");
+                    return;
+                }
+
+                var iconToSet = icon;
+                bool queued = dispatcher.TryEnqueue(() =>
+                {
+                    try
+                    {
+                        if (!_customIconRequested) return; // 2차 재확인
+                        CustomIcon = iconToSet;
+                        Helpers.DebugLogger.Log($"[CustomIcon] APPLIED: {Path}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Helpers.DebugLogger.Log($"[CustomIcon] APPLY-fail {Path}: {ex.Message}");
+                    }
+                });
+                if (!queued)
+                    Helpers.DebugLogger.Log($"[CustomIcon] APPLY-enqueue-fail: {Path}");
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[CustomIcon] LoadCustomIconAsync failed for {Path}: {ex.Message} ({ex.GetType().Name})");
+            }
+        }
+
+        /// <summary>
+        /// 설정 OFF 시 호출되어 캐시된 커스텀 아이콘을 초기화.
+        /// </summary>
+        public void ClearCustomIcon()
+        {
+            _customIconRequested = false;
+            CustomIcon = null;
+        }
+
         /// <summary>
         /// 폴더 크기: 백그라운드 계산 완료 시 표시, 미완료 시 빈칸.
         /// </summary>
@@ -401,6 +507,10 @@ namespace LumiFiles.ViewModels
             _folderModel = model;
             _fileService = fileService;
             // DO NOT load children here. Lazy loading only.
+
+            // 커스텀 아이콘 로드 요청 (설정 OFF이면 내부에서 즉시 return, Read-Only 없으면 skip).
+            // 결과는 비동기로 CustomIcon 속성에 반영되며 실패 시 기본 글리프 유지.
+            RequestCustomIconLoad();
         }
 
         private System.Threading.CancellationTokenSource? _cts;
@@ -646,7 +756,7 @@ namespace LumiFiles.ViewModels
                         try { hasChild = System.IO.Directory.EnumerateFileSystemEntries(d.FullName).Any(); }
                         catch { hasChild = true; }
 
-                        var folderItem = new FolderItem { Name = d.Name, Path = d.FullName, DateModified = d.LastWriteTime, IsHidden = (attrs & System.IO.FileAttributes.Hidden) != 0, HasChildEntries = hasChild };
+                        var folderItem = new FolderItem { Name = d.Name, Path = d.FullName, DateModified = d.LastWriteTime, IsHidden = (attrs & System.IO.FileAttributes.Hidden) != 0, MaybeHasCustomIcon = (attrs & (System.IO.FileAttributes.ReadOnly | System.IO.FileAttributes.System)) != 0, HasChildEntries = hasChild };
                         folders.Add(folderItem);
                         result.Add(new FolderViewModel(folderItem, _fileService));
                     }

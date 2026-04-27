@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 using System;
@@ -153,7 +153,7 @@ namespace LumiFiles
 
         /// <summary>
         /// 커맨드라인 문자열에서 폴더 경로 인수를 추출한다.
-        /// AppExecutionAlias 경유 시: "C:\...\lumifiles.exe" "D:\folder" → "D:\folder"
+        /// AppExecutionAlias 경유 시: "C:\...\LumiFiles.exe" "D:\folder" → "D:\folder"
         /// JumpList 경유 시: "D:\folder" → "D:\folder"
         /// </summary>
         /// <summary>휴지통 관련 shell 인자인지 판별.</summary>
@@ -166,7 +166,7 @@ namespace LumiFiles
 
         /// <summary>
         /// CLSID 가상 폴더 경로인지 판별 (This PC 제외 — LumiFiles 홈으로 처리).
-        /// 제어판(::{26EE0668-...}), 네트워크, 프린터 등 LumiFiles이 탐색할 수 없는 가상 폴더.
+        /// 제어판(::{26EE0668-...}), 네트워크, 프린터 등 LumiFiles가 탐색할 수 없는 가상 폴더.
         /// </summary>
         private static bool IsVirtualFolderArgument(string? arg)
         {
@@ -413,7 +413,7 @@ namespace LumiFiles
             //   → 스택트레이스 없거나, WinUI/WinRT 내부 프레임만 있는 경우 모두 포함
             bool isXamlRenderingNoise =
                 (e.Exception is ArgumentException && e.Exception.HResult == unchecked((int)0x80070057)
-                    && string.IsNullOrEmpty(e.Exception.StackTrace))
+                    && IsWinUIInternalOnly(e.Exception))
                 || (e.Exception is System.Runtime.InteropServices.COMException && e.Exception.HResult == unchecked((int)0x80004005)
                     && IsWinUIInternalOnly(e.Exception))
                 || (e.Exception is System.Runtime.InteropServices.COMException && e.Exception.HResult == unchecked((int)0x80070490)
@@ -501,6 +501,7 @@ namespace LumiFiles
             services.AddSingleton<Services.ShellService>();
             services.AddSingleton<Services.LocalizationService>();
             services.AddSingleton<Services.ContextMenuService>();
+            services.AddSingleton<Services.FolderIconService>();
             services.AddSingleton<Services.ActionLogService>();
             services.AddSingleton<Services.SettingsService>();
             services.AddSingleton<Services.FolderContentCache>();
@@ -602,7 +603,7 @@ namespace LumiFiles
                         if (!string.IsNullOrEmpty(launchData?.Arguments))
                         {
                             // AppExecutionAlias 경유 시 전체 커맨드라인이 옴:
-                            // "C:\...\lumifiles.exe" "D:\folder" → 폴더 경로만 추출
+                            // "C:\...\LumiFiles.exe" "D:\folder" → 폴더 경로만 추출
                             var rawArgs = launchData.Arguments;
                             StartupArguments = ExtractFolderArgument(rawArgs);
                         }

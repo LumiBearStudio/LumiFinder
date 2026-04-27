@@ -68,7 +68,7 @@ internal static class Program
             // Note: 메인의 SentryDsn 상수와 동일 — 환경변수로도 override 가능
             try
             {
-                var dsn = Environment.GetEnvironmentVariable("Lumi Files_SENTRY_DSN")
+                var dsn = Environment.GetEnvironmentVariable("LUMIFILES_SENTRY_DSN")
                     ?? "https://a7e1e9d16763c38024a495176e723b2a@o4510949994266624.ingest.de.sentry.io/4510950010191952";
                 Sentry.SentrySdk.Init(o =>
                 {

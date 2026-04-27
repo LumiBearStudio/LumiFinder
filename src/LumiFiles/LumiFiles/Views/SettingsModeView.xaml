@@ -1296,6 +1296,44 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- Folder Custom Icons (desktop.ini) -->
+                            <Border Style="{StaticResource SettingsCardBorder}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Style="{StaticResource CardIconContainer}">
+                                        <FontIcon Glyph="&#xE8B7;" Style="{StaticResource CardIconStyle}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Name="FolderCustomIconsLabel" Text="폴더 커스텀 아이콘 (desktop.ini)" Style="{StaticResource SettingsCardLabel}" />
+                                        <TextBlock x:Name="FolderCustomIconsDesc" Text="desktop.ini로 설정된 Windows 커스텀 폴더 아이콘 표시" Style="{StaticResource SettingsCardDesc}" />
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="FolderCustomIconsToggle" Grid.Column="2" IsOn="False" OnContent="" OffContent="" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Animations (panel slide-in + selection indicator movement) -->
+                            <Border Style="{StaticResource SettingsCardBorder}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" Style="{StaticResource CardIconContainer}">
+                                        <FontIcon Glyph="&#xE916;" Style="{StaticResource CardIconStyle}" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                        <TextBlock x:Name="AnimationsEnabledLabel" Text="애니메이션" Style="{StaticResource SettingsCardLabel}" />
+                                        <TextBlock x:Name="AnimationsEnabledDesc" Text="패널 슬라이드 및 선택 인디케이터 이동 효과" Style="{StaticResource SettingsCardDesc}" />
+                                    </StackPanel>
+                                    <ToggleSwitch x:Name="AnimationsEnabledToggle" Grid.Column="2" IsOn="True" OnContent="" OffContent="" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
                             <!-- Font -->
                             <Border Style="{StaticResource SettingsCardBorder}">
                                 <Grid>
@@ -2119,7 +2157,7 @@
                                         </Border>
                                         <StackPanel Spacing="2" VerticalAlignment="Center">
                                             <TextBlock x:Name="CoffeeLabel" Text="Buy me a coffee" Style="{StaticResource SettingsCardLabel}" />
-                                            <TextBlock x:Name="CoffeeDesc" Text="LumiFiles이 마음에 드셨다면, 커피 한 잔으로 응원해 주세요!" Style="{StaticResource SettingsCardDesc}" />
+                                            <TextBlock x:Name="CoffeeDesc" Text="Span이 마음에 드셨다면, 커피 한 잔으로 응원해 주세요!" Style="{StaticResource SettingsCardDesc}" />
                                         </StackPanel>
                                     </StackPanel>
                                     <Grid Margin="48,0,0,0" ColumnSpacing="8">
@@ -2170,7 +2208,7 @@
                                         </Border>
                                         <StackPanel Spacing="2" VerticalAlignment="Center">
                                             <TextBlock x:Name="OnboardingReplayLabel" Text="온보딩 다시 보기" Style="{StaticResource SettingsCardLabel}" />
-                                            <TextBlock x:Name="OnboardingReplayDesc" Text="LumiFiles의 핵심 기능을 다시 소개받습니다." Style="{StaticResource SettingsCardDesc}" />
+                                            <TextBlock x:Name="OnboardingReplayDesc" Text="Span의 핵심 기능을 다시 소개받습니다." Style="{StaticResource SettingsCardDesc}" />
                                         </StackPanel>
                                     </StackPanel>
                                     <Button x:Name="OnboardingReplayButton" Grid.Column="1" VerticalAlignment="Center"
@@ -2196,7 +2234,7 @@
                         <StackPanel Padding="20" Spacing="0">
                             <TextBlock x:Name="OpenSourceTitle" Text="오픈소스 라이선스" Style="{StaticResource SettingsSectionTitle}" />
 
-                            <TextBlock x:Name="OpenSourceDesc" Text="LumiFiles은 다음 오픈소스 프로젝트의 도움으로 만들어졌습니다."
+                            <TextBlock x:Name="OpenSourceDesc" Text="Span은 다음 오픈소스 프로젝트의 도움으로 만들어졌습니다."
                                        Style="{StaticResource SettingsCardDesc}" Margin="0,0,0,12" />
 
                             <!-- NuGet Packages -->

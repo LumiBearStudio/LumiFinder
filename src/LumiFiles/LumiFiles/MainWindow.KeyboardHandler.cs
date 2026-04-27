@@ -843,7 +843,7 @@ namespace LumiFiles
                 case ShortcutCommands.ShowProperties: HandleShowProperties(); return true;
                 case ShortcutCommands.ShowHelp: ToggleHelpOverlay(); return true;
                 case ShortcutCommands.OpenHelp:
-                    // LumiFiles Finder 온라인 가이드 사이트 열기 (기본 브라우저)
+                    // Lumi Files 온라인 가이드 사이트 열기 (기본 브라우저)
                     _ = Windows.System.Launcher.LaunchUriAsync(new Uri("https://lumibearstudio.github.io/docs"));
                     return true;
 

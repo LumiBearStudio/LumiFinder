@@ -97,7 +97,7 @@ namespace LumiFiles
             };
 
         /// <summary>
-        /// 가상 폴더 — Lumi Files에서 직접 탐색 불가, explorer.exe에 위임.
+        /// 가상 폴더 — LumiFiles에서 직접 탐색 불가, explorer.exe에 위임.
         /// RecycleBinFolder는 자체 처리되므로 여기에 포함하지 않음.
         /// </summary>
         private static readonly HashSet<string> _shellVirtualFolders = new(StringComparer.OrdinalIgnoreCase)

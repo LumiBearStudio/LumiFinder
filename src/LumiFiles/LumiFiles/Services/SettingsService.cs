@@ -117,6 +117,27 @@ public class SettingsService : ISettingsService
         set => Set("IconFontScale", value);
     }
 
+    /// <summary>
+    /// 폴더 커스텀 아이콘(desktop.ini) 표시 여부. 기본 OFF.
+    /// ON 시 Read-Only 속성을 가진 폴더에 한해 Windows Shell API로 커스텀 아이콘을 추출하여 글리프 대신 표시.
+    /// 아이콘 로드 실패 시 자동으로 기본 글리프 폴백.
+    /// </summary>
+    public bool FolderCustomIconsEnabled
+    {
+        get => Get("FolderCustomIconsEnabled", false);
+        set => Set("FolderCustomIconsEnabled", value);
+    }
+
+    /// <summary>
+    /// 심미적 애니메이션(새 Miller 컬럼 슬라이드-인, on-path 인디케이터 이동) 사용 여부.
+    /// 기본 ON. OFF 시 최종 상태로 즉시 전환되어 빠른 탐색 시 snappy 동작 (macOS Finder 유사).
+    /// </summary>
+    public bool AnimationsEnabled
+    {
+        get => Get("AnimationsEnabled", true);
+        set => Set("AnimationsEnabled", value);
+    }
+
     // ── Browsing ──
 
     public bool ShowHiddenFiles

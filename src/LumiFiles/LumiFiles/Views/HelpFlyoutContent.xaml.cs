@@ -113,50 +113,50 @@ namespace LumiFiles.Views
             var bindings = service.CloneCurrentBindings();
 
             // 탐색
-            SetKeyText(Key_AddressBar, bindings, "lumifiles.navigate.addressBar");
-            SetKeyText(Key_Search, bindings, "lumifiles.navigate.search");
-            SetKeyText(Key_Filter, bindings, "lumifiles.navigate.filterBar");
-            SetKeyText(Key_QuickLook, bindings, "lumifiles.quickLook.toggle");
+            SetKeyText(Key_AddressBar, bindings, "LumiFiles.navigate.addressBar");
+            SetKeyText(Key_Search, bindings, "LumiFiles.navigate.search");
+            SetKeyText(Key_Filter, bindings, "LumiFiles.navigate.filterBar");
+            SetKeyText(Key_QuickLook, bindings, "LumiFiles.quickLook.toggle");
 
             // 편집
-            SetKeyText(Key_Copy, bindings, "lumifiles.edit.copy");
-            SetKeyText(Key_Cut, bindings, "lumifiles.edit.cut");
-            SetKeyText(Key_Paste, bindings, "lumifiles.edit.paste");
-            SetKeyText(Key_PasteShortcut, bindings, "lumifiles.edit.pasteAsShortcut");
-            SetKeyText(Key_Duplicate, bindings, "lumifiles.edit.duplicate");
-            SetKeyText(Key_Rename, bindings, "lumifiles.edit.rename");
-            SetKeyText(Key_Delete, bindings, "lumifiles.edit.delete");
-            SetKeyText(Key_PermDelete, bindings, "lumifiles.edit.permanentDelete");
-            SetKeyText(Key_NewFolder, bindings, "lumifiles.edit.newFolder");
+            SetKeyText(Key_Copy, bindings, "LumiFiles.edit.copy");
+            SetKeyText(Key_Cut, bindings, "LumiFiles.edit.cut");
+            SetKeyText(Key_Paste, bindings, "LumiFiles.edit.paste");
+            SetKeyText(Key_PasteShortcut, bindings, "LumiFiles.edit.pasteAsShortcut");
+            SetKeyText(Key_Duplicate, bindings, "LumiFiles.edit.duplicate");
+            SetKeyText(Key_Rename, bindings, "LumiFiles.edit.rename");
+            SetKeyText(Key_Delete, bindings, "LumiFiles.edit.delete");
+            SetKeyText(Key_PermDelete, bindings, "LumiFiles.edit.permanentDelete");
+            SetKeyText(Key_NewFolder, bindings, "LumiFiles.edit.newFolder");
 
             // 보기
-            SetKeyText(Key_Miller, bindings, "lumifiles.view.miller");
-            SetKeyText(Key_Details, bindings, "lumifiles.view.details");
-            SetKeyText(Key_List, bindings, "lumifiles.view.list");
-            SetKeyText(Key_Icons, bindings, "lumifiles.view.icon");
-            SetKeyText(Key_SplitView, bindings, "lumifiles.view.splitView");
-            SetKeyText(Key_Preview, bindings, "lumifiles.view.preview");
-            SetKeyText(Key_EqColumns, bindings, "lumifiles.view.equalizeColumns");
-            SetKeyText(Key_AutoFit, bindings, "lumifiles.view.autoFitColumns");
-            SetKeyText(Key_Refresh, bindings, "lumifiles.view.refresh");
-            SetKeyText(Key_ToggleHidden, bindings, "lumifiles.view.toggleHidden");
-            SetKeyText(Key_Fullscreen, bindings, "lumifiles.view.fullscreen");
+            SetKeyText(Key_Miller, bindings, "LumiFiles.view.miller");
+            SetKeyText(Key_Details, bindings, "LumiFiles.view.details");
+            SetKeyText(Key_List, bindings, "LumiFiles.view.list");
+            SetKeyText(Key_Icons, bindings, "LumiFiles.view.icon");
+            SetKeyText(Key_SplitView, bindings, "LumiFiles.view.splitView");
+            SetKeyText(Key_Preview, bindings, "LumiFiles.view.preview");
+            SetKeyText(Key_EqColumns, bindings, "LumiFiles.view.equalizeColumns");
+            SetKeyText(Key_AutoFit, bindings, "LumiFiles.view.autoFitColumns");
+            SetKeyText(Key_Refresh, bindings, "LumiFiles.view.refresh");
+            SetKeyText(Key_ToggleHidden, bindings, "LumiFiles.view.toggleHidden");
+            SetKeyText(Key_Fullscreen, bindings, "LumiFiles.view.fullscreen");
 
             // 창 / 탭
-            SetKeyText(Key_NextTab, bindings, "lumifiles.tab.next");
-            SetKeyText(Key_NewTab, bindings, "lumifiles.tab.new");
-            SetKeyText(Key_CloseTab, bindings, "lumifiles.tab.close");
-            SetKeyText(Key_OpenInNewTab, bindings, "lumifiles.tab.openSelectedInNew");
-            SetKeyText(Key_NewWindow, bindings, "lumifiles.window.new");
-            SetKeyText(Key_Terminal, bindings, "lumifiles.window.terminal");
-            SetKeyText(Key_Settings, bindings, "lumifiles.window.settings");
-            SetKeyText(Key_Properties, bindings, "lumifiles.window.properties");
-            SetKeyText(Key_Help, bindings, "lumifiles.window.help");
+            SetKeyText(Key_NextTab, bindings, "LumiFiles.tab.next");
+            SetKeyText(Key_NewTab, bindings, "LumiFiles.tab.new");
+            SetKeyText(Key_CloseTab, bindings, "LumiFiles.tab.close");
+            SetKeyText(Key_OpenInNewTab, bindings, "LumiFiles.tab.openSelectedInNew");
+            SetKeyText(Key_NewWindow, bindings, "LumiFiles.window.new");
+            SetKeyText(Key_Terminal, bindings, "LumiFiles.window.terminal");
+            SetKeyText(Key_Settings, bindings, "LumiFiles.window.settings");
+            SetKeyText(Key_Properties, bindings, "LumiFiles.window.properties");
+            SetKeyText(Key_Help, bindings, "LumiFiles.window.help");
 
             // 합쳐진 매핑: Back + Forward
-            SetJoinedKeyText(Key_BackForward, bindings, "lumifiles.navigate.back", "lumifiles.navigate.forward");
+            SetJoinedKeyText(Key_BackForward, bindings, "LumiFiles.navigate.back", "LumiFiles.navigate.forward");
             // 합쳐진 매핑: Undo + Redo
-            SetJoinedKeyText(Key_UndoRedo, bindings, "lumifiles.edit.undo", "lumifiles.edit.redo");
+            SetJoinedKeyText(Key_UndoRedo, bindings, "LumiFiles.edit.undo", "LumiFiles.edit.redo");
         }
 
         private static void SetKeyText(TextBlock? tb, Dictionary<string, List<string>> bindings, string commandId)

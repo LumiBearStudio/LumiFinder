@@ -15,9 +15,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <!-- Sentry release 정확도 — Package.appxmanifest와 동기화 필요 (수동) -->
-    <Version>1.4.1</Version>
-    <AssemblyVersion>1.4.1.0</AssemblyVersion>
-    <FileVersion>1.4.1.0</FileVersion>
+    <Version>1.4.13</Version>
+    <AssemblyVersion>1.4.13.0</AssemblyVersion>
+    <FileVersion>1.4.13.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -77,8 +77,7 @@
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
   </ItemGroup>
-  <!-- Phase 1: 썸네일 격리 워커 — 빌드 의존성만 ProjectReference로,
-       출력 복사는 별도 target(CopyThumbsWorker)이 처리 -->
+  <!-- Phase 1: 썸네일 격리 워커 — 빌드 의존성 + MSIX 패키지 포함 -->
   <ItemGroup>
     <ProjectReference Include="..\LumiFiles.Thumbs\LumiFiles.Thumbs.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
@@ -88,34 +87,33 @@
     </ProjectReference>
   </ItemGroup>
 
-  <!-- 워커 .exe + .dll + 메타 파일을 메인 출력 폴더 + AppX staging 폴더 둘 다 복사.
-       MSIX 실행 시 메인은 AppX/ 하위에서 실행되므로 워커도 같은 위치에 있어야 함.
-       (이전 PackagingOutputs 등록은 DEP1000 상대경로 오해석으로 제거 — Content 방식으로 대체) -->
-  <Target Name="CopyThumbsWorker"
-          AfterTargets="Build"
+  <!-- v1.4.5: 이슈 #23 최종 수정 — LumiFiles.Thumbs self-contained 전체를 MSIX 패키지 포함.
+       이전 (v1.4.3/4): LumiFiles.Thumbs.* 4개 파일만 복사 → framework-dependent라 .NET 런타임 없어 spawn 즉사 →
+                      파이널라이저 큐 적체 → D3D 크래시.
+       수정 (v1.4.5): LumiFiles.Thumbs를 self-contained(런타임 포함)로 빌드하고, 전체 폴더(227개)를
+                    'LumiFiles.Thumbs/' 서브디렉토리로 패키징. ThumbnailClientService가 baseDir/LumiFiles.Thumbs/ 경로
+                    자동 탐색(line 70-71)하므로 코드 변경 없이 서브폴더 배치 가능.
+                    메인 앱 DLL과 네임 충돌 없음 (격리된 서브디렉토리).
+
+       경로: net8.0-windows10.0.19041.0/win-$(platform)/ (self-contained는 RID 서브폴더에 생성됨).
+       .pdb는 패키지 크기 절감 차원에서 제외. -->
+  <Target Name="IncludeThumbsInPackage"
+          BeforeTargets="AssignTargetPaths;GetCopyToOutputDirectoryItems"
           DependsOnTargets="ResolveProjectReferences">
     <PropertyGroup>
-      <_ThumbsBinDir>$(MSBuildThisFileDirectory)..\LumiFiles.Thumbs\bin\$(Platform)\$(Configuration)\$(TargetFramework)\</_ThumbsBinDir>
-      <_AppXDir>$(OutDir)AppX\</_AppXDir>
+      <_ThumbsRid Condition="'$(Platform)' == 'x64'">win-x64</_ThumbsRid>
+      <_ThumbsRid Condition="'$(Platform)' == 'x86'">win-x86</_ThumbsRid>
+      <_ThumbsRid Condition="'$(Platform)' == 'ARM64'">win-arm64</_ThumbsRid>
+      <_ThumbsBinDir>$(MSBuildThisFileDirectory)..\LumiFiles.Thumbs\bin\$(Platform)\$(Configuration)\net8.0-windows10.0.19041.0\$(_ThumbsRid)\</_ThumbsBinDir>
     </PropertyGroup>
-    <ItemGroup>
-      <_ThumbsFiles Include="$(_ThumbsBinDir)LumiFiles.Thumbs.exe" />
-      <_ThumbsFiles Include="$(_ThumbsBinDir)LumiFiles.Thumbs.dll" />
-      <_ThumbsFiles Include="$(_ThumbsBinDir)LumiFiles.Thumbs.deps.json" />
-      <_ThumbsFiles Include="$(_ThumbsBinDir)LumiFiles.Thumbs.runtimeconfig.json" />
-      <_ThumbsFiles Include="$(_ThumbsBinDir)LumiFiles.Thumbs.pdb" Condition="'$(Configuration)' == 'Debug'" />
+    <ItemGroup Condition="Exists('$(_ThumbsBinDir)LumiFiles.Thumbs.exe')">
+      <!-- LumiFiles.Thumbs self-contained 전체를 'LumiFiles.Thumbs/' 서브디렉토리로 포함 (pdb 제외) -->
+      <_ThumbsAllFiles Include="$(_ThumbsBinDir)**\*.*" Exclude="$(_ThumbsBinDir)**\*.pdb" />
+      <Content Include="@(_ThumbsAllFiles)"
+               Link="LumiFiles.Thumbs\%(RecursiveDir)%(Filename)%(Extension)"
+               CopyToOutputDirectory="Always"
+               Visible="false" />
     </ItemGroup>
-    <!-- 1) bin/{config}/ 직속 (직접 실행 케이스) -->
-    <Copy SourceFiles="@(_ThumbsFiles)"
-          DestinationFolder="$(OutDir)"
-          SkipUnchangedFiles="true"
-          Condition="Exists('%(Identity)')" />
-    <!-- 2) AppX/ 하위 (MSIX staging 케이스 — 사용자 baseDir이 여기) -->
-    <MakeDir Directories="$(_AppXDir)" Condition="!Exists('$(_AppXDir)')" />
-    <Copy SourceFiles="@(_ThumbsFiles)"
-          DestinationFolder="$(_AppXDir)"
-          SkipUnchangedFiles="true"
-          Condition="Exists('%(Identity)')" />
   </Target>
 
   <ItemGroup>
@@ -137,7 +135,7 @@
   <PropertyGroup>
     <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
     <PackageCertificateKeyFile>LumiFiles_Dev.pfx</PackageCertificateKeyFile>
-    <PackageCertificatePassword>LumiDev2026</PackageCertificatePassword>
+    <PackageCertificatePassword>LumiFilesDev2026</PackageCertificatePassword>
   </PropertyGroup>
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>

@@ -370,7 +370,7 @@ namespace LumiFiles
             // 1. 등록된 모든 명령 (Settings 명령은 별도로 처리하므로 제외)
             foreach (var cmdId in ShortcutCommands.GetAllCommands())
             {
-                if (cmdId.StartsWith("lumifiles.settings.")) continue;
+                if (cmdId.StartsWith("LumiFiles.settings.")) continue;
 
                 var displayName = ShortcutCommands.GetDisplayName(cmdId);
                 var category = ShortcutCommands.GetCategory(cmdId);

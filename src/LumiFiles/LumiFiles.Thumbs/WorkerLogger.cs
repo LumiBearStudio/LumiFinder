@@ -8,7 +8,7 @@ namespace LumiFiles.Thumbs;
 
 /// <summary>
 /// 워커 전용 로그. 메인 DebugLogger와 같은 폴더에 별도 prefix로 저장.
-/// 위치: %LocalAppData%\LumiFiles\Logs\LumiFiles_Worker_yyyyMMdd_HHmmss_pid{pid}.log
+/// 위치: %LocalAppData%\LumiFiles\Logs\Span_Worker_yyyyMMdd_HHmmss_pid{pid}.log
 ///
 /// M1: ConcurrentQueue + 백그라운드 flush — 호출 스레드 디스크 I/O 차단 제거.
 /// 워커 종료 시 FlushSync로 누락 방지.
@@ -28,7 +28,7 @@ internal static class WorkerLogger
         try { Directory.CreateDirectory(logsDir); } catch { }
         var sessionTag = DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var pid = Environment.ProcessId;
-        LogPath = Path.Combine(logsDir, $"LumiFiles_Worker_{sessionTag}_pid{pid}.log");
+        LogPath = Path.Combine(logsDir, $"Span_Worker_{sessionTag}_pid{pid}.log");
         try
         {
             File.WriteAllText(LogPath, $"=== LumiFiles Thumbs Worker Log - {DateTime.Now:yyyy-MM-dd HH:mm:ss} (pid={pid}) ===\n\n");

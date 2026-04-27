@@ -11,6 +11,8 @@ namespace LumiFiles.Services
         string Density { get; set; }
         string FontFamily { get; set; }
         string IconPack { get; set; }
+        bool FolderCustomIconsEnabled { get; set; }
+        bool AnimationsEnabled { get; set; }
     }
 
     /// <summary>

@@ -43,7 +43,7 @@ namespace LumiFiles.Models
         public bool Alt { get; set; }
 
         /// <summary>
-        /// 이 키 바인딩이 실행하는 커맨드 ID (예: "lumifiles.edit.copy")
+        /// 이 키 바인딩이 실행하는 커맨드 ID (예: "LumiFiles.edit.copy")
         /// </summary>
         public string CommandId { get; set; } = string.Empty;
 

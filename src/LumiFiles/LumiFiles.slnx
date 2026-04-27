@@ -10,6 +10,9 @@
     <Platform Solution="*|x86" Project="x86" />
     <Deploy />
   </Project>
+  <Project Path="LumiFiles.UITests/LumiFiles.UITests.csproj">
+    <Platform Solution="*|x64" Project="x64" />
+  </Project>
   <Project Path="LumiFiles.Thumbs/LumiFiles.Thumbs.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
