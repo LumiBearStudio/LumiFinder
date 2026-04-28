@@ -1313,27 +1313,28 @@
                         <RowDefinition Height="Auto"/> <!-- FilterBar -->
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/> <!-- Git Status Bar -->
+                        <RowDefinition Height="Auto"/> <!-- Path Bar (split mode only) -->
                     </Grid.RowDefinitions>
 
                     <!-- Drop overlay (cross-pane visual feedback) -->
-                    <Border x:Name="LeftDropOverlay" Grid.RowSpan="4" Opacity="0" IsHitTestVisible="False"
+                    <Border x:Name="LeftDropOverlay" Grid.RowSpan="5" Opacity="0" IsHitTestVisible="False"
                             Background="{ThemeResource SpanAccentBrush}" CornerRadius="4" Margin="4"/>
 
-                    <!-- Left Pane Path Header (split mode, hidden in Home) -->
+                    <!-- Left Pane Path Header (split mode, hidden in Home).
+                         Span jank tones (SpanBgLayer2Brush, SpanBorderSubtle, top accent line)
+                         removed in favor of LumiFiles transparent floating treatment. The
+                         segmented pill controls inside (Phase 3) carry their own visible fills,
+                         and the active pane indicator now lives on the toolbar tone + folder
+                         label (A+D combo) rather than a 1px accent strip. -->
                     <Grid Grid.Row="0" x:Name="LeftPathHeader" Height="32"
                           Visibility="{x:Bind IsLeftPaneHeaderVisible(ViewModel.IsSplitViewEnabled, ViewModel.CurrentViewMode), Mode=OneWay}"
-                          Background="{ThemeResource SpanBgLayer2Brush}"
-                          BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="0,0,0,1"
+                          Background="{x:Bind LeftPaneActiveBrush(ViewModel.ActivePane), Mode=OneWay}"
                           Tapped="OnLeftPaneHeaderTapped">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>  <!-- Nav buttons -->
                             <ColumnDefinition Width="*"/>     <!-- Breadcrumb -->
                             <ColumnDefinition Width="Auto"/>  <!-- Copy path -->
                         </Grid.ColumnDefinitions>
-                        <!-- Active pane accent bar -->
-                        <Rectangle Height="1" VerticalAlignment="Top" Grid.ColumnSpan="3"
-                                   Fill="{ThemeResource SpanAccentBrush}"
-                                   Opacity="{x:Bind LeftPaneAccentOpacity(ViewModel.ActivePane), Mode=OneWay}"/>
                         <!-- Nav buttons -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center" Margin="2,0,0,0">
                             <Button x:Name="LeftBackButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="뒤로 (Alt+Left)"
@@ -1350,18 +1351,32 @@
                                     Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
                                 <FontIcon Glyph="&#xE72A;" FontSize="11"/>
                             </Button>
-                            <Button x:Name="LeftUpButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="위로"
-                                    Tag="Left" Click="OnPaneNavigateUpClick"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <FontIcon Glyph="&#xE74A;" FontSize="11"/>
-                            </Button>
+                            <!-- LeftUpButton removed — single LumiToolbar dropped the Up button per
+                                 design spec; pane mini toolbar follows suit for consistency. -->
                         </StackPanel>
-                        <!-- Breadcrumb + Edit mode -->
+                        <!-- Breadcrumb + Edit mode (kept in tree but visually hidden — its role
+                             moved to the per-pane LumiPathBar at the bottom of the pane container.
+                             AddressBar instance retained so existing focus / SyncLeftAddressBar
+                             / event-routing code keeps working until it is migrated out. -->
                         <appcontrols:AddressBarControl x:Name="LeftAddressBar" Grid.Column="1"
+                            Visibility="Collapsed"
                             RecentFolders="{x:Bind ViewModel.RecentFolders, Mode=OneWay}"
                             BreadcrumbSegmentClicked="OnAddressBarBreadcrumbClicked"
                             BreadcrumbChevronClicked="OnAddressBarChevronClicked"
                             PathNavigated="OnAddressBarPathNavigated"/>
+                        <!-- D combo: address folder label (current folder name + amber icon).
+                             Foreground = active-pane amber / inactive-pane secondary so the
+                             focused pane reads with the LumiFiles golden accent. -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7"
+                                    VerticalAlignment="Center" Padding="10,0,12,0">
+                            <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource LumiAmberBrush}"/>
+                            <TextBlock Text="{x:Bind ViewModel.Explorer.CurrentFolderName, Mode=OneWay}"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       FontWeight="Medium"
+                                       Foreground="{x:Bind LeftPaneActiveLabelBrush(ViewModel.ActivePane), Mode=OneWay}"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
                         <!-- Pane actions: CopyPath | Sort, ViewMode, Preview -->
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center" Margin="0,0,2,0">
                             <!-- CopyPath -->
@@ -1803,6 +1818,52 @@
                             </Button.Flyout>
                         </Button>
                     </Border>
+
+                    <!-- Left Pane Path Bar — split mode only. Sits at the bottom row of the
+                         pane container itself so the breadcrumb aligns with this pane's actual
+                         column area (vs the legacy outer status bar which spanned the whole
+                         content+sidebar grid). Single mode keeps the outer LumiPathBar. -->
+                    <Grid Grid.Row="4" Grid.ColumnSpan="3" x:Name="LeftPanePathBar"
+                          Height="{StaticResource LumiPathBarHeight}"
+                          Background="{ThemeResource LumiPathBarBrush}"
+                          BorderBrush="{ThemeResource LumiDividerSoftBrush}" BorderThickness="0,1,0,0"
+                          Padding="14,0"
+                          Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.Explorer.PathSegments, Mode=OneWay}"
+                                      VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="0"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:PathSegment">
+                                    <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
+                                        <Button Padding="6,3" MinWidth="0" MinHeight="0"
+                                                Background="Transparent" BorderThickness="0"
+                                                CornerRadius="{StaticResource LumiPathSegmentCornerRadius}"
+                                                Click="OnLumiPathSegmentLeftClick"
+                                                Tag="{x:Bind FullPath}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <FontIcon Glyph="&#xE8B7;" FontSize="11"
+                                                          Foreground="{ThemeResource LumiAmberBrush}"
+                                                          VerticalAlignment="Center"/>
+                                                <TextBlock Text="{x:Bind Name}"
+                                                           FontFamily="{StaticResource LumiFontFamily}"
+                                                           FontSize="{StaticResource LumiFontSizePathBar}"
+                                                           Foreground="{ThemeResource LumiTextSecondaryBrush}"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <TextBlock Text="›" FontSize="9" Opacity="0.5"
+                                                   Foreground="{ThemeResource LumiTextTertiaryBrush}"
+                                                   Margin="2,0,2,0" VerticalAlignment="Center"
+                                                   Visibility="{x:Bind ChevronVisibility}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
                 </Grid>
 
                 <!-- ===== RIGHT PANE ===== -->
@@ -1814,26 +1875,23 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/> <!-- Git Status Bar -->
+                        <RowDefinition Height="Auto"/> <!-- Path Bar (split mode only) -->
                     </Grid.RowDefinitions>
 
                     <!-- Drop overlay (cross-pane visual feedback) -->
-                    <Border x:Name="RightDropOverlay" Grid.RowSpan="3" Opacity="0" IsHitTestVisible="False"
+                    <Border x:Name="RightDropOverlay" Grid.RowSpan="4" Opacity="0" IsHitTestVisible="False"
                             Background="{ThemeResource SpanAccentBrush}" CornerRadius="4" Margin="4"/>
 
                     <!-- Right Pane Path Header -->
+                    <!-- Right Pane Path Header — Span jank tones removed (see LeftPathHeader comment). -->
                     <Grid Grid.Row="0" x:Name="RightPathHeader" Height="32"
-                          Background="{ThemeResource SpanBgLayer2Brush}"
-                          BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="0,0,0,1"
+                          Background="{x:Bind RightPaneActiveBrush(ViewModel.ActivePane), Mode=OneWay}"
                           Tapped="OnRightPaneHeaderTapped">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- Active pane accent bar -->
-                        <Rectangle Height="1" VerticalAlignment="Top" Grid.ColumnSpan="3"
-                                   Fill="{ThemeResource SpanAccentBrush}"
-                                   Opacity="{x:Bind RightPaneAccentOpacity(ViewModel.ActivePane), Mode=OneWay}"/>
                         <!-- Nav buttons -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center" Margin="2,0,0,0">
                             <Button x:Name="RightBackButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="뒤로 (Alt+Left)"
@@ -1848,18 +1906,26 @@
                                     Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
                                 <FontIcon Glyph="&#xE72A;" FontSize="11"/>
                             </Button>
-                            <Button x:Name="RightUpButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="위로"
-                                    Tag="Right" Click="OnPaneNavigateUpClick"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <FontIcon Glyph="&#xE74A;" FontSize="11"/>
-                            </Button>
+                            <!-- RightUpButton removed — see LeftPathHeader comment. -->
                         </StackPanel>
-                        <!-- Breadcrumb + Edit mode -->
+                        <!-- Breadcrumb hidden — see LeftAddressBar comment. -->
                         <appcontrols:AddressBarControl x:Name="RightAddressBar" Grid.Column="1"
+                            Visibility="Collapsed"
                             RecentFolders="{x:Bind ViewModel.RecentFolders, Mode=OneWay}"
                             BreadcrumbSegmentClicked="OnAddressBarBreadcrumbClicked"
                             BreadcrumbChevronClicked="OnAddressBarChevronClicked"
                             PathNavigated="OnAddressBarPathNavigated"/>
+                        <!-- D combo: right-pane address folder label. -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7"
+                                    VerticalAlignment="Center" Padding="10,0,12,0">
+                            <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource LumiAmberBrush}"/>
+                            <TextBlock Text="{x:Bind ViewModel.RightExplorer.CurrentFolderName, Mode=OneWay}"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       FontWeight="Medium"
+                                       Foreground="{x:Bind RightPaneActiveLabelBrush(ViewModel.ActivePane), Mode=OneWay}"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
                         <!-- Pane actions: CopyPath | Sort, ViewMode, Preview -->
                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center" Margin="0,0,2,0">
                             <!-- CopyPath -->
@@ -2246,6 +2312,51 @@
                             </Button.Flyout>
                         </Button>
                     </Border>
+
+                    <!-- Right Pane Path Bar — split mode only. Same pattern as LeftPanePathBar
+                         but bound to RightExplorer so the breadcrumb tracks the right pane's
+                         own current path. -->
+                    <Grid Grid.Row="3" Grid.ColumnSpan="3" x:Name="RightPanePathBar"
+                          Height="{StaticResource LumiPathBarHeight}"
+                          Background="{ThemeResource LumiPathBarBrush}"
+                          BorderBrush="{ThemeResource LumiDividerSoftBrush}" BorderThickness="0,1,0,0"
+                          Padding="14,0"
+                          Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.RightExplorer.PathSegments, Mode=OneWay}"
+                                      VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="0"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:PathSegment">
+                                    <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
+                                        <Button Padding="6,3" MinWidth="0" MinHeight="0"
+                                                Background="Transparent" BorderThickness="0"
+                                                CornerRadius="{StaticResource LumiPathSegmentCornerRadius}"
+                                                Click="OnLumiPathSegmentRightClick"
+                                                Tag="{x:Bind FullPath}">
+                                            <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <FontIcon Glyph="&#xE8B7;" FontSize="11"
+                                                          Foreground="{ThemeResource LumiAmberBrush}"
+                                                          VerticalAlignment="Center"/>
+                                                <TextBlock Text="{x:Bind Name}"
+                                                           FontFamily="{StaticResource LumiFontFamily}"
+                                                           FontSize="{StaticResource LumiFontSizePathBar}"
+                                                           Foreground="{ThemeResource LumiTextSecondaryBrush}"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <TextBlock Text="›" FontSize="9" Opacity="0.5"
+                                                   Foreground="{ThemeResource LumiTextTertiaryBrush}"
+                                                   Margin="2,0,2,0" VerticalAlignment="Center"
+                                                   Visibility="{x:Bind ChevronVisibility}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
                 </Grid>
 
                 <!-- Split divider (RightPaneContainer의 Margin="1,0,0,0"으로 생긴 1px 갭에 배치) -->
@@ -2263,8 +2374,9 @@
              4. PATH BAR (mockup _ui_mockup_v3_glass.html / V3.png)
              • height 30, padding 0 14, bg LumiPathBarBrush, hairline top divider
              • Single mode  : breadcrumb (LEFT) + status incl. disk space (RIGHT)
-             • Split mode   : two side-by-side path bars (left+right pane);
-                              disk space hidden (sender's request "디스크정보만 숨김")
+             • Split mode   : two side-by-side path bars (left+right pane).
+                              Disk space text hidden (per spec); item-count and selection
+                              status are shown for the ACTIVE pane only on the right edge.
              ============================================================ -->
         <Grid Grid.Column="1" Grid.Row="3" AutomationProperties.AutomationId="StatusBar"
               Height="{StaticResource LumiPathBarHeight}"
@@ -2273,77 +2385,86 @@
               BorderThickness="0,1,0,0"
               Padding="14,0"
               Visibility="{x:Bind helpers:ConverterHelpers.NotBoolToVisibility(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
 
-            <!-- Left: breadcrumb (mockup spec) — folder icon + segment chip + chevron separator.
-                 Bound to the existing ExplorerViewModel.PathSegments ObservableCollection (Models.PathSegment).
-                 Each segment is clickable: NavigateToSegment(segment) jumps to that path. -->
-            <ItemsControl x:Name="LumiPathBarItems" Grid.Column="0" VerticalAlignment="Center"
-                          ItemsSource="{x:Bind ViewModel.ActiveExplorer.PathSegments, Mode=OneWay}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="0"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="models:PathSegment">
-                        <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
-                            <Button Padding="6,3" MinWidth="0" MinHeight="0"
-                                    Background="Transparent" BorderThickness="0"
-                                    CornerRadius="{StaticResource LumiPathSegmentCornerRadius}"
-                                    Click="OnLumiPathSegmentClick"
-                                    Tag="{x:Bind FullPath}">
-                                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                    <FontIcon Glyph="&#xE8B7;" FontSize="11"
-                                              Foreground="{ThemeResource LumiAmberBrush}"
-                                              VerticalAlignment="Center"/>
-                                    <TextBlock Text="{x:Bind Name}"
-                                               FontFamily="{StaticResource LumiFontFamily}"
-                                               FontSize="{StaticResource LumiFontSizePathBar}"
-                                               Foreground="{ThemeResource LumiTextSecondaryBrush}"
-                                               VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            <TextBlock Text="›" FontSize="9" Opacity="0.5"
-                                       Foreground="{ThemeResource LumiTextTertiaryBrush}"
-                                       Margin="2,0,2,0" VerticalAlignment="Center"
-                                       Visibility="{x:Bind ChevronVisibility}"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <!-- ===== Single-pane mode ===== -->
+            <Grid Visibility="{x:Bind helpers:ConverterHelpers.NotBoolToVisibility(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- Right: status (item count · selection · disk space) -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"
-                        BorderBrush="{ThemeResource LumiDividerBrush}" BorderThickness="1,0,0,0" Padding="12,0,0,0">
-                <TextBlock AutomationProperties.AutomationId="TextBlock_ItemCount"
-                           Text="{x:Bind ViewModel.StatusItemCountText, Mode=OneWay}"
-                           FontFamily="{StaticResource LumiFontFamily}"
-                           FontSize="{StaticResource LumiFontSizePathStatus}"
-                           Foreground="{ThemeResource LumiTextTertiaryBrush}"
-                           VerticalAlignment="Center"
-                           Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusItemCountText), Mode=OneWay}"/>
-                <Ellipse Width="3" Height="3" Fill="{ThemeResource LumiTextTertiaryBrush}" VerticalAlignment="Center"
-                         Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusSelectionText), Mode=OneWay}"/>
-                <TextBlock Text="{x:Bind ViewModel.StatusSelectionText, Mode=OneWay}"
-                           FontFamily="{StaticResource LumiFontFamily}"
-                           FontSize="{StaticResource LumiFontSizePathStatus}"
-                           Foreground="{ThemeResource LumiTextTertiaryBrush}"
-                           VerticalAlignment="Center"
-                           Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusSelectionText), Mode=OneWay}"/>
-                <Ellipse Width="3" Height="3" Fill="{ThemeResource LumiTextTertiaryBrush}" VerticalAlignment="Center"
-                         Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusDiskSpaceText), Mode=OneWay}"/>
-                <TextBlock AutomationProperties.AutomationId="TextBlock_DiskSpace"
-                           Text="{x:Bind ViewModel.StatusDiskSpaceText, Mode=OneWay}"
-                           FontFamily="{StaticResource LumiFontFamily}"
-                           FontSize="{StaticResource LumiFontSizePathStatus}"
-                           Foreground="{ThemeResource LumiTextTertiaryBrush}"
-                           VerticalAlignment="Center"
-                           Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusDiskSpaceText), Mode=OneWay}"/>
-            </StackPanel>
+                <!-- Left: breadcrumb (mockup spec) — folder icon + segment chip + chevron separator.
+                     Bound to the existing ExplorerViewModel.PathSegments ObservableCollection (Models.PathSegment).
+                     Each segment is clickable: NavigateToSegment(segment) jumps to that path. -->
+                <ItemsControl x:Name="LumiPathBarItems" Grid.Column="0" VerticalAlignment="Center"
+                              ItemsSource="{x:Bind ViewModel.ActiveExplorer.PathSegments, Mode=OneWay}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="0"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:PathSegment">
+                            <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
+                                <Button Padding="6,3" MinWidth="0" MinHeight="0"
+                                        Background="Transparent" BorderThickness="0"
+                                        CornerRadius="{StaticResource LumiPathSegmentCornerRadius}"
+                                        Click="OnLumiPathSegmentClick"
+                                        Tag="{x:Bind FullPath}">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <FontIcon Glyph="&#xE8B7;" FontSize="11"
+                                                  Foreground="{ThemeResource LumiAmberBrush}"
+                                                  VerticalAlignment="Center"/>
+                                        <TextBlock Text="{x:Bind Name}"
+                                                   FontFamily="{StaticResource LumiFontFamily}"
+                                                   FontSize="{StaticResource LumiFontSizePathBar}"
+                                                   Foreground="{ThemeResource LumiTextSecondaryBrush}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Text="›" FontSize="9" Opacity="0.5"
+                                           Foreground="{ThemeResource LumiTextTertiaryBrush}"
+                                           Margin="2,0,2,0" VerticalAlignment="Center"
+                                           Visibility="{x:Bind ChevronVisibility}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Right: status (item count · selection · disk space) -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center"
+                            BorderBrush="{ThemeResource LumiDividerBrush}" BorderThickness="1,0,0,0" Padding="12,0,0,0">
+                    <TextBlock AutomationProperties.AutomationId="TextBlock_ItemCount"
+                               Text="{x:Bind ViewModel.StatusItemCountText, Mode=OneWay}"
+                               FontFamily="{StaticResource LumiFontFamily}"
+                               FontSize="{StaticResource LumiFontSizePathStatus}"
+                               Foreground="{ThemeResource LumiTextTertiaryBrush}"
+                               VerticalAlignment="Center"
+                               Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusItemCountText), Mode=OneWay}"/>
+                    <Ellipse Width="3" Height="3" Fill="{ThemeResource LumiTextTertiaryBrush}" VerticalAlignment="Center"
+                             Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusSelectionText), Mode=OneWay}"/>
+                    <TextBlock Text="{x:Bind ViewModel.StatusSelectionText, Mode=OneWay}"
+                               FontFamily="{StaticResource LumiFontFamily}"
+                               FontSize="{StaticResource LumiFontSizePathStatus}"
+                               Foreground="{ThemeResource LumiTextTertiaryBrush}"
+                               VerticalAlignment="Center"
+                               Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusSelectionText), Mode=OneWay}"/>
+                    <Ellipse Width="3" Height="3" Fill="{ThemeResource LumiTextTertiaryBrush}" VerticalAlignment="Center"
+                             Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusDiskSpaceText), Mode=OneWay}"/>
+                    <TextBlock AutomationProperties.AutomationId="TextBlock_DiskSpace"
+                               Text="{x:Bind ViewModel.StatusDiskSpaceText, Mode=OneWay}"
+                               FontFamily="{StaticResource LumiFontFamily}"
+                               FontSize="{StaticResource LumiFontSizePathStatus}"
+                               Foreground="{ThemeResource LumiTextTertiaryBrush}"
+                               VerticalAlignment="Center"
+                               Visibility="{x:Bind helpers:StatusBarHelper.ShowIfNotEmpty(ViewModel.StatusDiskSpaceText), Mode=OneWay}"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Split mode: outer path bar is hidden (Visibility above). Each pane carries
+                 its own path bar at the bottom row inside LeftPaneContainer / RightPaneContainer
+                 so the breadcrumbs align with their own column area instead of the sidebar+content
+                 outer grid. -->
         </Grid>
 
         <!-- File Operation Progress Panel (floating bottom-right, above content) -->

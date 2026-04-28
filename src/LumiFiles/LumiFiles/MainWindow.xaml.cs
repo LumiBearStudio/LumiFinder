@@ -6844,6 +6844,30 @@ namespace LumiFiles
             catch (Exception ex) { Helpers.DebugLogger.Log($"[LumiPathBar] segment click '{fullPath}' failed: {ex.Message}"); }
         }
 
+        /// <summary>Split-mode left-pane breadcrumb segment click — navigates the left
+        /// explorer (= ViewModel.Explorer, an alias for LeftExplorer that fires explicit
+        /// PropertyChanged so the call site stays in sync across tab switches).</summary>
+        private async void OnLumiPathSegmentLeftClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn) return;
+            if (btn.Tag is not string fullPath || string.IsNullOrEmpty(fullPath)) return;
+            var explorer = ViewModel?.Explorer;
+            if (explorer == null) return;
+            try { await explorer.NavigateToPath(fullPath); }
+            catch (Exception ex) { Helpers.DebugLogger.Log($"[LumiPathBar:Left] segment click '{fullPath}' failed: {ex.Message}"); }
+        }
+
+        /// <summary>Split-mode right-pane breadcrumb segment click — navigates RightExplorer.</summary>
+        private async void OnLumiPathSegmentRightClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn) return;
+            if (btn.Tag is not string fullPath || string.IsNullOrEmpty(fullPath)) return;
+            var explorer = ViewModel?.RightExplorer;
+            if (explorer == null) return;
+            try { await explorer.NavigateToPath(fullPath); }
+            catch (Exception ex) { Helpers.DebugLogger.Log($"[LumiPathBar:Right] segment click '{fullPath}' failed: {ex.Message}"); }
+        }
+
         private async void OnLumiSidebarItemTapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
         {
             if (sender is not Grid grid) return;

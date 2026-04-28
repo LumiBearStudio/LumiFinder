@@ -113,6 +113,40 @@ namespace LumiFiles
         public double RightPaneAccentOpacity(ActivePane activePane)
             => activePane == ActivePane.Right ? 1.0 : 0.0;
 
+        // ── Active pane indicator (A combo) ─────────────────────────────────
+        // A: PathHeader Background carries the LumiPillBrush (subtle stadium fill, ~12% alpha)
+        // when the pane is active; otherwise transparent. The visible toolbar tone difference
+        // tells the user at a glance which pane has focus.
+        // The matching label-color piece (D combo) lands in the next phase together with
+        // the segmented 5-group mini toolbar layout.
+
+        public Microsoft.UI.Xaml.Media.Brush LeftPaneActiveBrush(ActivePane activePane)
+            => activePane == ActivePane.Left
+                ? (ThemeBrush("LumiPillBrush") ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent))
+                : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+
+        public Microsoft.UI.Xaml.Media.Brush RightPaneActiveBrush(ActivePane activePane)
+            => activePane == ActivePane.Right
+                ? (ThemeBrush("LumiPillBrush") ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent))
+                : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+
+        // D: folder-label brush — amber on the active pane, secondary tone otherwise.
+        // Mirrors the existing tab/Miller-column active-label pattern so the active
+        // pane reads with the same golden accent users see elsewhere.
+        public Microsoft.UI.Xaml.Media.Brush LeftPaneActiveLabelBrush(ActivePane activePane)
+            => activePane == ActivePane.Left
+                ? (ThemeBrush("LumiAmberBrush") ?? ThemeBrush("LumiTextPrimaryBrush")
+                   ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White))
+                : (ThemeBrush("LumiTextSecondaryBrush") ?? ThemeBrush("LumiTextPrimaryBrush")
+                   ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LightGray));
+
+        public Microsoft.UI.Xaml.Media.Brush RightPaneActiveLabelBrush(ActivePane activePane)
+            => activePane == ActivePane.Right
+                ? (ThemeBrush("LumiAmberBrush") ?? ThemeBrush("LumiTextPrimaryBrush")
+                   ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White))
+                : (ThemeBrush("LumiTextSecondaryBrush") ?? ThemeBrush("LumiTextPrimaryBrush")
+                   ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LightGray));
+
         #endregion
 
         #region Focus Tracking
@@ -304,10 +338,9 @@ namespace LumiFiles
             MainVm_Medium.Text = _loc.Get("MediumIcons");
             MainVm_Small.Text = _loc.Get("SmallIcons");
 
-            // --- Left pane tooltips ---
+            // --- Left pane tooltips (LeftUpButton removed; tooltip line dropped) ---
             ToolTipService.SetToolTip(LeftBackButton, _loc.Get("Tooltip_Back"));
             ToolTipService.SetToolTip(LeftForwardButton, _loc.Get("Tooltip_Forward"));
-            ToolTipService.SetToolTip(LeftUpButton, _loc.Get("Tooltip_Up"));
             ToolTipService.SetToolTip(LeftCopyPathButton, _loc.Get("Tooltip_CopyPath"));
             ToolTipService.SetToolTip(LeftSortButton, _loc.Get("Tooltip_Sort"));
             ToolTipService.SetToolTip(LeftPreviewButton, _loc.Get("Tooltip_Preview"));
@@ -330,10 +363,9 @@ namespace LumiFiles
             LeftVm_Medium.Text = _loc.Get("MediumIcons");
             LeftVm_Small.Text = _loc.Get("SmallIcons");
 
-            // --- Right pane tooltips ---
+            // --- Right pane tooltips (RightUpButton removed) ---
             ToolTipService.SetToolTip(RightBackButton, _loc.Get("Tooltip_Back"));
             ToolTipService.SetToolTip(RightForwardButton, _loc.Get("Tooltip_Forward"));
-            ToolTipService.SetToolTip(RightUpButton, _loc.Get("Tooltip_Up"));
             ToolTipService.SetToolTip(RightCopyPathButton, _loc.Get("Tooltip_CopyPath"));
             ToolTipService.SetToolTip(RightSortButton, _loc.Get("Tooltip_Sort"));
             ToolTipService.SetToolTip(RightPreviewButton, _loc.Get("Tooltip_Preview"));
