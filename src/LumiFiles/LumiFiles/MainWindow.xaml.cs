@@ -436,6 +436,13 @@ namespace LumiFiles
             // The 24px rounded WindowFrame Border sits on top of the wallpaper.
             SystemBackdrop = null;
 
+            // ====================================================================
+            // Stage 4 — LumiSidebar navigation dispatch (placeholder bindings).
+            // Resolves path from the item's TextBlock label and navigates the
+            // active explorer. Recent/Settings/Tags currently noop.
+            // ====================================================================
+            // (handler defined below as a method on this partial class)
+
             // Close-to-Tray policy:
             //   - Setting OFF  → always real close (existing behavior)
             //   - Setting ON + multiple windows open → real close this window only
@@ -834,27 +841,49 @@ namespace LumiFiles
                         SplitterCol.Width = new GridLength(0);
                         RightPaneCol.Width = new GridLength(1, GridUnitType.Star);
 
-                        // Tab 2 설정에 따라 우측 창 동작 결정
+                        // Tab 2 startup. behavior=0 (default — was Home, now Desktop matching Tab1),
+                        // 1=RestoreSession, 2=CustomPath. Uses the sidebar-click pattern
+                        // (NavigateTo(FolderItem) + EnableAutoNavigation suppressed) so the right
+                        // pane lands on the target folder as COLUMN 1 instead of expanding the
+                        // full ancestor chain via NavigateToPath.
                         var tab2Behavior = _settings.Tab2StartupBehavior;
-                        if (tab2Behavior != 0) // 0=Home이 아니면 경로 탐색
+                        if (ViewModel.RightExplorer.Columns.Count == 0 ||
+                            ViewModel.RightExplorer.CurrentPath == "PC")
                         {
-                            if (ViewModel.RightExplorer.Columns.Count == 0 ||
-                                ViewModel.RightExplorer.CurrentPath == "PC")
+                            string? targetPath = null;
+                            if (tab2Behavior == 2 && !string.IsNullOrEmpty(_settings.Tab2StartupPath)
+                                && System.IO.Directory.Exists(_settings.Tab2StartupPath))
                             {
-                                if (tab2Behavior == 2 && !string.IsNullOrEmpty(_settings.Tab2StartupPath)
-                                    && System.IO.Directory.Exists(_settings.Tab2StartupPath))
-                                {
-                                    // 사용자 지정 경로
-                                    _ = ViewModel.RightExplorer.NavigateToPath(_settings.Tab2StartupPath);
-                                }
+                                targetPath = _settings.Tab2StartupPath;
+                            }
+                            else if (tab2Behavior == 1)
+                            {
+                                // Restore last session: keep legacy helper which uses prior path.
+                                NavigateRightPaneToRealPath();
+                                targetPath = null; // already handled
+                            }
+                            else
+                            {
+                                // 0 (default) — Desktop.
+                                var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                                if (!string.IsNullOrEmpty(desktop) && System.IO.Directory.Exists(desktop))
+                                    targetPath = desktop;
                                 else
-                                {
-                                    // 마지막 세션 복원 또는 fallback
-                                    NavigateRightPaneToRealPath();
-                                }
+                                    NavigateRightPaneToRealPath(); // extreme fallback
+                            }
+
+                            if (!string.IsNullOrEmpty(targetPath))
+                            {
+                                var leaf = System.IO.Path.GetFileName(targetPath);
+                                if (string.IsNullOrEmpty(leaf)) leaf = targetPath;
+                                var folder = new Models.FolderItem { Name = leaf, Path = targetPath };
+                                bool prevAutoNav = ViewModel.RightExplorer.EnableAutoNavigation;
+                                ViewModel.RightExplorer.EnableAutoNavigation = false;
+                                _ = ViewModel.RightExplorer.NavigateTo(folder)
+                                    .ContinueWith(_ => ViewModel.RightExplorer.EnableAutoNavigation = prevAutoNav,
+                                        System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext());
                             }
                         }
-                        // tab2Behavior == 0: Home → 우측 창 탐색 안 함 (PC 상태 유지)
                     }
 
                     // ── Per-Tab Miller Panels: 세션 복원 후 모든 탭에 대해 패널 생성 ──
@@ -1038,9 +1067,9 @@ namespace LumiFiles
                 var appSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
                 if (appSettings.Values.TryGetValue("CustomSidebarWidth", out var saved) && saved is double w)
                 {
-                    w = Math.Clamp(w, 150, 400);
-                    SidebarCol.Width = new GridLength(w);
-                    _savedSidebarWidth = w;
+                    // Legacy SidebarBorder is collapsed; keep column at 0 regardless of saved width.
+                    SidebarCol.Width = new GridLength(0);
+                    _savedSidebarWidth = 0;
                 }
             }
             catch { }
@@ -1075,10 +1104,11 @@ namespace LumiFiles
 
         private void OnSidebarSplitterManipulationDelta(object sender, Microsoft.UI.Xaml.Input.ManipulationDeltaRoutedEventArgs e)
         {
-            double newWidth = Math.Clamp(_sidebarSplitterStartWidth + e.Cumulative.Translation.X, 150, 400);
-            SidebarCol.Width = new GridLength(newWidth);
-            _savedSidebarWidth = newWidth;
-            SaveSidebarWidth(newWidth);
+            // Legacy splitter no-op: LumiSidebar has fixed width and the legacy column is
+            // suppressed (SidebarBorder.Visibility=Collapsed, SidebarCol.Width=0).
+            double newWidth = 0;
+            SidebarCol.Width = new GridLength(0);
+            _savedSidebarWidth = 0;
         }
 
         private void OnTabElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
@@ -2483,9 +2513,10 @@ namespace LumiFiles
             {
                 if (_sidebarHiddenForSpecialMode)
                 {
-                    SidebarBorder.Visibility = Visibility.Visible;
-                    SidebarSplitter.Visibility = Visibility.Visible;
-                    SidebarCol.Width = new GridLength(_savedSidebarWidth);
+                    // Legacy SidebarBorder remains collapsed under the LumiSidebar redesign.
+                    SidebarBorder.Visibility = Visibility.Collapsed;
+                    SidebarSplitter.Visibility = Visibility.Collapsed;
+                    SidebarCol.Width = new GridLength(0); // legacy column always 0 under LumiSidebar
                     SidebarCol.MinWidth = 150;
                     _sidebarHiddenForSpecialMode = false;
 
@@ -6667,6 +6698,210 @@ namespace LumiFiles
             else
             {
                 LeftFilterCountText.Text = string.Empty;
+            }
+        }
+
+        // ============================================================
+        // Stage 4 — LumiSidebar navigation dispatch
+        // Each Lumi sidebar item is a Grid with a single TextBlock label;
+        // we resolve the path by label text and call NavigateToPath on the
+        // active explorer. Items without a path mapping are no-op for now.
+        // ============================================================
+        // ============================================================
+        // LumiToolbar — inline search: 32px button ↔ 250px TextBox toggle
+        // ============================================================
+        private void OnLumiSearchClick(object sender, RoutedEventArgs e)
+        {
+            // Toggle the entire search button frame (the 3px group wrapper) — not just
+            // the button — so the frame doesn't linger behind the rectangular search box.
+            LumiSearchButtonFrame.Visibility = Visibility.Collapsed;
+            LumiSearchExpanded.Visibility = Visibility.Visible;
+            LumiSearchInput.Focus(FocusState.Programmatic);
+        }
+
+        private void OnLumiSearchCloseClick(object sender, RoutedEventArgs e)
+        {
+            CollapseLumiSearch();
+        }
+
+        private void OnLumiSearchInputKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Escape)
+            {
+                CollapseLumiSearch();
+                e.Handled = true;
+            }
+            else if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                // Hand off to the existing command palette / search infrastructure.
+                try { OpenCommandPalette(); } catch { }
+                e.Handled = true;
+            }
+        }
+
+        private void OnLumiSearchInputLostFocus(object sender, RoutedEventArgs e)
+        {
+            // Auto-collapse when empty and focus leaves; keep expanded if user typed something.
+            if (LumiSearchInput.Text.Length == 0)
+                CollapseLumiSearch();
+        }
+
+        private void CollapseLumiSearch()
+        {
+            LumiSearchExpanded.Visibility = Visibility.Collapsed;
+            LumiSearchButtonFrame.Visibility = Visibility.Visible;
+            LumiSearchInput.Text = string.Empty;
+        }
+
+        // ============================================================
+        // LumiSidebar — dynamic favorite / drive tap (Tag carries path)
+        // ============================================================
+        /// <summary>
+        /// LumiSidebar section header toggle (Favorites / Local Drives / Cloud / Network).
+        /// Mirrors the Span-original SidebarSectionToggle pattern: Tag identifies which
+        /// section's IsXxxExpanded ObservableProperty to flip; the chevron rotates and
+        /// the ItemsControl visibility-binds collapse/expand automatically.
+        /// </summary>
+        private void OnSidebarSectionToggle(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement fe || fe.Tag is not string section) return;
+            switch (section)
+            {
+                case "Favorites": ViewModel.IsFavoritesExpanded = !ViewModel.IsFavoritesExpanded; break;
+                case "Local":     ViewModel.IsLocalDrivesExpanded = !ViewModel.IsLocalDrivesExpanded; break;
+                case "Cloud":     ViewModel.IsCloudDrivesExpanded = !ViewModel.IsCloudDrivesExpanded; break;
+                case "Network":   ViewModel.IsNetworkDrivesExpanded = !ViewModel.IsNetworkDrivesExpanded; break;
+            }
+            e.Handled = true;
+        }
+
+        private async void OnLumiFavoriteItemTapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+            => await NavigateLumiSidebarTagAsync(sender);
+
+        private async void OnLumiDriveItemTapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+            => await NavigateLumiSidebarTagAsync(sender);
+
+        private async System.Threading.Tasks.Task NavigateLumiSidebarTagAsync(object sender)
+        {
+            if (sender is not FrameworkElement fe) return;
+            if (fe.Tag is not string path || string.IsNullOrEmpty(path)) return;
+            if (!System.IO.Directory.Exists(path)) { Helpers.DebugLogger.Log($"[LumiSidebar] path missing: {path}"); return; }
+            var explorer = ViewModel?.ActiveExplorer;
+            if (explorer == null) return;
+            try
+            {
+                if (ViewModel.CurrentViewMode != ViewMode.MillerColumns &&
+                    ViewModel.CurrentViewMode != ViewMode.Details &&
+                    ViewModel.CurrentViewMode != ViewMode.IconSmall &&
+                    ViewModel.CurrentViewMode != ViewMode.IconMedium &&
+                    ViewModel.CurrentViewMode != ViewMode.IconLarge)
+                {
+                    ViewModel.CurrentViewMode = ViewMode.MillerColumns;
+                }
+                // Span-original favorite click pattern: build a FolderItem and call
+                // NavigateTo(FolderItem) so the sidebar entry becomes COLUMN 1 itself
+                // (no parent drive column above it). NavigateToPath would prepend the
+                // full ancestor chain (e.g. D:\ before 2.Model_Data) which is wrong here.
+                var leafName = System.IO.Path.GetFileName(path);
+                if (string.IsNullOrEmpty(leafName)) leafName = path; // drives, UNC roots, etc.
+                var folder = new Models.FolderItem { Name = leafName, Path = path };
+
+                // Suppress NavigateTo's post-load auto-expand (ExplorerViewModel.cs:612-617):
+                // when EnableAutoNavigation=false, the "if SelectedChild is folder, open column 2"
+                // branch is skipped, so the user lands on column 1 with no second column eagerly
+                // popped open. We restore EnableAutoNavigation right after NavigateTo so that
+                // subsequent arrow-key navigation still auto-expands as before.
+                bool prevAutoNav = explorer.EnableAutoNavigation;
+                explorer.EnableAutoNavigation = false;
+                try
+                {
+                    await explorer.NavigateTo(folder);
+                }
+                finally
+                {
+                    explorer.EnableAutoNavigation = (ViewModel.CurrentViewMode == ViewMode.MillerColumns)
+                        ? true
+                        : prevAutoNav;
+                }
+
+                UpdateViewModeVisibility();
+                if (ViewModel.CurrentViewMode == ViewMode.MillerColumns) FocusColumnAsync(0);
+                else FocusActiveView();
+            }
+            catch (Exception ex) { Helpers.DebugLogger.Log($"[LumiSidebar] navigate '{path}' failed: {ex.Message}"); }
+        }
+
+        // ============================================================
+        // Stage 8 — LumiPathBar segment click navigation
+        // ============================================================
+        private async void OnLumiPathSegmentClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn) return;
+            if (btn.Tag is not string fullPath || string.IsNullOrEmpty(fullPath)) return;
+            var explorer = ViewModel?.ActiveExplorer;
+            if (explorer == null) return;
+            try { await explorer.NavigateToPath(fullPath); }
+            catch (Exception ex) { Helpers.DebugLogger.Log($"[LumiPathBar] segment click '{fullPath}' failed: {ex.Message}"); }
+        }
+
+        private async void OnLumiSidebarItemTapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            if (sender is not Grid grid) return;
+            // The sidebar item layout is: [icon at col 0] + [TextBlock label at col 1].
+            string? label = null;
+            foreach (var child in grid.Children)
+            {
+                if (child is TextBlock tb) { label = tb.Text; break; }
+            }
+            Helpers.DebugLogger.Log($"[LumiSidebar] tapped: '{label ?? "(null)"}'");
+            if (string.IsNullOrEmpty(label)) return;
+
+            string? path = label switch
+            {
+                "Desktop"         => Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                "Documents"       => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "Downloads"       => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"),
+                "Pictures"        => Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+                "Music"           => Environment.GetFolderPath(Environment.SpecialFolder.MyMusic),
+                "Projects"        => @"D:\11.AI",
+                "Local Disk (C:)" => @"C:\",
+                "Data (D:)"       => @"D:\",
+                "OneDrive"        => Environment.GetEnvironmentVariable("OneDrive"),
+                _ => null
+            };
+
+            if (string.IsNullOrEmpty(path)) { Helpers.DebugLogger.Log($"[LumiSidebar] no path mapping for '{label}'"); return; }
+            if (!System.IO.Directory.Exists(path)) { Helpers.DebugLogger.Log($"[LumiSidebar] path does not exist: {path}"); return; }
+
+            var explorer = ViewModel?.ActiveExplorer;
+            if (explorer == null) { Helpers.DebugLogger.Log("[LumiSidebar] ActiveExplorer null"); return; }
+            try
+            {
+                // Switch out of Home/Settings/ActionLog into MillerColumns so navigation is visible.
+                if (ViewModel.CurrentViewMode != ViewMode.MillerColumns &&
+                    ViewModel.CurrentViewMode != ViewMode.Details &&
+                    ViewModel.CurrentViewMode != ViewMode.IconSmall &&
+                    ViewModel.CurrentViewMode != ViewMode.IconMedium &&
+                    ViewModel.CurrentViewMode != ViewMode.IconLarge)
+                {
+                    ViewModel.CurrentViewMode = ViewMode.MillerColumns;
+                }
+                // Re-enable single-tap auto-navigation in MillerColumns (mockup behavior).
+                // ShouldAutoNavigate is private on MainViewModel; setting true directly here
+                // matches the default for MillerColumns (unless user has set MillerClickBehavior="double").
+                if (ViewModel.CurrentViewMode == ViewMode.MillerColumns)
+                {
+                    explorer.EnableAutoNavigation = true;
+                }
+                await explorer.NavigateToPath(path);
+                UpdateViewModeVisibility();
+                if (ViewModel.CurrentViewMode == ViewMode.MillerColumns) FocusColumnAsync(0);
+                else FocusActiveView();
+                Helpers.DebugLogger.Log($"[LumiSidebar] navigated to '{path}', mode={ViewModel.CurrentViewMode}");
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[LumiSidebar] navigate failed for '{label}' -> '{path}': {ex.Message}");
             }
         }
 

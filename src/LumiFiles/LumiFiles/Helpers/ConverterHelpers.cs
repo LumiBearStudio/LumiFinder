@@ -15,5 +15,10 @@ namespace LumiFiles.Helpers
         /// <summary>bool → Visibility 반전 변환 (true=Collapsed, false=Visible).</summary>
         public static Microsoft.UI.Xaml.Visibility NotBoolToVisibility(bool value) =>
             value ? Microsoft.UI.Xaml.Visibility.Collapsed : Microsoft.UI.Xaml.Visibility.Visible;
+
+        /// <summary>Hide network drives in the LumiSidebar Local Drives section
+        /// (Drives collection contains both — Network section uses NetworkDrives instead).</summary>
+        public static Microsoft.UI.Xaml.Visibility NotNetworkDriveVisibility(bool isNetwork) =>
+            isNetwork ? Microsoft.UI.Xaml.Visibility.Collapsed : Microsoft.UI.Xaml.Visibility.Visible;
     }
 }

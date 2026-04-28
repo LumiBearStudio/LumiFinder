@@ -20,23 +20,33 @@
 
                 <!-- ==================== DARK THEME ==================== -->
                 <ResourceDictionary x:Key="Dark">
-                    <!-- Backgrounds -->
-                    <Color x:Key="SpanBgMicaColor">#202020</Color>
-                    <Color x:Key="SpanBgLayer1Color">#2d2d2d</Color>
-                    <Color x:Key="SpanBgLayer2Color">#383838</Color>
-                    <Color x:Key="SpanBgLayer3Color">#484848</Color>
-                    <Color x:Key="SpanBgLayer2TransparentColor">#00383838</Color>
+                    <!-- Backgrounds — keyed to the sidebar gradient (LumiSidebarBrush =
+                         #1E1C28 → #161420). Layer1 picks up the sidebar's top tone (opaque),
+                         Layer2 sits one step lighter (column headers, sublayers), Layer3 a
+                         shade lighter still. Same purple-warm hue family so DetailsModeView
+                         and PreviewPanelView read as a continuation of the sidebar instead
+                         of the cool gray Span original. -->
+                    <Color x:Key="SpanBgMicaColor">#0F0E14</Color>
+                    <Color x:Key="SpanBgLayer1Color">#1E1C28</Color>
+                    <Color x:Key="SpanBgLayer2Color">#26242E</Color>
+                    <Color x:Key="SpanBgLayer3Color">#2E2C38</Color>
+                    <Color x:Key="SpanBgLayer2TransparentColor">#0026242E</Color>
 
-                    <!-- Accent -->
-                    <Color x:Key="SpanAccentColor">#60cdff</Color>
-                    <Color x:Key="SpanAccentHoverColor">#7ed8ff</Color>
-                    <Color x:Key="SpanAccentDimColor">#B360CDFF</Color>
+                    <!-- Accent — rebranded from Span's Win11 blue (#60cdff) to LumiFiles amber.
+                         Drives every Span*Accent* brush usage (file icons, link emblems, hover
+                         highlights, etc.) so legacy views (DetailsModeView, PreviewPanelView)
+                         pick up the LumiFiles golden-brown tone without per-view edits. -->
+                    <Color x:Key="SpanAccentColor">#FFB86B</Color>
+                    <Color x:Key="SpanAccentHoverColor">#FFC988</Color>
+                    <Color x:Key="SpanAccentDimColor">#B3FFB86B</Color>
 
-                    <!-- Text -->
-                    <Color x:Key="SpanTextPrimaryColor">#ffffff</Color>
-                    <Color x:Key="SpanTextSecondaryColor">#ababab</Color>
-                    <Color x:Key="SpanTextTertiaryColor">#787878</Color>
-                    <Color x:Key="SpanTextDisabledColor">#555555</Color>
+                    <!-- Text — rebranded to LumiFiles dark-mode text scale (LumiTextPrimary
+                         #EEEEF2 / Secondary #92929A / Tertiary #60606A) so Span* legacy text
+                         tones match the rest of the app. -->
+                    <Color x:Key="SpanTextPrimaryColor">#EEEEF2</Color>
+                    <Color x:Key="SpanTextSecondaryColor">#92929A</Color>
+                    <Color x:Key="SpanTextTertiaryColor">#60606A</Color>
+                    <Color x:Key="SpanTextDisabledColor">#3E3E45</Color>
 
                     <!-- Solid Brushes -->
                     <SolidColorBrush x:Key="SpanBgMicaBrush" Color="{StaticResource SpanBgMicaColor}" />

@@ -398,7 +398,25 @@ namespace LumiFiles.ViewModels
             {
                 if (System.IO.Directory.Exists(tab.Path))
                 {
-                    await tab.Explorer.NavigateToPath(tab.Path);
+                    // Mirror the sidebar-click pattern (NavigateLumiSidebarTagAsync): make the
+                    // tab's path the FIRST column itself instead of expanding the full
+                    // ancestor chain via NavigateToPath. EnableAutoNavigation is suppressed
+                    // during the call so the leftmost column doesn't auto-pop a second
+                    // column for its first child, then restored for subsequent arrow-key nav.
+                    var leafName = System.IO.Path.GetFileName(tab.Path);
+                    if (string.IsNullOrEmpty(leafName)) leafName = tab.Path;
+                    var folder = new Models.FolderItem { Name = leafName, Path = tab.Path };
+
+                    bool prevAutoNav = tab.Explorer.EnableAutoNavigation;
+                    tab.Explorer.EnableAutoNavigation = false;
+                    try
+                    {
+                        await tab.Explorer.NavigateTo(folder);
+                    }
+                    finally
+                    {
+                        tab.Explorer.EnableAutoNavigation = ShouldAutoNavigate(tab.ViewMode);
+                    }
                 }
                 else
                 {
@@ -547,17 +565,10 @@ namespace LumiFiles.ViewModels
                         _ => ViewMode.MillerColumns
                     };
 
-                    // behavior=0(Home): 홈 화면으로 시작, 드라이브 클릭 시 tab2VM으로 전환
-                    if (tab2Behavior == 0)
-                    {
-                        RightViewMode = ViewMode.Home;
-                        _rightPreferredViewMode = tab2VM;
-                    }
-                    else
-                    {
-                        RightViewMode = tab2VM;
-                        _rightPreferredViewMode = null;
-                    }
+                    // behavior=0 was Home; now opens Desktop in the right pane (matches Tab1).
+                    // 1=RestoreSession, 2=CustomPath both use tab2VM with their own path.
+                    RightViewMode = tab2VM;
+                    _rightPreferredViewMode = null;
                     RightExplorer.EnableAutoNavigation = ShouldAutoNavigate(tab2VM);
                     Helpers.DebugLogger.Log($"[LoadTabsFromSettings] Tab2: behavior={tab2Behavior}, viewMode={tab2VM}, rightVM={RightViewMode}, path={settings.Tab2StartupPath}");
                 }
@@ -657,9 +668,34 @@ namespace LumiFiles.ViewModels
                     // Fallback to Home if path invalid
                     goto case 0;
 
-                case 0: // Home
+                case 0: // Default — open Desktop (was: Home dashboard, removed per UX redesign)
                 default:
                 {
+                    // Resolve the user's Desktop path so each profile lands on its own
+                    // Desktop folder. Falls back to the original Home behavior only if the
+                    // Desktop path can't be resolved or doesn't exist (extremely rare).
+                    var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                    if (!string.IsNullOrEmpty(desktopPath) && System.IO.Directory.Exists(desktopPath))
+                    {
+                        var deskName = System.IO.Path.GetFileName(desktopPath.TrimEnd('\\'));
+                        if (string.IsNullOrEmpty(deskName)) deskName = desktopPath;
+
+                        var rootD = new FolderItem { Name = "PC", Path = "PC" };
+                        var explorerD = new ExplorerViewModel(rootD, _fileService);
+                        explorerD.EnableAutoNavigation = ShouldAutoNavigate(startupViewMode);
+
+                        return new TabItem
+                        {
+                            Header = deskName,
+                            Path = desktopPath,
+                            ViewMode = startupViewMode,
+                            IconSize = ViewMode.IconMedium,
+                            IsActive = false,
+                            Explorer = explorerD
+                        };
+                    }
+
+                    // Fallback (Desktop unavailable) — keep legacy Home so the app still launches.
                     var root0 = new FolderItem { Name = "PC", Path = "PC" };
                     var explorer0 = new ExplorerViewModel(root0, _fileService);
                     explorer0.EnableAutoNavigation = ShouldAutoNavigate(ViewMode.Home);

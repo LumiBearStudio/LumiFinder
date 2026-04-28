@@ -434,29 +434,54 @@ namespace LumiFiles
                     LeftAddressBar.CurrentPath = ViewModel.Explorer.CurrentPath;
                 }
 
-                // Initialize right pane based on Tab2 startup settings
+                // Initialize right pane based on Tab2 startup settings.
+                // behavior=0 default was Home; now Desktop (mirroring Tab1). All three
+                // branches use NavigateTo(FolderItem) + EnableAutoNavigation suppressed
+                // (sidebar-click pattern) so the right pane lands on the target folder
+                // as COLUMN 1 instead of expanding the full ancestor chain.
                 if (ViewModel.RightExplorer.Columns.Count == 0 ||
                     ViewModel.RightExplorer.CurrentPath == "PC")
                 {
                     var tab2Behavior = _settings.Tab2StartupBehavior;
-                    if (tab2Behavior == 0)
-                    {
-                        // Home: 우측 패인에 홈 화면 표시
-                        ViewModel.RightViewMode = Models.ViewMode.Home;
-                        Helpers.DebugLogger.Log("[ToggleSplitView] Right pane → Home view");
-                    }
-                    else if (tab2Behavior == 2 && !string.IsNullOrEmpty(_settings.Tab2StartupPath)
+                    string? targetPath = null;
+
+                    if (tab2Behavior == 2 && !string.IsNullOrEmpty(_settings.Tab2StartupPath)
                         && System.IO.Directory.Exists(_settings.Tab2StartupPath))
                     {
-                        // CustomPath: 사용자 지정 경로로 이동
-                        _ = ViewModel.RightExplorer.NavigateToPath(_settings.Tab2StartupPath);
-                        Helpers.DebugLogger.Log($"[ToggleSplitView] Right pane → custom path: {_settings.Tab2StartupPath}");
+                        targetPath = _settings.Tab2StartupPath;
+                        Helpers.DebugLogger.Log($"[ToggleSplitView] Right pane → custom path: {targetPath}");
+                    }
+                    else if (tab2Behavior == 1)
+                    {
+                        NavigateRightPaneToRealPath();
+                        Helpers.DebugLogger.Log("[ToggleSplitView] Right pane → restore session");
                     }
                     else
                     {
-                        // RestoreSession (behavior=1) 또는 fallback: 저장된 경로 복원
-                        NavigateRightPaneToRealPath();
-                        Helpers.DebugLogger.Log("[ToggleSplitView] Right pane → restore session");
+                        // 0 (default) — Desktop.
+                        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                        if (!string.IsNullOrEmpty(desktop) && System.IO.Directory.Exists(desktop))
+                        {
+                            targetPath = desktop;
+                            Helpers.DebugLogger.Log($"[ToggleSplitView] Right pane → Desktop: {targetPath}");
+                        }
+                        else
+                        {
+                            NavigateRightPaneToRealPath();
+                            Helpers.DebugLogger.Log("[ToggleSplitView] Right pane → fallback (Desktop unavailable)");
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(targetPath))
+                    {
+                        var leaf = System.IO.Path.GetFileName(targetPath);
+                        if (string.IsNullOrEmpty(leaf)) leaf = targetPath;
+                        var folder = new Models.FolderItem { Name = leaf, Path = targetPath };
+                        bool prevAutoNav = ViewModel.RightExplorer.EnableAutoNavigation;
+                        ViewModel.RightExplorer.EnableAutoNavigation = false;
+                        _ = ViewModel.RightExplorer.NavigateTo(folder)
+                            .ContinueWith(_ => ViewModel.RightExplorer.EnableAutoNavigation = prevAutoNav,
+                                System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext());
                     }
                 }
 
@@ -1072,11 +1097,83 @@ namespace LumiFiles
                     LeftViewModeIcon.Glyph = GetViewModeGlyph(ViewModel.LeftViewMode);
                     RightViewModeIcon.Glyph = GetViewModeGlyph(ViewModel.RightViewMode);
                 }
+
+                // LumiToolbar View segmented bar — sync active highlight with current mode.
+                UpdateLumiViewModeButtons(mode);
             }
             catch (Exception ex)
             {
                 Helpers.DebugLogger.Log($"[MainWindow] UpdateViewModeIcon error: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// LumiToolbar의 View 그룹 (Miller / Details / Icons) 중 현재 모드에 해당하는 버튼만
+        /// LumiPillActiveBrush + amber 텍스트로 highlight, 나머지는 inactive 톤으로 복원.
+        /// </summary>
+        private void UpdateLumiViewModeButtons(Models.ViewMode mode)
+        {
+            var active = ThemeBrush("LumiPillActiveBrush");
+            // Inactive buttons are transparent so the outer container's PillBrush fill
+            // shows through; only the active mode renders its own amber stadium pill.
+            var inactive = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            var amber = ThemeBrush("LumiAmberSoftBrush");
+            var primary = ThemeBrush("LumiTextPrimaryBrush");
+
+            bool isMiller = mode == Models.ViewMode.MillerColumns;
+            bool isDetails = mode == Models.ViewMode.Details;
+            bool isIcons = mode == Models.ViewMode.IconSmall
+                        || mode == Models.ViewMode.IconMedium
+                        || mode == Models.ViewMode.IconLarge
+                        || mode == Models.ViewMode.IconExtraLarge;
+
+            ApplyViewModeButtonState(LumiViewMillerButton, isMiller, active, inactive, amber, primary);
+            ApplyViewModeButtonState(LumiViewDetailsButton, isDetails, active, inactive, amber, primary);
+            ApplyViewModeButtonState(LumiViewIconsButton, isIcons, active, inactive, amber, primary);
+        }
+
+        /// <summary>
+        /// Apply active/inactive visuals to a view-mode toggle button. When active, also
+        /// override PointerOver/Pressed theme brushes via Button.Resources so hover does
+        /// NOT fall back to WinUI's default gray (the user-reported regression where the
+        /// amber active state turned gray on mouse-over). When inactive, those overrides
+        /// are removed so the button gets the standard subtle gray hover affordance.
+        /// </summary>
+        private static void ApplyViewModeButtonState(
+            Microsoft.UI.Xaml.Controls.Button? btn, bool isActive,
+            Microsoft.UI.Xaml.Media.Brush? activeBg, Microsoft.UI.Xaml.Media.Brush? inactiveBg,
+            Microsoft.UI.Xaml.Media.Brush? amberFg, Microsoft.UI.Xaml.Media.Brush? primaryFg)
+        {
+            if (btn == null) return;
+            btn.Background = isActive ? activeBg : inactiveBg;
+            btn.Foreground = isActive ? amberFg : primaryFg;
+
+            const string bgPointerOverKey = "ButtonBackgroundPointerOver";
+            const string bgPressedKey     = "ButtonBackgroundPressed";
+            const string fgPointerOverKey = "ButtonForegroundPointerOver";
+            const string fgPressedKey     = "ButtonForegroundPressed";
+
+            if (isActive && activeBg != null && amberFg != null)
+            {
+                btn.Resources[bgPointerOverKey] = activeBg;
+                btn.Resources[bgPressedKey]     = activeBg;
+                btn.Resources[fgPointerOverKey] = amberFg;
+                btn.Resources[fgPressedKey]     = amberFg;
+            }
+            else
+            {
+                btn.Resources.Remove(bgPointerOverKey);
+                btn.Resources.Remove(bgPressedKey);
+                btn.Resources.Remove(fgPointerOverKey);
+                btn.Resources.Remove(fgPressedKey);
+            }
+        }
+
+        private static Microsoft.UI.Xaml.Media.Brush? ThemeBrush(string key)
+        {
+            if (Microsoft.UI.Xaml.Application.Current.Resources.TryGetValue(key, out var v) && v is Microsoft.UI.Xaml.Media.Brush b)
+                return b;
+            return null;
         }
 
         private static string GetViewModeGlyph(Models.ViewMode mode) => mode switch

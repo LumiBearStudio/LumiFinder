@@ -260,7 +260,20 @@ namespace LumiFiles.ViewModels
         }
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsActiveColumnVisible))]
+        [NotifyPropertyChangedFor(nameof(IsInactiveColumnVisible))]
         private bool _isActive = false; // Indicates if this column has focus
+
+        /// <summary>
+        /// Visibility helpers for the col-header label colour swap (active column gets
+        /// the amber accent, others stay tertiary). Mirrors the IsActiveVisible /
+        /// IsInactiveVisible pattern used by TabItem.
+        /// </summary>
+        public Microsoft.UI.Xaml.Visibility IsActiveColumnVisible
+            => IsActive ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+
+        public Microsoft.UI.Xaml.Visibility IsInactiveColumnVisible
+            => IsActive ? Microsoft.UI.Xaml.Visibility.Collapsed : Microsoft.UI.Xaml.Visibility.Visible;
 
         /// <summary>
         /// 정렬 중 플래그 - true일 때 PropertyChanged 이벤트 무시

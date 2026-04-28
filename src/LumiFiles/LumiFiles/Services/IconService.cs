@@ -29,7 +29,8 @@ namespace LumiFiles.Services
         public string DefaultIcon { get; set; } = "file-text-line";
         public string DefaultColor { get; set; } = "#9E9E9E";
         public string FolderIcon { get; set; } = "folder-3-fill"; // \uED53 - Corrected unicode
-        public string FolderColor { get; set; } = "#FFD54F";
+        // Mockup default: Tahoe blue (#6AA8E8). Users can still override via Settings.
+        public string FolderColor { get; set; } = "#6AA8E8";
         public List<IconMapping> Mappings { get; set; } = new();
     }
 

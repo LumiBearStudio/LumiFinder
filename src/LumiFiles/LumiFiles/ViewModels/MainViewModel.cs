@@ -70,6 +70,9 @@ namespace LumiFiles.ViewModels
 
         // 사이드바 섹션 접기/펴기 상태
         [ObservableProperty]
+        private bool _isFavoritesExpanded = true;
+
+        [ObservableProperty]
         private bool _isLocalDrivesExpanded = true;
 
         [ObservableProperty]
@@ -77,6 +80,12 @@ namespace LumiFiles.ViewModels
 
         [ObservableProperty]
         private bool _isNetworkDrivesExpanded = true;
+
+        partial void OnIsFavoritesExpandedChanged(bool value)
+        {
+            if (_isCleaningUp) return;
+            try { App.Current.Services.GetRequiredService<SettingsService>().Set("SidebarFavoritesExpanded", value); } catch (Exception ex) { Helpers.DebugLogger.Log($"[MainViewModel] SidebarFavoritesExpanded save failed: {ex.Message}"); }
+        }
 
         partial void OnIsLocalDrivesExpandedChanged(bool value)
         {
@@ -567,6 +576,7 @@ namespace LumiFiles.ViewModels
             try
             {
                 var settings = App.Current.Services.GetRequiredService<SettingsService>();
+                _isFavoritesExpanded = settings.Get("SidebarFavoritesExpanded", true);
                 _isLocalDrivesExpanded = settings.Get("SidebarLocalExpanded", true);
                 _isCloudDrivesExpanded = settings.Get("SidebarCloudExpanded", true);
                 _isNetworkDrivesExpanded = settings.Get("SidebarNetworkExpanded", true);

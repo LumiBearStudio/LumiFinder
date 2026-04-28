@@ -1081,12 +1081,13 @@ namespace LumiFiles
             int newLevel = int.TryParse(scale, out var n) ? Math.Clamp(n, 0, 5) : 0;
             svc.Level = newLevel; // → PropertyChanged → XAML bindings 자동 갱신
 
-            // Sidebar 컬럼 폭 (GridLength 는 직접 바인딩 어려우므로 여기서 설정)
-            double sidebarWidth = 200 + newLevel * 6;
+            // Legacy SidebarBorder is collapsed; force its column to zero width so the new
+            // LumiSidebar (RootGrid Column 0, full height) is the only visible sidebar.
+            double sidebarWidth = 0;
             if (!_sidebarHiddenForSpecialMode)
-                SidebarCol.Width = new GridLength(sidebarWidth);
+                SidebarCol.Width = new GridLength(0);
             else
-                _savedSidebarWidth = sidebarWidth; // Settings 모드 해제 시 복원될 값 갱신
+                _savedSidebarWidth = 0;
 
             // Global UI (toolbar, tab bar, status bar) — 여전히 tree walker
             ApplyIconFontScaleToGlobalUI(newLevel);

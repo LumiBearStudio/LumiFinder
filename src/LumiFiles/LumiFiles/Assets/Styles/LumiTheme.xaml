@@ -58,9 +58,18 @@
     <!-- Content overlay: rgba(0,0,0,0.12) -->
     <SolidColorBrush x:Key="LumiContentOverlayBrush" Color="#1F000000" />
 
-    <!-- Pill (toolbar capsule): rgba(255,255,255,0.025) / hover 0.055 -->
-    <SolidColorBrush x:Key="LumiPillBrush" Color="#06FFFFFF" />
-    <SolidColorBrush x:Key="LumiPillHoverBrush" Color="#0EFFFFFF" />
+    <!-- Outer container fill — Finder-style fill-only grouping (no outline border).
+         Boosted from 0.08 to 0.12 so the stadium reads clearly on the dark wallpaper
+         even without the 1px hairline outline (which has been removed per macOS Finder
+         visual reference). -->
+    <SolidColorBrush x:Key="LumiPillBrush" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="LumiPillHoverBrush" Color="#33FFFFFF" />
+
+    <!-- Group frame outline: hairline 1px border wrapping each segmented bar with 3px
+         padding. Per user reference image the group emphasis comes from a thin OUTLINE
+         around the bar — not a filled bg. Alpha had to be boosted to 30% on our near-
+         black wallpaper (#0F0E14); anything lower than ~25% disappears entirely. -->
+    <SolidColorBrush x:Key="LumiPillFrameBrush" Color="#4DFFFFFF" />
 
     <!-- Path bar bg: rgba(0,0,0,0.20) -->
     <SolidColorBrush x:Key="LumiPathBarBrush" Color="#33000000" />
@@ -236,6 +245,27 @@
     <CornerRadius x:Key="LumiSidebarCornerRadius">18</CornerRadius>
     <CornerRadius x:Key="LumiPanelInnerCornerRadius">16</CornerRadius>
     <CornerRadius x:Key="LumiPillCornerRadius">999</CornerRadius>
+    <!-- ClipFlow toolbar pattern (ClipboardStripPanel.xaml:144-209):
+         outer Border CornerRadius=16 (absolute, NOT stadium) wraps inner buttons that each
+         carry CornerRadius=12 (= button height 24 / 2). Outer is a softly-rounded rectangle
+         clearly larger than the inner button stadium; the 4px radius gap between outer 16
+         and inner 12 prevents the "double oval" perception (which the stadium frame had). -->
+    <CornerRadius x:Key="LumiPillFrameCornerRadius">16</CornerRadius>
+    <!-- Segmented control corner-radius set (per user spec): outer Border is rectangular,
+         inner buttons sit edge-to-edge so the group reads as a single bar with only the
+         first/last buttons rounding the outer corners.
+           Left   = TopLeft+BottomLeft round only  (first button in a group)
+           Middle = all corners square             (inner buttons)
+           Right  = TopRight+BottomRight round only (last button in a group)
+         Single-button groups (Sort, Search) reuse LumiPillCornerRadius (999) so they remain
+         fully stadium-shaped on their own. -->
+    <!-- All inner buttons share the same stadium radius = button height (24) / 2 = 12.
+         Mirrors ClipFlow's FilterAllBtn/FilterTextBtn pattern: every button is its own
+         small stadium pill, no segmented half-corners. Active/inactive states are
+         distinguished by background (PillActiveBrush vs Transparent), not by shape. -->
+    <CornerRadius x:Key="LumiPillButtonCornerRadius">12</CornerRadius>
+    <CornerRadius x:Key="LumiPillButtonLeftCornerRadius">12</CornerRadius>
+    <CornerRadius x:Key="LumiPillButtonRightCornerRadius">12</CornerRadius>
     <CornerRadius x:Key="LumiSidebarItemCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="LumiTabCornerRadius">8</CornerRadius>
     <CornerRadius x:Key="LumiFileRowCornerRadius">7</CornerRadius>
@@ -247,11 +277,20 @@
 
     <!-- Window padding: 6 left/top/bottom, 0 right (content flush right) -->
     <Thickness x:Key="LumiWindowPadding">6,6,0,6</Thickness>
-    <!-- Sidebar margin from content: 6 right -->
-    <Thickness x:Key="LumiSidebarMargin">0,0,6,0</Thickness>
+    <!-- Sidebar margin: floating 4 sides (mockup glass card) -->
+    <Thickness x:Key="LumiSidebarMargin">6,6,6,6</Thickness>
 
     <x:Double x:Key="LumiSidebarWidth">228</x:Double>
     <x:Double x:Key="LumiColumnWidth">260</x:Double>
+    <!-- GridLength variants for direct ColumnDefinition.Width / RowDefinition.Height usage
+         (XAML cannot implicitly convert x:Double -> GridLength). -->
+    <GridLength x:Key="LumiSidebarGridWidth">228</GridLength>
+    <GridLength x:Key="LumiColumnGridWidth">260</GridLength>
+    <GridLength x:Key="LumiPreviewColumnGridWidth">300</GridLength>
+    <GridLength x:Key="LumiSidebarTopGridHeight">36</GridLength>
+    <GridLength x:Key="LumiTitleBarGridHeight">36</GridLength>
+    <GridLength x:Key="LumiToolbarGridHeight">44</GridLength>
+    <GridLength x:Key="LumiPathBarGridHeight">30</GridLength>
     <x:Double x:Key="LumiPreviewColumnWidth">300</x:Double>
 
     <!-- Heights -->

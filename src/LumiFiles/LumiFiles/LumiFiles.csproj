@@ -131,11 +131,14 @@
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
   </PropertyGroup>
-  <!-- Self-signed cert for sideload/GitHub. Store re-signs on submission. -->
+  <!-- Self-signed cert for sideload/GitHub. Store re-signs on submission.
+       Disabled while LumiFiles_Dev.pfx is not yet generated.
+       Re-enable + create new dev cert via VS (Package.appxmanifest > Packaging > Create test certificate)
+       before producing sideload .msix or before Store submission. -->
   <PropertyGroup>
-    <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
-    <PackageCertificateKeyFile>LumiFiles_Dev.pfx</PackageCertificateKeyFile>
-    <PackageCertificatePassword>LumiFilesDev2026</PackageCertificatePassword>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <!-- <PackageCertificateKeyFile>LumiFiles_Dev.pfx</PackageCertificateKeyFile> -->
+    <!-- <PackageCertificatePassword>LumiFilesDev2026</PackageCertificatePassword> -->
   </PropertyGroup>
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
