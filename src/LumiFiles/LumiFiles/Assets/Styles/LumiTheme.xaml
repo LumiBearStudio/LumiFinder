@@ -53,15 +53,16 @@
          4. GLASS LAYERS
          (mockup HTML rgba alpha → #AARRGGBB)
          ============================================================ -->
-    <!-- Window frame: rgba(18,18,24,0.60) → rgba(12,12,16,0.72)
-         Stage S-3.9: dropped further from 0.75/0.85. With WallpaperBase
-         no longer opaque, this is now the dominant tint over the inner
-         content area and needs to be light enough that the desktop
-         vibrancy reads through. ListView/sidebar items above carry
-         their own opaque-enough fills for text contrast. -->
+    <!-- Window frame: rgba(18,18,24,0.78) → rgba(12,12,16,0.88)
+         Stage S-3.10: brought back from 0.60/0.72 → 0.78/0.88. Content
+         text was getting lost against a colored desktop bleeding
+         straight through the frame. This level keeps the inner content
+         area readable while still letting a hint of vibrancy through
+         (Miller column items, Details list rows, etc. don't add their
+         own background, so the frame is the de-facto content backdrop). -->
     <LinearGradientBrush x:Key="LumiWindowFrameBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#99121218" />
-        <GradientStop Offset="1" Color="#B80C0C10" />
+        <GradientStop Offset="0" Color="#C7121218" />
+        <GradientStop Offset="1" Color="#E00C0C10" />
     </LinearGradientBrush>
 
     <!-- Sidebar (Layer 2, floating glass): rgba(30,28,40,0.55) → rgba(22,20,32,0.65)
@@ -205,15 +206,17 @@
          or by stacking multiple Rectangles with brushes at the lowest z.
          Base linear here; radials applied as separate brushes below.
          ============================================================ -->
-    <!-- Stage S-3.9 (Plan C cont.): wallpaper base alpha was 100% (FF), which
-         turned the WallpaperRoot Rectangle into an opaque shroud over the
-         entire window — the DesktopAcrylic backdrop was sitting underneath
-         but had nothing visible to bleed through. Dropped to 0x55 (~33%)
-         so the outer 6px gap and any uncovered area shows desktop vibrancy
-         tinted with a warm purple Tahoe wash, instead of solid dark. -->
+    <!-- Wallpaper base — Stage S-3.10 (Plan C tuning):
+         S-3.9's 0x55 (~33%) was too transparent; the user reported the
+         desktop bled through so strongly that the window read as a
+         colored band rather than a Tahoe-tinted glass surface, and the
+         24px rounded corner was visually lost in the bleed. Bumped to
+         0xB3 (~70%) — wallpaper still semi-translucent so DesktopAcrylic
+         vibrancy registers, but the dark-purple Tahoe wash is now the
+         dominant tone in the outer gap. -->
     <LinearGradientBrush x:Key="LumiWallpaperBaseBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Offset="0" Color="#551A0E30" />
-        <GradientStop Offset="1" Color="#550C0818" />
+        <GradientStop Offset="0" Color="#B31A0E30" />
+        <GradientStop Offset="1" Color="#B30C0818" />
     </LinearGradientBrush>
 
     <!-- Radial gradient brushes — five layers stacked over base.
