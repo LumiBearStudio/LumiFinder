@@ -84,7 +84,7 @@
              to read more distinct. -->
         <Border x:Name="LumiContentCard"
                 Grid.Column="1" Grid.Row="0" Grid.RowSpan="4"
-                Margin="0,6,6,6"
+                Margin="0,3,3,3"
                 CornerRadius="{StaticResource LumiSidebarCornerRadius}"
                 Background="{ThemeResource LumiSidebarBrush}"
                 BorderThickness="0"

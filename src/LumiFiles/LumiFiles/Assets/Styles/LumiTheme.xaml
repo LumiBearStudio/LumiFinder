@@ -278,11 +278,13 @@
          WindowFrame's 18px curve fills with vibrancy rather than a dark
          patch — the chrome corner mismatch disappears visually. -->
     <CornerRadius x:Key="LumiWindowCornerRadius">18</CornerRadius>
-    <!-- Stage S-3.14: 18 → 12 to follow Apple HIG / macOS concentric corner rule:
-         inner = outer − padding. With LumiWindowCornerRadius=18 and a 6px
-         LumiSidebarMargin, the inner sidebar card now reads as nested *inside*
-         the outer window frame instead of competing with the same curve. -->
-    <CornerRadius x:Key="LumiSidebarCornerRadius">12</CornerRadius>
+    <!-- Stage S-3.18 (alternative B): tightened the outer-to-inner gap from
+         6px to 3px and bumped this radius 12 → 15 so the concentric rule
+         (inner = outer − padding = 18 − 3 = 15) keeps the sidebar/content
+         cards reading as one shape with the WindowFrame, just nested.
+         The gap narrows from 6 to 3, so the two glass surfaces stop
+         feeling like two separate windows pasted together. -->
+    <CornerRadius x:Key="LumiSidebarCornerRadius">15</CornerRadius>
     <CornerRadius x:Key="LumiPanelInnerCornerRadius">16</CornerRadius>
     <CornerRadius x:Key="LumiPillCornerRadius">999</CornerRadius>
     <!-- ClipFlow toolbar pattern (ClipboardStripPanel.xaml:144-209):
@@ -325,7 +327,11 @@
          rounded floating card rather than a dark square. -->
     <Thickness x:Key="LumiWindowPadding">6</Thickness>
     <!-- Sidebar margin: floating 4 sides (mockup glass card) -->
-    <Thickness x:Key="LumiSidebarMargin">6,6,6,6</Thickness>
+    <!-- Stage S-3.18 (alternative B): 6 → 3. Halves the gutter between
+         WindowFrame and the inner sidebar/content cards so the outer
+         glass band reads thinner and the cards feel concentric with
+         the frame rather than islanded inside it. -->
+    <Thickness x:Key="LumiSidebarMargin">3</Thickness>
 
     <x:Double x:Key="LumiSidebarWidth">228</x:Double>
     <x:Double x:Key="LumiColumnWidth">260</x:Double>
