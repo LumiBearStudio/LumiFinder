@@ -535,14 +535,21 @@
                             Background="Transparent"
                             Foreground="{ThemeResource LumiTextPrimaryBrush}"
                             ToolTipService.ToolTip="Preview pane" Click="OnPreviewToggleClick">
-                        <FontIcon Glyph="&#xE890;" FontSize="13"/>
+                        <!-- ri-eye-line (RemixIcons) — cleaner than the Segoe MDL2 'View'
+                             eye glyph (E890) that read awkwardly in the pill bar. -->
+                        <FontIcon FontFamily="{StaticResource RemixIcons}"
+                                  Glyph="{StaticResource Icon_Preview}" FontSize="14"/>
                     </Button>
                     <Button Width="24" Height="24" Padding="0" BorderThickness="0"
                             CornerRadius="{StaticResource LumiPillButtonRightCornerRadius}"
                             Background="Transparent"
                             Foreground="{ThemeResource LumiTextPrimaryBrush}"
                             ToolTipService.ToolTip="Split view" Click="OnSplitViewToggleClick">
-                        <FontIcon Glyph="&#xE78D;" FontSize="13"/>
+                        <!-- ri-layout-column-fill (RemixIcons) — two clean side-by-side
+                             columns. Replaces Segoe MDL2 'DockLeft' (E78D) which only
+                             showed a single docked panel and didn't read as 'split'. -->
+                        <FontIcon FontFamily="{StaticResource RemixIcons}"
+                                  Glyph="{StaticResource Icon_SplitView}" FontSize="14"/>
                     </Button>
                 </StackPanel>
             </Border>
