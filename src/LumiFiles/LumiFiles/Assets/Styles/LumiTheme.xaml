@@ -17,6 +17,16 @@
     <SolidColorBrush x:Key="LumiAmberSoftBrush" Color="{StaticResource LumiAmberSoftColor}" />
     <SolidColorBrush x:Key="LumiAmberDeepBrush" Color="{StaticResource LumiAmberDeepColor}" />
 
+    <!-- Stage S-3.2/3.3 active-pane indicator brushes — global FALLBACKS so
+         resource lookup never throws when a consumer (e.g. LumiPanePathBar
+         instances inside a pane container being toggled visible during a
+         split-view transition) measures BEFORE the pane-scoped Grid.Resources
+         override kicks in. The pane-scoped brushes in MainWindow.xaml take
+         precedence whenever the consumer's visual tree is rooted under a
+         LeftPaneContainer / RightPaneContainer; otherwise these defaults apply. -->
+    <SolidColorBrush x:Key="LumiPanePathIconBrush" Color="{StaticResource LumiAmberColor}" />
+    <SolidColorBrush x:Key="LumiPaneColumnNameBrush" Color="{StaticResource LumiAmberColor}" />
+
     <!-- ============================================================
          2. DARK SURFACES
          ============================================================ -->
