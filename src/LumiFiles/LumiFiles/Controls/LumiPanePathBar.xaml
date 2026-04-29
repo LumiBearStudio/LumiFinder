@@ -27,7 +27,7 @@
                             Tag="{x:Bind FullPath}">
                         <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                             <FontIcon Glyph="&#xE8B7;" FontSize="11"
-                                      Foreground="{ThemeResource LumiAmberBrush}"
+                                      Foreground="{ThemeResource LumiPanePathIconBrush}"
                                       VerticalAlignment="Center"/>
                             <TextBlock Text="{x:Bind Name}"
                                        FontFamily="{StaticResource LumiFontFamily}"

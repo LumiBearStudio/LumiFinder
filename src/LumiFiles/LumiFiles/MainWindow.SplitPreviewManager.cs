@@ -153,24 +153,35 @@ namespace LumiFiles
 
         private static void ApplyPaneIndicatorBrushes(FrameworkElement pane, bool isActive)
         {
-            // Active pane uses amber palette; inactive uses warm gray. Alpha
-            // values mirror WinUI's ListViewItemBackgroundSelected family so
-            // hover / pressed states stay visually distinct in both modes.
+            // Active pane uses bright amber (LumiAmberColor) for both the col-
+            // header folder name and the ListView selection — amber-deep was
+            // tested first but read too dark on dark glass. Inactive pane uses
+            // warm gray. Alpha bumped above WinUI's default selection family
+            // because amber needs more presence than the default neutral fill.
             var nameColor = isActive
                 ? s_amber
                 : Microsoft.UI.ColorHelper.FromArgb(0x80, s_inactiveWhite.R, s_inactiveWhite.G, s_inactiveWhite.B);
 
-            var selBase = isActive ? s_amberDeep : s_inactiveGray;
+            // Bottom breadcrumb (LumiPanePathBar) folder icon color. Fully
+            // opaque on both states; the difference is hue (amber vs gray)
+            // rather than alpha, since this icon is small and subtle alpha
+            // changes get lost.
+            var pathIconColor = isActive ? s_amber : s_inactiveGray;
+
+            // Selection background base — bright amber on the active pane so
+            // the selected row clearly says "this is where focus lives now."
+            var selBase = isActive ? s_amber : s_inactiveGray;
 
             SetBrush(pane, "LumiPaneColumnNameBrush", nameColor);
+            SetBrush(pane, "LumiPanePathIconBrush", pathIconColor);
             SetBrush(pane, "ListViewItemBackgroundSelected",
-                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0x55 : (byte)0x33, selBase.R, selBase.G, selBase.B));
+                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0x80 : (byte)0x44, selBase.R, selBase.G, selBase.B));
             SetBrush(pane, "ListViewItemBackgroundSelectedPointerOver",
-                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0x77 : (byte)0x55, selBase.R, selBase.G, selBase.B));
+                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0xA0 : (byte)0x66, selBase.R, selBase.G, selBase.B));
             SetBrush(pane, "ListViewItemBackgroundSelectedPressed",
-                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0x99 : (byte)0x77, selBase.R, selBase.G, selBase.B));
+                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0xC0 : (byte)0x88, selBase.R, selBase.G, selBase.B));
             SetBrush(pane, "ListViewItemBackgroundSelectedDisabled",
-                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0x33 : (byte)0x22, selBase.R, selBase.G, selBase.B));
+                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0x44 : (byte)0x22, selBase.R, selBase.G, selBase.B));
         }
 
         private static void SetBrush(FrameworkElement pane, string key, Windows.UI.Color color)

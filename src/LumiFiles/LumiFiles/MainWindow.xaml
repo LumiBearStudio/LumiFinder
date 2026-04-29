@@ -1318,13 +1318,19 @@
                     <Grid.Resources>
                         <!-- Miller col-header active-column folder-name color -->
                         <SolidColorBrush x:Key="LumiPaneColumnNameBrush" Color="#FFFFB86B"/>
+                        <!-- LumiPanePathBar (bottom breadcrumb) folder-icon color.
+                             Active pane = amber, inactive pane = warm gray. -->
+                        <SolidColorBrush x:Key="LumiPanePathIconBrush" Color="#FFFFB86B"/>
                         <!-- ListView/GridView selection background — overrides system defaults
-                             only within this pane's visual scope. Alpha matches WinUI's
-                             ListViewItemBackgroundSelected family (~33%/55%/77%). -->
-                        <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#55D48028"/>
-                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#77D48028"/>
-                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#99D48028"/>
-                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedDisabled" Color="#33D48028"/>
+                             only within this pane's visual scope. Active palette = bright
+                             amber (LumiAmberColor) so selected items read clearly as the
+                             "you are working here" cue. Alpha bumped over the WinUI default
+                             family because amber on dark needs more presence than the
+                             default neutral overlay. -->
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#80FFB86B"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#A0FFB86B"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#C0FFB86B"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedDisabled" Color="#44FFB86B"/>
                     </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/> <!-- FilterBar -->
@@ -1730,9 +1736,10 @@
                          RefreshActivePaneIndicators flips Left vs Right colors live. -->
                     <Grid.Resources>
                         <SolidColorBrush x:Key="LumiPaneColumnNameBrush" Color="#80FFFFFF"/>
-                        <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#33808080"/>
-                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#55808080"/>
-                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#77808080"/>
+                        <SolidColorBrush x:Key="LumiPanePathIconBrush" Color="#FF808080"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#44808080"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#66808080"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#88808080"/>
                         <SolidColorBrush x:Key="ListViewItemBackgroundSelectedDisabled" Color="#22808080"/>
                     </Grid.Resources>
                     <Grid.RowDefinitions>
