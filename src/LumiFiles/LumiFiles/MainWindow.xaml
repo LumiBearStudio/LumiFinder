@@ -71,6 +71,25 @@
              in Main Area row 2 (collapsed via SidebarCol Width=0) until Stage 4
              rewires data into this new sidebar.
              ============================================================ -->
+        <!-- ============================================================
+             LUMI CONTENT CARD — Stage S-3.16 background card sibling to
+             LumiSidebar. Renders BEFORE the actual content rows so it
+             paints behind them (XAML z-order). Same 12px round + 6px
+             gap (left=0 because the sidebar already eats that gap on
+             the right edge) so the two cards form a balanced pair
+             nested inside the 18px-rounded WindowFrame, matching the
+             macOS-Finder concentric card pattern the user asked for.
+             Background = LumiSidebarBrush for now; a separate tint
+             can be split out in S-3.17 if the user wants the panes
+             to read more distinct. -->
+        <Border x:Name="LumiContentCard"
+                Grid.Column="1" Grid.Row="0" Grid.RowSpan="4"
+                Margin="0,6,6,6"
+                CornerRadius="{StaticResource LumiSidebarCornerRadius}"
+                Background="{ThemeResource LumiSidebarBrush}"
+                BorderThickness="0"
+                IsHitTestVisible="False"/>
+
         <Border x:Name="LumiSidebar"
                 Grid.Column="0" Grid.Row="0" Grid.RowSpan="4"
                 Margin="{StaticResource LumiSidebarMargin}"

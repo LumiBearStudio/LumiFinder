@@ -278,7 +278,11 @@
          WindowFrame's 18px curve fills with vibrancy rather than a dark
          patch — the chrome corner mismatch disappears visually. -->
     <CornerRadius x:Key="LumiWindowCornerRadius">18</CornerRadius>
-    <CornerRadius x:Key="LumiSidebarCornerRadius">18</CornerRadius>
+    <!-- Stage S-3.14: 18 → 12 to follow Apple HIG / macOS concentric corner rule:
+         inner = outer − padding. With LumiWindowCornerRadius=18 and a 6px
+         LumiSidebarMargin, the inner sidebar card now reads as nested *inside*
+         the outer window frame instead of competing with the same curve. -->
+    <CornerRadius x:Key="LumiSidebarCornerRadius">12</CornerRadius>
     <CornerRadius x:Key="LumiPanelInnerCornerRadius">16</CornerRadius>
     <CornerRadius x:Key="LumiPillCornerRadius">999</CornerRadius>
     <!-- ClipFlow toolbar pattern (ClipboardStripPanel.xaml:144-209):
