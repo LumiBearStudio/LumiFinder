@@ -34,8 +34,16 @@ namespace LumiFiles.Helpers
 
         internal const int DWMWA_TRANSITIONS_FORCEDISABLED = 3;
         internal const int DWMWA_CLOAK = 13;
+        internal const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
         internal const int DWMWA_BORDER_COLOR = 34;
         internal const int DWMWA_CAPTION_COLOR = 35;
+
+        // DWMWA_WINDOW_CORNER_PREFERENCE values
+        // (Windows 11 only — silently ignored on Windows 10)
+        internal const int DWMWCP_DEFAULT = 0;     // System decides
+        internal const int DWMWCP_DONOTROUND = 1;  // Square corners
+        internal const int DWMWCP_ROUND = 2;       // Standard round (~8px)
+        internal const int DWMWCP_ROUNDSMALL = 3;  // Smaller round
 
         [DllImport("user32.dll")]
         internal static extern bool SetForegroundWindow(IntPtr hWnd);

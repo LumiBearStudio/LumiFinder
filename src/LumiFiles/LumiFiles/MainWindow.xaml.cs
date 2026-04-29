@@ -456,6 +456,31 @@ namespace LumiFiles
                 SystemBackdrop = null;
             }
 
+            // Stage S-3.19: tell DWM to NOT round the system chrome corners.
+            // Without this, Win11 forces ~8px rounded corners on every top-level
+            // window, which clashed with our WindowFrame's 18px LumiWindowCornerRadius
+            // (the inner card's curve looked bigger than the actual window
+            // corner). With DONOTROUND, the system chrome is square; the visible
+            // corner radius is solely the WindowFrame's 18px Border, sitting on
+            // top of DesktopAcrylic backdrop in the 4 outer-corner triangles.
+            // Silently ignored on Windows 10.
+            try
+            {
+                // _hwnd is assigned later in this constructor, so resolve the
+                // handle directly here to avoid a forward-reference null.
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                int pref = Helpers.NativeMethods.DWMWCP_DONOTROUND;
+                Helpers.NativeMethods.DwmSetWindowAttribute(
+                    hwnd,
+                    Helpers.NativeMethods.DWMWA_WINDOW_CORNER_PREFERENCE,
+                    ref pref,
+                    sizeof(int));
+            }
+            catch (System.Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[MainWindow] Disable system corner round failed: {ex.Message}");
+            }
+
             // ====================================================================
             // Stage 4 — LumiSidebar navigation dispatch (placeholder bindings).
             // Resolves path from the item's TextBlock label and navigates the
