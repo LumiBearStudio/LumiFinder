@@ -639,7 +639,55 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition x:Name="RightPaddingColumn" Width="0"/> <!-- 캡션 버튼 여백 (코드에서 설정) -->
+                <ColumnDefinition Width="Auto"/> <!-- Stage S-3.21: 자체 caption buttons (borderless) -->
             </Grid.ColumnDefinitions>
+
+            <!-- Stage S-3.21 (Plan A — DragShelf borderless port): self-drawn
+                 minimize / maximize / close buttons. Visible only when system
+                 chrome is suppressed via SetBorderAndTitleBar(false, false). -->
+            <StackPanel x:Name="CaptionButtonsHost" Grid.Column="3"
+                        Orientation="Horizontal" Spacing="0"
+                        VerticalAlignment="Top"
+                        Visibility="Collapsed">
+                <Button x:Name="CaptionMinimizeButton"
+                        Width="46" Height="32" Padding="0"
+                        Background="Transparent" BorderThickness="0"
+                        CornerRadius="0"
+                        ToolTipService.ToolTip="최소화"
+                        Click="OnCaptionMinimizeClick">
+                    <FontIcon Glyph="&#xE921;" FontSize="10"
+                              FontFamily="Segoe Fluent Icons"
+                              Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
+                </Button>
+                <Button x:Name="CaptionMaximizeButton"
+                        Width="46" Height="32" Padding="0"
+                        Background="Transparent" BorderThickness="0"
+                        CornerRadius="0"
+                        ToolTipService.ToolTip="최대화"
+                        Click="OnCaptionMaximizeClick">
+                    <FontIcon x:Name="CaptionMaximizeIcon"
+                              Glyph="&#xE922;" FontSize="10"
+                              FontFamily="Segoe Fluent Icons"
+                              Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
+                </Button>
+                <!-- Close uses a custom hover style: red bg + white glyph -->
+                <Button x:Name="CaptionCloseButton"
+                        Width="46" Height="32" Padding="0"
+                        Background="Transparent" BorderThickness="0"
+                        CornerRadius="0"
+                        ToolTipService.ToolTip="닫기"
+                        Click="OnCaptionCloseClick">
+                    <Button.Resources>
+                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#E81123"/>
+                        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#F1707A"/>
+                        <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White"/>
+                        <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White"/>
+                    </Button.Resources>
+                    <FontIcon Glyph="&#xE8BB;" FontSize="10"
+                              FontFamily="Segoe Fluent Icons"
+                              Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
+                </Button>
+            </StackPanel>
 
             <!-- Bottom border line removed (mockup has no titlebar bottom rule) -->
             <Rectangle Grid.ColumnSpan="3" Height="1" VerticalAlignment="Bottom"

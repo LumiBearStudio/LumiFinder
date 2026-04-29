@@ -45,6 +45,33 @@ namespace LumiFiles.Helpers
         internal const int DWMWCP_ROUND = 2;       // Standard round (~8px)
         internal const int DWMWCP_ROUNDSMALL = 3;  // Smaller round
 
+        // Borderless / glass support (Stage S-3.21, ported from DragShelf).
+        // DwmExtendFrameIntoClientArea(hwnd, MARGINS{-1,-1,-1,-1}) collapses
+        // the system frame into the client area, eliminating the default
+        // window border. SetWindowLong then strips WS_OVERLAPPEDWINDOW bits
+        // so the system doesn't draw caption / sysmenu / thick border.
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct MARGINS
+        {
+            public int Left, Right, Top, Bottom;
+        }
+
+        [DllImport("dwmapi.dll")]
+        internal static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref MARGINS pMarInset);
+
+        // Note: GetWindowLong / SetWindowLong are already declared below with
+        // int signatures (legacy). For S-3.21 borderless transition we treat
+        // the style word as uint via unchecked casts at the call site.
+
+        internal const int GWL_STYLE = -16;
+        // GWL_EXSTYLE already declared further down (= -20).
+
+        // Window styles
+        internal const uint WS_OVERLAPPEDWINDOW = 0x00CF0000u; // composite mask
+        internal const uint WS_POPUP            = 0x80000000u;
+        internal const uint WS_CLIPCHILDREN     = 0x02000000u;
+        internal const uint WS_THICKFRAME       = 0x00040000u; // resizable
+
         [DllImport("user32.dll")]
         internal static extern bool SetForegroundWindow(IntPtr hWnd);
 

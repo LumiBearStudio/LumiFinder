@@ -317,13 +317,14 @@
     <CornerRadius x:Key="LumiPreviewCardCornerRadius">11</CornerRadius>
 
     <!-- Window padding: 6 left/top/bottom, 0 right (content flush right) -->
-    <!-- Stage S-3.20 (Plan X-Big): bumped 6 → 8 to widen the DesktopAcrylic
-         band that sits between Win11's ~8px system chrome corner and our
-         own 18px WindowFrame round. Without this band, the 18px curve
-         hides under the chrome 8px and the bigger inner radius doesn't
-         read. 8px gives both rounds room to be visible: chrome outer
-         8px + 8px backdrop glass + 18px inner frame. -->
-    <Thickness x:Key="LumiWindowPadding">8</Thickness>
+    <!-- Stage S-3.21 (Plan A — borderless port from DragShelf):
+         Collapsed back to 0. With the system chrome stripped (SetBorder
+         AndTitleBar false + WS_POPUP), there's no longer a Win11 8px
+         chrome corner to hide behind, so the WindowFrame's CornerRadius
+         IS the visible window outline. No outer band needed; the
+         WindowFrame's translucency over DesktopAcrylic provides the
+         glass feel directly at the edges. -->
+    <Thickness x:Key="LumiWindowPadding">0</Thickness>
     <!-- Sidebar margin: floating 4 sides (mockup glass card) -->
     <!-- Stage S-3.18 (alternative B): 6 → 3. Halves the gutter between
          WindowFrame and the inner sidebar/content cards so the outer

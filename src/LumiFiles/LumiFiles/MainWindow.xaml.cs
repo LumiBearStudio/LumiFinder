@@ -456,36 +456,72 @@ namespace LumiFiles
                 SystemBackdrop = null;
             }
 
-            // Stage S-3.20 (Plan X-Big, pattern ported from DragShelf):
-            // Use Win11's standard ~8px rounded corners on the SYSTEM chrome
-            // (DWMWCP_ROUND) and let our 18px LumiWindowCornerRadius live
-            // INSIDE that with an 8px LumiWindowPadding band of DesktopAcrylic
-            // between them. The 8px chrome corner is the actual window
-            // outline; the 18px WindowFrame sits as a clearly visible
-            // bigger-radius card nested inside, with vibrant glass filling
-            // the band between the two.
+            // Stage S-3.21 (Plan A — DragShelf borderless port):
+            // Strip the system chrome entirely so our WindowFrame Border is
+            // the only thing that draws the window outline. Without this,
+            // Win11 forces a small ~8px chrome corner that fights any
+            // larger LumiWindowCornerRadius we set; with this, the window's
+            // visible shape is 100% controlled by our XAML.
             //
-            // S-3.19 set DONOTROUND so the WindowFrame curve would be the
-            // only round shape — but the 18px curve stopped reading because
-            // the backdrop tone and the WindowFrame brush tone were too
-            // similar. Going back to ROUND with a thicker padding restores
-            // both a clear outer outline (chrome 8px) AND a clear inner
-            // curve (frame 18px). Silently ignored on Windows 10.
+            // Pattern (matches D:\11.AI\DragShelf\source EphemeralShelfWindow):
+            //   1. SetBorderAndTitleBar(false, false)   — hide system caption
+            //   2. DwmExtendFrameIntoClientArea(-1)     — collapse system frame
+            //   3. SetWindowLong: strip WS_OVERLAPPEDWINDOW, add WS_POPUP
+            //   4. DwmSetWindowAttribute(ROUND)         — request rounded shape
+            //
+            // Caption buttons (min / max / close) are now drawn by us in
+            // AppTitleBar.CaptionButtonsHost (XAML), wired to the handlers
+            // below.
             try
             {
-                // _hwnd is assigned later in this constructor, so resolve the
-                // handle directly here to avoid a forward-reference null.
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+
+                // 1. Hide system caption buttons + border (presenter-level)
+                if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
+                {
+                    presenter.SetBorderAndTitleBar(false, false);
+                }
+
+                // 2. Collapse the system frame margin into the client area
+                var margins = new Helpers.NativeMethods.MARGINS
+                {
+                    Left = -1, Right = -1, Top = -1, Bottom = -1
+                };
+                Helpers.NativeMethods.DwmExtendFrameIntoClientArea(hwnd, ref margins);
+
+                // 3. Strip WS_OVERLAPPEDWINDOW bits + add WS_POPUP | WS_THICKFRAME.
+                //    Keeping WS_THICKFRAME preserves edge-resize hit-test even
+                //    though there's no visible border (DragShelf is fixed-size
+                //    so they drop it; LumiFiles is resizable so we keep it).
+                //    NativeMethods.GetWindowLong / SetWindowLong return int
+                //    (legacy signatures); unchecked casts bridge to the uint
+                //    style flags.
+                uint style = unchecked((uint)Helpers.NativeMethods.GetWindowLong(
+                    hwnd, Helpers.NativeMethods.GWL_STYLE));
+                style &= ~Helpers.NativeMethods.WS_OVERLAPPEDWINDOW;
+                style |= Helpers.NativeMethods.WS_POPUP
+                       | Helpers.NativeMethods.WS_CLIPCHILDREN
+                       | Helpers.NativeMethods.WS_THICKFRAME;
+                Helpers.NativeMethods.SetWindowLong(
+                    hwnd,
+                    Helpers.NativeMethods.GWL_STYLE,
+                    unchecked((int)style));
+
+                // 4. Request rounded outer shape (Win11 only)
                 int pref = Helpers.NativeMethods.DWMWCP_ROUND;
                 Helpers.NativeMethods.DwmSetWindowAttribute(
                     hwnd,
                     Helpers.NativeMethods.DWMWA_WINDOW_CORNER_PREFERENCE,
                     ref pref,
                     sizeof(int));
+
+                // Show the self-drawn caption buttons now that system chrome
+                // is gone (otherwise the user would have no way to close).
+                CaptionButtonsHost.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
             }
             catch (System.Exception ex)
             {
-                Helpers.DebugLogger.Log($"[MainWindow] Set system corner round failed: {ex.Message}");
+                Helpers.DebugLogger.Log($"[MainWindow] Borderless init failed: {ex.Message}");
             }
 
             // ====================================================================
@@ -6942,6 +6978,39 @@ namespace LumiFiles
             {
                 Helpers.DebugLogger.Log($"[LumiSidebar] navigate failed for '{label}' -> '{path}': {ex.Message}");
             }
+        }
+
+        // ── Custom Caption Buttons (Stage S-3.21, borderless mode) ─────────
+        // System min/max/close are suppressed by SetBorderAndTitleBar(false,
+        // false); these handlers replace them. AppWindow.Presenter exposes
+        // Minimize/Maximize/Restore so we just forward to it.
+
+        private void OnCaptionMinimizeClick(object sender, RoutedEventArgs e)
+        {
+            if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
+                p.Minimize();
+        }
+
+        private void OnCaptionMaximizeClick(object sender, RoutedEventArgs e)
+        {
+            if (AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
+            {
+                if (p.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized)
+                {
+                    p.Restore();
+                    if (CaptionMaximizeIcon != null) CaptionMaximizeIcon.Glyph = ""; // maximize
+                }
+                else
+                {
+                    p.Maximize();
+                    if (CaptionMaximizeIcon != null) CaptionMaximizeIcon.Glyph = ""; // restore
+                }
+            }
+        }
+
+        private void OnCaptionCloseClick(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
 
     }
