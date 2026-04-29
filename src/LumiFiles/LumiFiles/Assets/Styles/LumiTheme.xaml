@@ -278,13 +278,12 @@
          WindowFrame's 18px curve fills with vibrancy rather than a dark
          patch — the chrome corner mismatch disappears visually. -->
     <CornerRadius x:Key="LumiWindowCornerRadius">18</CornerRadius>
-    <!-- Stage S-3.18 (alternative B): tightened the outer-to-inner gap from
-         6px to 3px and bumped this radius 12 → 15 so the concentric rule
-         (inner = outer − padding = 18 − 3 = 15) keeps the sidebar/content
-         cards reading as one shape with the WindowFrame, just nested.
-         The gap narrows from 6 to 3, so the two glass surfaces stop
-         feeling like two separate windows pasted together. -->
-    <CornerRadius x:Key="LumiSidebarCornerRadius">15</CornerRadius>
+    <!-- Stage S-3.20 (Plan X-Big): pulled back from 15 → 12 because the
+         outer ladder grew (chrome 8 + 8px backdrop + WindowFrame 18) and
+         the inner sidebar at 15 was visually almost the same as 18 frame.
+         12 keeps a clear concentric step from the 18 frame down through
+         the 12 sidebar/content cards (= roughly 18 − sidebar_margin*2). -->
+    <CornerRadius x:Key="LumiSidebarCornerRadius">12</CornerRadius>
     <CornerRadius x:Key="LumiPanelInnerCornerRadius">16</CornerRadius>
     <CornerRadius x:Key="LumiPillCornerRadius">999</CornerRadius>
     <!-- ClipFlow toolbar pattern (ClipboardStripPanel.xaml:144-209):
@@ -318,14 +317,13 @@
     <CornerRadius x:Key="LumiPreviewCardCornerRadius">11</CornerRadius>
 
     <!-- Window padding: 6 left/top/bottom, 0 right (content flush right) -->
-    <!-- Stage S-3.13: 6px gap on all four sides (was 0 in S-3.11, before
-         that 6,6,0,6). With WallpaperBase made fully transparent below,
-         this gap exposes the raw DesktopAcrylic backdrop — vibrant glass
-         around the rounded WindowFrame card. The WindowFrame's 18px
-         corner radius (matching the sidebar) sits cleanly inside this
-         backdrop margin, so the 4 window corners now read as a properly
-         rounded floating card rather than a dark square. -->
-    <Thickness x:Key="LumiWindowPadding">6</Thickness>
+    <!-- Stage S-3.20 (Plan X-Big): bumped 6 → 8 to widen the DesktopAcrylic
+         band that sits between Win11's ~8px system chrome corner and our
+         own 18px WindowFrame round. Without this band, the 18px curve
+         hides under the chrome 8px and the bigger inner radius doesn't
+         read. 8px gives both rounds room to be visible: chrome outer
+         8px + 8px backdrop glass + 18px inner frame. -->
+    <Thickness x:Key="LumiWindowPadding">8</Thickness>
     <!-- Sidebar margin: floating 4 sides (mockup glass card) -->
     <!-- Stage S-3.18 (alternative B): 6 → 3. Halves the gutter between
          WindowFrame and the inner sidebar/content cards so the outer

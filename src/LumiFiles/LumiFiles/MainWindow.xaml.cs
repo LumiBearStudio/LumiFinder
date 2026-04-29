@@ -456,20 +456,27 @@ namespace LumiFiles
                 SystemBackdrop = null;
             }
 
-            // Stage S-3.19: tell DWM to NOT round the system chrome corners.
-            // Without this, Win11 forces ~8px rounded corners on every top-level
-            // window, which clashed with our WindowFrame's 18px LumiWindowCornerRadius
-            // (the inner card's curve looked bigger than the actual window
-            // corner). With DONOTROUND, the system chrome is square; the visible
-            // corner radius is solely the WindowFrame's 18px Border, sitting on
-            // top of DesktopAcrylic backdrop in the 4 outer-corner triangles.
-            // Silently ignored on Windows 10.
+            // Stage S-3.20 (Plan X-Big, pattern ported from DragShelf):
+            // Use Win11's standard ~8px rounded corners on the SYSTEM chrome
+            // (DWMWCP_ROUND) and let our 18px LumiWindowCornerRadius live
+            // INSIDE that with an 8px LumiWindowPadding band of DesktopAcrylic
+            // between them. The 8px chrome corner is the actual window
+            // outline; the 18px WindowFrame sits as a clearly visible
+            // bigger-radius card nested inside, with vibrant glass filling
+            // the band between the two.
+            //
+            // S-3.19 set DONOTROUND so the WindowFrame curve would be the
+            // only round shape — but the 18px curve stopped reading because
+            // the backdrop tone and the WindowFrame brush tone were too
+            // similar. Going back to ROUND with a thicker padding restores
+            // both a clear outer outline (chrome 8px) AND a clear inner
+            // curve (frame 18px). Silently ignored on Windows 10.
             try
             {
                 // _hwnd is assigned later in this constructor, so resolve the
                 // handle directly here to avoid a forward-reference null.
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-                int pref = Helpers.NativeMethods.DWMWCP_DONOTROUND;
+                int pref = Helpers.NativeMethods.DWMWCP_ROUND;
                 Helpers.NativeMethods.DwmSetWindowAttribute(
                     hwnd,
                     Helpers.NativeMethods.DWMWA_WINDOW_CORNER_PREFERENCE,
@@ -478,7 +485,7 @@ namespace LumiFiles
             }
             catch (System.Exception ex)
             {
-                Helpers.DebugLogger.Log($"[MainWindow] Disable system corner round failed: {ex.Message}");
+                Helpers.DebugLogger.Log($"[MainWindow] Set system corner round failed: {ex.Message}");
             }
 
             // ====================================================================
