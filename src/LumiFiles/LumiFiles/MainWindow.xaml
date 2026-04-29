@@ -374,11 +374,12 @@
 
         <!-- ============================================================
              LUMI TOOLBAR — compact pill groups (mockup Stage 6 placeholder).
-             Visual only at this stage; bindings still in LegacyUnifiedBar (collapsed).
-             Stage 6 will wire NavBack/NavForward/Address/Search into these pills.
+             Visible in BOTH single and split modes (Stage S-1, option A): split-view
+             keeps the same shared toolbar, binding to ActiveExplorer / ActivePane so
+             actions follow the focused pane. Per-pane mini headers are being removed
+             in subsequent stages (S-2, S-3) of this refactor.
              ============================================================ -->
-        <Grid Grid.Column="1" Grid.Row="1" Height="{StaticResource LumiToolbarHeight}" Padding="14,0"
-              Visibility="{x:Bind helpers:ConverterHelpers.NotBoolToVisibility(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
+        <Grid Grid.Column="1" Grid.Row="1" Height="{StaticResource LumiToolbarHeight}" Padding="14,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>  <!-- Back/Forward pill -->
                 <ColumnDefinition Width="Auto"/>  <!-- Address folder -->
@@ -1326,49 +1327,17 @@
                          segmented pill controls inside (Phase 3) carry their own visible fills,
                          and the active pane indicator now lives on the toolbar tone + folder
                          label (A+D combo) rather than a 1px accent strip. -->
+                    <!-- Stage S-2: per-pane mini toolbar removed. Single LumiToolbar at the
+                         top of the window now handles all actions, binding to ActiveExplorer
+                         so it follows whichever pane has focus. The 32px header keeps just
+                         the active-pane indicator (PillBrush bg + amber folder label) so
+                         users can tell at a glance which pane is the action target. -->
                     <Grid Grid.Row="0" x:Name="LeftPathHeader" Height="32"
                           Visibility="{x:Bind IsLeftPaneHeaderVisible(ViewModel.IsSplitViewEnabled, ViewModel.CurrentViewMode), Mode=OneWay}"
                           Background="{x:Bind LeftPaneActiveBrush(ViewModel.ActivePane), Mode=OneWay}"
                           Tapped="OnLeftPaneHeaderTapped">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>  <!-- Nav buttons -->
-                            <ColumnDefinition Width="*"/>     <!-- Breadcrumb -->
-                            <ColumnDefinition Width="Auto"/>  <!-- Copy path -->
-                        </Grid.ColumnDefinitions>
-                        <!-- Nav buttons -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center" Margin="2,0,0,0">
-                            <Button x:Name="LeftBackButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="뒤로 (Alt+Left)"
-                                    Tag="Left" Click="OnPaneGoBackClick"
-                                    RightTapped="OnPaneBackButtonRightTapped"
-                                    IsEnabled="{x:Bind ViewModel.CanGoBack, Mode=OneWay}"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <FontIcon Glyph="&#xE72B;" FontSize="11"/>
-                            </Button>
-                            <Button x:Name="LeftForwardButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="앞으로 (Alt+Right)"
-                                    Tag="Left" Click="OnPaneGoForwardClick"
-                                    RightTapped="OnPaneForwardButtonRightTapped"
-                                    IsEnabled="{x:Bind ViewModel.CanGoForward, Mode=OneWay}"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <FontIcon Glyph="&#xE72A;" FontSize="11"/>
-                            </Button>
-                            <!-- LeftUpButton removed — single LumiToolbar dropped the Up button per
-                                 design spec; pane mini toolbar follows suit for consistency. -->
-                        </StackPanel>
-                        <!-- Breadcrumb + Edit mode (kept in tree but visually hidden — its role
-                             moved to the per-pane LumiPathBar at the bottom of the pane container.
-                             AddressBar instance retained so existing focus / SyncLeftAddressBar
-                             / event-routing code keeps working until it is migrated out. -->
-                        <appcontrols:AddressBarControl x:Name="LeftAddressBar" Grid.Column="1"
-                            Visibility="Collapsed"
-                            RecentFolders="{x:Bind ViewModel.RecentFolders, Mode=OneWay}"
-                            BreadcrumbSegmentClicked="OnAddressBarBreadcrumbClicked"
-                            BreadcrumbChevronClicked="OnAddressBarChevronClicked"
-                            PathNavigated="OnAddressBarPathNavigated"/>
-                        <!-- D combo: address folder label (current folder name + amber icon).
-                             Foreground = active-pane amber / inactive-pane secondary so the
-                             focused pane reads with the LumiFiles golden accent. -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7"
-                                    VerticalAlignment="Center" Padding="10,0,12,0">
+                        <StackPanel Orientation="Horizontal" Spacing="7"
+                                    VerticalAlignment="Center" Padding="14,0,14,0">
                             <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource LumiAmberBrush}"/>
                             <TextBlock Text="{x:Bind ViewModel.Explorer.CurrentFolderName, Mode=OneWay}"
                                        FontFamily="{StaticResource LumiFontFamily}"
@@ -1376,76 +1345,6 @@
                                        FontWeight="Medium"
                                        Foreground="{x:Bind LeftPaneActiveLabelBrush(ViewModel.ActivePane), Mode=OneWay}"
                                        TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                        <!-- Pane actions: CopyPath | Sort, ViewMode, Preview -->
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center" Margin="0,0,2,0">
-                            <!-- CopyPath -->
-                            <Button x:Name="LeftCopyPathButton" Style="{StaticResource UnifiedButtonStyle}"
-                                    ToolTipService.ToolTip="경로 복사" Tag="Left" Click="OnPaneCopyPathClick"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <FontIcon Glyph="&#xE8C8;" FontSize="11"/>
-                            </Button>
-                            <Rectangle Width="1" Height="16" Fill="{ThemeResource SpanBorderSubtleBrush}" Margin="2,0" VerticalAlignment="Center"/>
-                            <!-- Sort -->
-                            <Button x:Name="LeftSortButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="정렬"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <Button.Flyout>
-                                    <MenuFlyout Placement="Bottom" Opening="OnLeftPaneSortMenuOpening">
-                                        <MenuFlyoutItem x:Name="LeftSortByNameItem" Text="이름" Click="OnSortByName">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C1;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="LeftSortByDateItem" Text="날짜" Click="OnSortByDate">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE787;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="LeftSortBySizeItem" Text="크기" Click="OnSortBySize">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91B;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="LeftSortByTypeItem" Text="종류" Click="OnSortByType">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutSeparator/>
-                                        <MenuFlyoutItem x:Name="LeftSortAscendingItem" Text="오름차순" Click="OnSortAscending">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74A;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="LeftSortDescendingItem" Text="내림차순" Click="OnSortDescending">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74B;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                    </MenuFlyout>
-                                </Button.Flyout>
-                                <FontIcon Glyph="&#xE8CB;" FontSize="11"/>
-                            </Button>
-                            <!-- ViewMode -->
-                            <Button x:Name="LeftViewModeButton" AutomationProperties.AutomationId="Button_LeftViewMode" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="보기 전환"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <Button.Flyout>
-                                    <MenuFlyout Placement="Bottom" Opening="OnLeftPaneViewModeMenuOpening">
-                                        <MenuFlyoutItem x:Name="LeftVm_Miller" Text="Miller Columns" Click="OnViewModeMillerColumns">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xF0E2;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="LeftVm_Details" Text="Details" Click="OnViewModeDetails">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8EF;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="LeftVm_List" Text="List" Click="OnViewModeList">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE80A;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutSeparator/>
-                                        <MenuFlyoutSubItem x:Name="LeftVm_Icons" Text="Icons">
-                                            <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE91B;"/></MenuFlyoutSubItem.Icon>
-                                            <MenuFlyoutItem x:Name="LeftVm_ExtraLarge" Text="Extra Large Icons" Click="OnViewModeIconExtraLarge"/>
-                                            <MenuFlyoutItem x:Name="LeftVm_Large" Text="Large Icons" Click="OnViewModeIconLarge"/>
-                                            <MenuFlyoutItem x:Name="LeftVm_Medium" Text="Medium Icons" Click="OnViewModeIconMedium"/>
-                                            <MenuFlyoutItem x:Name="LeftVm_Small" Text="Small Icons" Click="OnViewModeIconSmall"/>
-                                        </MenuFlyoutSubItem>
-                                    </MenuFlyout>
-                                </Button.Flyout>
-                                <FontIcon x:Name="LeftViewModeIcon" Glyph="&#xF0E2;" FontSize="11"/>
-                            </Button>
-                            <!-- Preview -->
-                            <Button x:Name="LeftPreviewButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="미리보기 패널"
-                                    Tag="Left" Click="OnPanePreviewToggle"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <FontIcon x:Name="LeftPreviewIcon" Glyph="&#xE8A0;" FontSize="11"/>
-                            </Button>
                         </StackPanel>
                     </Grid>
 
@@ -1847,42 +1746,16 @@
                     <Border x:Name="RightDropOverlay" Grid.RowSpan="4" Opacity="0" IsHitTestVisible="False"
                             Background="{ThemeResource SpanAccentBrush}" CornerRadius="4" Margin="4"/>
 
-                    <!-- Right Pane Path Header -->
-                    <!-- Right Pane Path Header — Span jank tones removed (see LeftPathHeader comment). -->
+                    <!-- Right Pane Path Header — same Stage S-2 simplification as LeftPathHeader.
+                         All nav / address / action / sort / view-mode / preview controls
+                         removed; only the active-pane indicator (PillBrush bg + amber folder
+                         label) remains. The single LumiToolbar at the top handles every
+                         action via ActiveExplorer binding. -->
                     <Grid Grid.Row="0" x:Name="RightPathHeader" Height="32"
                           Background="{x:Bind RightPaneActiveBrush(ViewModel.ActivePane), Mode=OneWay}"
                           Tapped="OnRightPaneHeaderTapped">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <!-- Nav buttons -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center" Margin="2,0,0,0">
-                            <Button x:Name="RightBackButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="뒤로 (Alt+Left)"
-                                    Tag="Right" Click="OnPaneGoBackClick"
-                                    RightTapped="OnPaneBackButtonRightTapped"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <FontIcon Glyph="&#xE72B;" FontSize="11"/>
-                            </Button>
-                            <Button x:Name="RightForwardButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="앞으로 (Alt+Right)"
-                                    Tag="Right" Click="OnPaneGoForwardClick"
-                                    RightTapped="OnPaneForwardButtonRightTapped"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <FontIcon Glyph="&#xE72A;" FontSize="11"/>
-                            </Button>
-                            <!-- RightUpButton removed — see LeftPathHeader comment. -->
-                        </StackPanel>
-                        <!-- Breadcrumb hidden — see LeftAddressBar comment. -->
-                        <appcontrols:AddressBarControl x:Name="RightAddressBar" Grid.Column="1"
-                            Visibility="Collapsed"
-                            RecentFolders="{x:Bind ViewModel.RecentFolders, Mode=OneWay}"
-                            BreadcrumbSegmentClicked="OnAddressBarBreadcrumbClicked"
-                            BreadcrumbChevronClicked="OnAddressBarChevronClicked"
-                            PathNavigated="OnAddressBarPathNavigated"/>
-                        <!-- D combo: right-pane address folder label. -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7"
-                                    VerticalAlignment="Center" Padding="10,0,12,0">
+                        <StackPanel Orientation="Horizontal" Spacing="7"
+                                    VerticalAlignment="Center" Padding="14,0,14,0">
                             <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource LumiAmberBrush}"/>
                             <TextBlock Text="{x:Bind ViewModel.RightExplorer.CurrentFolderName, Mode=OneWay}"
                                        FontFamily="{StaticResource LumiFontFamily}"
@@ -1890,76 +1763,6 @@
                                        FontWeight="Medium"
                                        Foreground="{x:Bind RightPaneActiveLabelBrush(ViewModel.ActivePane), Mode=OneWay}"
                                        TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                        <!-- Pane actions: CopyPath | Sort, ViewMode, Preview -->
-                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center" Margin="0,0,2,0">
-                            <!-- CopyPath -->
-                            <Button x:Name="RightCopyPathButton" Style="{StaticResource UnifiedButtonStyle}"
-                                    ToolTipService.ToolTip="경로 복사" Tag="Right" Click="OnPaneCopyPathClick"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <FontIcon Glyph="&#xE8C8;" FontSize="11"/>
-                            </Button>
-                            <Rectangle Width="1" Height="16" Fill="{ThemeResource SpanBorderSubtleBrush}" Margin="2,0" VerticalAlignment="Center"/>
-                            <!-- Sort -->
-                            <Button x:Name="RightSortButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="정렬"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <Button.Flyout>
-                                    <MenuFlyout Placement="Bottom" Opening="OnRightPaneSortMenuOpening">
-                                        <MenuFlyoutItem x:Name="RightSortByNameItem" Text="이름" Click="OnSortByName">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8C1;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="RightSortByDateItem" Text="날짜" Click="OnSortByDate">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE787;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="RightSortBySizeItem" Text="크기" Click="OnSortBySize">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE91B;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="RightSortByTypeItem" Text="종류" Click="OnSortByType">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8FD;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutSeparator/>
-                                        <MenuFlyoutItem x:Name="RightSortAscendingItem" Text="오름차순" Click="OnSortAscending">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74A;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="RightSortDescendingItem" Text="내림차순" Click="OnSortDescending">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE74B;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                    </MenuFlyout>
-                                </Button.Flyout>
-                                <FontIcon Glyph="&#xE8CB;" FontSize="11"/>
-                            </Button>
-                            <!-- ViewMode -->
-                            <Button x:Name="RightViewModeButton" AutomationProperties.AutomationId="Button_RightViewMode" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="보기 전환"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <Button.Flyout>
-                                    <MenuFlyout Placement="Bottom" Opening="OnRightPaneViewModeMenuOpening">
-                                        <MenuFlyoutItem x:Name="RightVm_Miller" Text="Miller Columns" Click="OnViewModeMillerColumns">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xF0E2;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="RightVm_Details" Text="Details" Click="OnViewModeDetails">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8EF;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem x:Name="RightVm_List" Text="List" Click="OnViewModeList">
-                                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE80A;"/></MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutSeparator/>
-                                        <MenuFlyoutSubItem x:Name="RightVm_Icons" Text="Icons">
-                                            <MenuFlyoutSubItem.Icon><FontIcon Glyph="&#xE91B;"/></MenuFlyoutSubItem.Icon>
-                                            <MenuFlyoutItem x:Name="RightVm_ExtraLarge" Text="Extra Large Icons" Click="OnViewModeIconExtraLarge"/>
-                                            <MenuFlyoutItem x:Name="RightVm_Large" Text="Large Icons" Click="OnViewModeIconLarge"/>
-                                            <MenuFlyoutItem x:Name="RightVm_Medium" Text="Medium Icons" Click="OnViewModeIconMedium"/>
-                                            <MenuFlyoutItem x:Name="RightVm_Small" Text="Small Icons" Click="OnViewModeIconSmall"/>
-                                        </MenuFlyoutSubItem>
-                                    </MenuFlyout>
-                                </Button.Flyout>
-                                <FontIcon x:Name="RightViewModeIcon" Glyph="&#xF0E2;" FontSize="11"/>
-                            </Button>
-                            <!-- Preview -->
-                            <Button x:Name="RightPreviewButton" Style="{StaticResource UnifiedButtonStyle}" ToolTipService.ToolTip="미리보기 패널"
-                                    Tag="Right" Click="OnPanePreviewToggle"
-                                    Padding="4" MinWidth="0" MinHeight="0" Width="26" Height="26">
-                                <FontIcon x:Name="RightPreviewIcon" Glyph="&#xE8A0;" FontSize="11"/>
-                            </Button>
                         </StackPanel>
                     </Grid>
 

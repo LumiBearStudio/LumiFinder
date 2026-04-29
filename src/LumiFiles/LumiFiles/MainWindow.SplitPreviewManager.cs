@@ -242,19 +242,9 @@ namespace LumiFiles
                 MainVm_ExtraLarge, MainVm_Large, MainVm_Medium, MainVm_Small);
         }
 
-        private void OnLeftPaneViewModeMenuOpening(object sender, object e)
-        {
-            ViewModel.ActivePane = ActivePane.Left;
-            LocalizeViewMenuItems(LeftVm_Miller, LeftVm_Details, LeftVm_Icons,
-                LeftVm_ExtraLarge, LeftVm_Large, LeftVm_Medium, LeftVm_Small);
-        }
-
-        private void OnRightPaneViewModeMenuOpening(object sender, object e)
-        {
-            ViewModel.ActivePane = ActivePane.Right;
-            LocalizeViewMenuItems(RightVm_Miller, RightVm_Details, RightVm_Icons,
-                RightVm_ExtraLarge, RightVm_Large, RightVm_Medium, RightVm_Small);
-        }
+        // OnLeftPaneViewModeMenuOpening / OnRightPaneViewModeMenuOpening removed — Stage S-2
+        // dropped the per-pane mini toolbars (and their view-mode flyouts). Single LumiToolbar
+        // ViewMode menu now handles all panes via ActiveExplorer binding.
 
         private void LocalizeViewMenuItems(
             MenuFlyoutItem miller, MenuFlyoutItem details, MenuFlyoutSubItem icons,
@@ -292,11 +282,8 @@ namespace LumiFiles
             ToolTipService.SetToolTip(SplitViewButton, _loc.Get("Tooltip_SplitView"));
             ToolTipService.SetToolTip(PreviewToggleButton, _loc.Get("Tooltip_Preview"));
 
-            // View mode button tooltip (all three: main, left, right)
-            var vmTip = _loc.Get("ViewModeSwitch");
-            ToolTipService.SetToolTip(ViewModeButton, vmTip);
-            ToolTipService.SetToolTip(LeftViewModeButton, vmTip);
-            ToolTipService.SetToolTip(RightViewModeButton, vmTip);
+            // View mode button tooltip (single toolbar — per-pane mini buttons removed in Stage S-2)
+            ToolTipService.SetToolTip(ViewModeButton, _loc.Get("ViewModeSwitch"));
 
             // Sidebar bottom bar tooltips
             ToolTipService.SetToolTip(HelpButton, _loc.Get("Tooltip_Help"));
@@ -338,55 +325,9 @@ namespace LumiFiles
             MainVm_Medium.Text = _loc.Get("MediumIcons");
             MainVm_Small.Text = _loc.Get("SmallIcons");
 
-            // --- Left pane tooltips (LeftUpButton removed; tooltip line dropped) ---
-            ToolTipService.SetToolTip(LeftBackButton, _loc.Get("Tooltip_Back"));
-            ToolTipService.SetToolTip(LeftForwardButton, _loc.Get("Tooltip_Forward"));
-            ToolTipService.SetToolTip(LeftCopyPathButton, _loc.Get("Tooltip_CopyPath"));
-            ToolTipService.SetToolTip(LeftSortButton, _loc.Get("Tooltip_Sort"));
-            ToolTipService.SetToolTip(LeftPreviewButton, _loc.Get("Tooltip_Preview"));
-
-            // Left pane sort menu items
-            LeftSortByNameItem.Text = _loc.Get("Name");
-            LeftSortByDateItem.Text = _loc.Get("Date");
-            LeftSortBySizeItem.Text = _loc.Get("Size");
-            LeftSortByTypeItem.Text = _loc.Get("Type");
-            LeftSortAscendingItem.Text = _loc.Get("Ascending");
-            LeftSortDescendingItem.Text = _loc.Get("Descending");
-
-            // Left pane view mode menu items
-            LeftVm_Miller.Text = _loc.Get("MillerColumns");
-            LeftVm_Details.Text = _loc.Get("Details");
-            LeftVm_List.Text = _loc.Get("ViewMode_List");
-            LeftVm_Icons.Text = _loc.Get("Icons");
-            LeftVm_ExtraLarge.Text = _loc.Get("ExtraLargeIcons");
-            LeftVm_Large.Text = _loc.Get("LargeIcons");
-            LeftVm_Medium.Text = _loc.Get("MediumIcons");
-            LeftVm_Small.Text = _loc.Get("SmallIcons");
-
-            // --- Right pane tooltips (RightUpButton removed) ---
-            ToolTipService.SetToolTip(RightBackButton, _loc.Get("Tooltip_Back"));
-            ToolTipService.SetToolTip(RightForwardButton, _loc.Get("Tooltip_Forward"));
-            ToolTipService.SetToolTip(RightCopyPathButton, _loc.Get("Tooltip_CopyPath"));
-            ToolTipService.SetToolTip(RightSortButton, _loc.Get("Tooltip_Sort"));
-            ToolTipService.SetToolTip(RightPreviewButton, _loc.Get("Tooltip_Preview"));
-
-            // Right pane sort menu items
-            RightSortByNameItem.Text = _loc.Get("Name");
-            RightSortByDateItem.Text = _loc.Get("Date");
-            RightSortBySizeItem.Text = _loc.Get("Size");
-            RightSortByTypeItem.Text = _loc.Get("Type");
-            RightSortAscendingItem.Text = _loc.Get("Ascending");
-            RightSortDescendingItem.Text = _loc.Get("Descending");
-
-            // Right pane view mode menu items
-            RightVm_Miller.Text = _loc.Get("MillerColumns");
-            RightVm_Details.Text = _loc.Get("Details");
-            RightVm_List.Text = _loc.Get("ViewMode_List");
-            RightVm_Icons.Text = _loc.Get("Icons");
-            RightVm_ExtraLarge.Text = _loc.Get("ExtraLargeIcons");
-            RightVm_Large.Text = _loc.Get("LargeIcons");
-            RightVm_Medium.Text = _loc.Get("MediumIcons");
-            RightVm_Small.Text = _loc.Get("SmallIcons");
+            // Stage S-2: per-pane mini toolbar deleted, so all the per-pane tooltip /
+            // sort-flyout / view-mode-flyout localization lines are gone. The single
+            // LumiToolbar at the top covers every pane via ActiveExplorer binding.
 
             // --- Tab headers (Home / Settings / ActionLog) ---
             foreach (var tab in ViewModel.Tabs)
@@ -459,12 +400,8 @@ namespace LumiFiles
                 SplitterCol.Width = new GridLength(0);
                 RightPaneCol.Width = new GridLength(1, GridUnitType.Star);
 
-                // Sync left pane breadcrumb — 비활성 상태에서 탭 전환 시 갱신 안 된 경우 보정
-                if (ViewModel.Explorer?.PathSegments != null)
-                {
-                    LeftAddressBar.PathSegments = ViewModel.Explorer.PathSegments;
-                    LeftAddressBar.CurrentPath = ViewModel.Explorer.CurrentPath;
-                }
+                // Stage S-2: per-pane LeftAddressBar removed; MainAddressBar (single toolbar)
+                // already binds to ActiveExplorer so the breadcrumb stays in sync automatically.
 
                 // Initialize right pane based on Tab2 startup settings.
                 // behavior=0 default was Home; now Desktop (mirroring Tab1). All three
@@ -595,11 +532,9 @@ namespace LumiFiles
 
         private void SyncRightAddressBar()
         {
-            if (ViewModel.RightExplorer != null)
-            {
-                RightAddressBar.PathSegments = ViewModel.RightExplorer.PathSegments;
-                RightAddressBar.CurrentPath = ViewModel.RightExplorer.CurrentPath ?? string.Empty;
-            }
+            // Stage S-2: per-pane RightAddressBar removed. The single MainAddressBar
+            // binds to ActiveExplorer; ActivePane=Right means RightExplorer's path
+            // automatically appears there with no manual sync needed.
         }
 
         private void SubscribeRightExplorerForAddressBar()
@@ -1095,15 +1030,8 @@ namespace LumiFiles
                     PreviewToggleIcon.Foreground = isActive ? accentBrush : defaultBrush;
                 }
 
-                // Split view pane-specific buttons
-                if (ViewModel.IsSplitViewEnabled)
-                {
-                    bool leftActive = ViewModel.IsLeftPreviewEnabled;
-                    bool rightActive = ViewModel.IsRightPreviewEnabled;
-
-                    LeftPreviewIcon.Foreground = leftActive ? accentBrush : defaultBrush;
-                    RightPreviewIcon.Foreground = rightActive ? accentBrush : defaultBrush;
-                }
+                // Stage S-2: per-pane preview button removed. Single LumiToolbar's
+                // PreviewToggleIcon already covers the active pane via ActiveExplorer.
             }
             catch (Exception ex)
             {
@@ -1123,12 +1051,8 @@ namespace LumiFiles
 
                 ViewModeIcon.Glyph = glyph;
 
-                // Split view pane-specific buttons
-                if (ViewModel.IsSplitViewEnabled)
-                {
-                    LeftViewModeIcon.Glyph = GetViewModeGlyph(ViewModel.LeftViewMode);
-                    RightViewModeIcon.Glyph = GetViewModeGlyph(ViewModel.RightViewMode);
-                }
+                // Stage S-2: per-pane view-mode buttons removed. Single LumiToolbar's
+                // ViewModeIcon already reflects ActiveExplorer.CurrentViewMode.
 
                 // LumiToolbar View segmented bar — sync active highlight with current mode.
                 UpdateLumiViewModeButtons(mode);

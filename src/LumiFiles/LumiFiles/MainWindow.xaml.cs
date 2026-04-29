@@ -2232,9 +2232,8 @@ namespace LumiFiles
         /// </summary>
         private void DismissAddressBarEditMode()
         {
+            // Stage S-2: only MainAddressBar remains; per-pane bars removed.
             MainAddressBar.ExitEditMode();
-            LeftAddressBar.ExitEditMode();
-            RightAddressBar.ExitEditMode();
         }
 
         /// <summary>
@@ -2257,20 +2256,9 @@ namespace LumiFiles
                 return;
             }
 
-            // Main (single-pane) 주소창
+            // Stage S-2: only MainAddressBar — it follows ActiveExplorer automatically.
             MainAddressBar.PathSegments = explorer.PathSegments;
             MainAddressBar.CurrentPath = explorer.CurrentPath ?? string.Empty;
-
-            // Left pane 주소창 (split mode)
-            LeftAddressBar.PathSegments = explorer.PathSegments;
-            LeftAddressBar.CurrentPath = explorer.CurrentPath ?? string.Empty;
-
-            // Right pane 주소창 (split mode) — RightExplorer가 있으면 동기화
-            if (ViewModel.RightExplorer != null)
-            {
-                RightAddressBar.PathSegments = ViewModel.RightExplorer.PathSegments;
-                RightAddressBar.CurrentPath = ViewModel.RightExplorer.CurrentPath ?? string.Empty;
-            }
         }
 
         /// <summary>
@@ -2296,8 +2284,6 @@ namespace LumiFiles
             };
             MainAddressBar.PathSegments = segments;
             MainAddressBar.CurrentPath = path;
-            LeftAddressBar.PathSegments = segments;
-            LeftAddressBar.CurrentPath = path;
 
             // XAML 아이콘 가시성
             HomeAddressIcon.Visibility = mode == ViewMode.Home ? Visibility.Visible : Visibility.Collapsed;
@@ -2324,8 +2310,6 @@ namespace LumiFiles
                     }
                     MainAddressBar.PathSegments = explorer.PathSegments;
                     MainAddressBar.CurrentPath = explorer.CurrentPath ?? string.Empty;
-                    LeftAddressBar.PathSegments = explorer.PathSegments;
-                    LeftAddressBar.CurrentPath = explorer.CurrentPath ?? string.Empty;
 
                     // Downloads folder: deferred auto-grouping after children load
                     ScheduleDownloadsGroupingIfNeeded(explorer);

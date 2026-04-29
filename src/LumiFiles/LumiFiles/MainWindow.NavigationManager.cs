@@ -810,7 +810,7 @@ namespace LumiFiles
         /// </summary>
         private void OnAddressBarBreadcrumbClicked(object sender, Controls.BreadcrumbClickEventArgs e)
         {
-            Helpers.DebugLogger.Log($"[OnAddressBarBreadcrumbClicked] path='{e.FullPath}', sender={sender.GetType().Name}, isRight={ReferenceEquals(sender, RightAddressBar)}, isLeft={ReferenceEquals(sender, LeftAddressBar)}");
+            Helpers.DebugLogger.Log($"[OnAddressBarBreadcrumbClicked] path='{e.FullPath}', sender={sender.GetType().Name}");
 
             if (e.FullPath == "::home::")
             {
@@ -1049,30 +1049,16 @@ namespace LumiFiles
         }
 
         /// <summary>
-        /// 현재 활성 AddressBarControl 반환 (단일/좌/우).
+        /// 현재 활성 AddressBarControl 반환 — Stage S-2 후로는 MainAddressBar 단일.
         /// </summary>
-        private Controls.AddressBarControl GetActiveAddressBar()
-        {
-            if (!ViewModel.IsSplitViewEnabled) return MainAddressBar;
-            return ViewModel.ActivePane == ActivePane.Left ? LeftAddressBar : RightAddressBar;
-        }
+        private Controls.AddressBarControl GetActiveAddressBar() => MainAddressBar;
 
         /// <summary>
         /// AddressBarControl sender에서 해당하는 ExplorerViewModel 결정.
+        /// Stage S-2: per-pane address bars removed; MainAddressBar always uses ActiveExplorer.
         /// </summary>
         private ExplorerViewModel ResolveExplorerForAddressBar(object sender)
         {
-            if (ReferenceEquals(sender, RightAddressBar))
-            {
-                ViewModel.ActivePane = ActivePane.Right;
-                return ViewModel.RightExplorer;
-            }
-            if (ReferenceEquals(sender, LeftAddressBar))
-            {
-                ViewModel.ActivePane = ActivePane.Left;
-                return ViewModel.LeftExplorer;
-            }
-            // MainAddressBar → use ActiveExplorer
             return ViewModel.ActiveExplorer;
         }
 
