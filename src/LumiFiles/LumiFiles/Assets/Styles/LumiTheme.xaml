@@ -208,16 +208,17 @@
          or by stacking multiple Rectangles with brushes at the lowest z.
          Base linear here; radials applied as separate brushes below.
          ============================================================ -->
-    <!-- Wallpaper base — Stage S-3.12 tuning:
-         With the outer wallpaper gap collapsed (S-3.11), this brush only
-         shows in the area covered by WallpaperRoot but not by WindowFrame
-         (effectively zero now), and through any uncovered transparency in
-         WindowFrame. Lowered to 0x66 (~40%) so it doesn't dominate when
-         WindowFrame's alpha bleeds — the dark Tahoe wash becomes a tint,
-         not the floor — and DesktopAcrylic vibrancy registers more. -->
+    <!-- Wallpaper base — Stage S-3.13:
+         Fully transparent. The outer 6px gap (LumiWindowPadding) now
+         shows the raw DesktopAcrylic backdrop directly, giving the
+         floating-card look the user asked for ("4 corners with the same
+         rounded treatment as the sidebar"). The dark Tahoe wash that
+         used to live here as a tint is gone — when/if the vivid radial
+         layers are re-enabled this brush can be brought back as the
+         base color underneath them. -->
     <LinearGradientBrush x:Key="LumiWallpaperBaseBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Offset="0" Color="#661A0E30" />
-        <GradientStop Offset="1" Color="#660C0818" />
+        <GradientStop Offset="0" Color="#001A0E30" />
+        <GradientStop Offset="1" Color="#000C0818" />
     </LinearGradientBrush>
 
     <!-- Radial gradient brushes — five layers stacked over base.
@@ -270,15 +271,13 @@
     <!-- ============================================================
          11. GEOMETRY
          ============================================================ -->
-    <!-- Stage S-3.12: was 24px to match the v3_glass mockup's outer Tahoe
-         frame, but with no outer wallpaper gap (S-3.11 collapsed it) the
-         24px curve sat INSIDE Win11's ~8px system chrome corner — the
-         16x16 patches of empty wallpaper at each corner read as four
-         dark squares around an inner rounded card. Setting to 0 lets the
-         system chrome corner be the only rounded shape, so the 4-corner
-         mismatch goes away. (If/when the vivid radial wallpaper is
-         restored and the outer gap comes back, raise this back to 24.) -->
-    <CornerRadius x:Key="LumiWindowCornerRadius">0</CornerRadius>
+    <!-- Stage S-3.13: matches LumiSidebarCornerRadius (18) so the inner
+         WindowFrame card has the same round-shoulder language as the
+         floating sidebar inside it. The outer 6px gap (S-3.13 padding)
+         exposes raw DesktopAcrylic, so the 4-corner area outside the
+         WindowFrame's 18px curve fills with vibrancy rather than a dark
+         patch — the chrome corner mismatch disappears visually. -->
+    <CornerRadius x:Key="LumiWindowCornerRadius">18</CornerRadius>
     <CornerRadius x:Key="LumiSidebarCornerRadius">18</CornerRadius>
     <CornerRadius x:Key="LumiPanelInnerCornerRadius">16</CornerRadius>
     <CornerRadius x:Key="LumiPillCornerRadius">999</CornerRadius>
@@ -313,12 +312,14 @@
     <CornerRadius x:Key="LumiPreviewCardCornerRadius">11</CornerRadius>
 
     <!-- Window padding: 6 left/top/bottom, 0 right (content flush right) -->
-    <!-- Stage S-3.11: collapsed the 6px outer gap to 0. The gap was meant to
-         expose a vivid Tahoe radial wallpaper through glass, but with the
-         radials disabled the gap just read as a dark band of unexplained
-         padding around the window. Until/unless the radials are brought
-         back, the WindowFrame should fill edge-to-edge (no visible gap). -->
-    <Thickness x:Key="LumiWindowPadding">0</Thickness>
+    <!-- Stage S-3.13: 6px gap on all four sides (was 0 in S-3.11, before
+         that 6,6,0,6). With WallpaperBase made fully transparent below,
+         this gap exposes the raw DesktopAcrylic backdrop — vibrant glass
+         around the rounded WindowFrame card. The WindowFrame's 18px
+         corner radius (matching the sidebar) sits cleanly inside this
+         backdrop margin, so the 4 window corners now read as a properly
+         rounded floating card rather than a dark square. -->
+    <Thickness x:Key="LumiWindowPadding">6</Thickness>
     <!-- Sidebar margin: floating 4 sides (mockup glass card) -->
     <Thickness x:Key="LumiSidebarMargin">6,6,6,6</Thickness>
 
