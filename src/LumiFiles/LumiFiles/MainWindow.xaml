@@ -1310,46 +1310,18 @@
                       Background="Transparent"
                       AllowDrop="True" DragOver="OnPaneDragOver" Drop="OnPaneDrop" DragLeave="OnPaneDragLeave">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/> <!-- FilterBar -->
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>    <!-- Content -->
                         <RowDefinition Height="Auto"/> <!-- Git Status Bar -->
                         <RowDefinition Height="Auto"/> <!-- Path Bar (split mode only) -->
                     </Grid.RowDefinitions>
 
                     <!-- Drop overlay (cross-pane visual feedback) -->
-                    <Border x:Name="LeftDropOverlay" Grid.RowSpan="5" Opacity="0" IsHitTestVisible="False"
+                    <Border x:Name="LeftDropOverlay" Grid.RowSpan="4" Opacity="0" IsHitTestVisible="False"
                             Background="{ThemeResource SpanAccentBrush}" CornerRadius="4" Margin="4"/>
 
-                    <!-- Left Pane Path Header (split mode, hidden in Home).
-                         Span jank tones (SpanBgLayer2Brush, SpanBorderSubtle, top accent line)
-                         removed in favor of LumiFiles transparent floating treatment. The
-                         segmented pill controls inside (Phase 3) carry their own visible fills,
-                         and the active pane indicator now lives on the toolbar tone + folder
-                         label (A+D combo) rather than a 1px accent strip. -->
-                    <!-- Stage S-2: per-pane mini toolbar removed. Single LumiToolbar at the
-                         top of the window now handles all actions, binding to ActiveExplorer
-                         so it follows whichever pane has focus. The 32px header keeps just
-                         the active-pane indicator (PillBrush bg + amber folder label) so
-                         users can tell at a glance which pane is the action target. -->
-                    <Grid Grid.Row="0" x:Name="LeftPathHeader" Height="32"
-                          Visibility="{x:Bind IsLeftPaneHeaderVisible(ViewModel.IsSplitViewEnabled, ViewModel.CurrentViewMode), Mode=OneWay}"
-                          Background="{x:Bind LeftPaneActiveBrush(ViewModel.ActivePane), Mode=OneWay}"
-                          Tapped="OnLeftPaneHeaderTapped">
-                        <StackPanel Orientation="Horizontal" Spacing="7"
-                                    VerticalAlignment="Center" Padding="14,0,14,0">
-                            <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource LumiAmberBrush}"/>
-                            <TextBlock Text="{x:Bind ViewModel.Explorer.CurrentFolderName, Mode=OneWay}"
-                                       FontFamily="{StaticResource LumiFontFamily}"
-                                       FontSize="{StaticResource LumiFontSizeBase}"
-                                       FontWeight="Medium"
-                                       Foreground="{x:Bind LeftPaneActiveLabelBrush(ViewModel.ActivePane), Mode=OneWay}"
-                                       TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                    </Grid>
-
                     <!-- Filter Bar (Ctrl+Shift+F) -->
-                    <Grid x:Name="LeftFilterBar" Grid.Row="1" Height="32" Visibility="Collapsed"
+                    <Grid x:Name="LeftFilterBar" Grid.Row="0" Height="32" Visibility="Collapsed"
                           Background="{ThemeResource SpanBgLayer2Brush}"
                           BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="0,0,0,1">
                         <Grid.ColumnDefinitions>
@@ -1379,7 +1351,7 @@
                     </Grid>
 
                     <!-- Left Pane Content -->
-                    <Grid Grid.Row="2">
+                    <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition x:Name="LeftPreviewSplitterCol" Width="0"/>
@@ -1665,7 +1637,7 @@
                     </Grid>
 
                     <!-- Git Status Bar (Left) -->
-                    <Border x:Name="LeftGitStatusBar" Grid.Row="3" Grid.ColumnSpan="3"
+                    <Border x:Name="LeftGitStatusBar" Grid.Row="2" Grid.ColumnSpan="3"
                             Height="28" Background="{ThemeResource SpanBgLayer2Brush}"
                             BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="0,1,0,0"
                             Visibility="Collapsed">
@@ -1722,12 +1694,29 @@
                          pane container itself so the breadcrumb aligns with this pane's actual
                          column area (vs the legacy outer status bar which spanned the whole
                          content+sidebar grid). Single mode keeps the outer LumiPathBar. -->
-                    <appcontrols:LumiPanePathBar Grid.Row="4" Grid.ColumnSpan="3"
+                    <appcontrols:LumiPanePathBar Grid.Row="3" Grid.ColumnSpan="3"
                                                  x:Name="LeftPanePathBar"
                                                  Mode="Left"
                                                  Height="{StaticResource LumiPathBarHeight}"
                                                  PathSegments="{x:Bind ViewModel.Explorer.PathSegments, Mode=OneWay}"
                                                  Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsSplitViewEnabled), Mode=OneWay}"/>
+
+                    <!-- Active-pane indicator — A+B miniaturized hybrid (Stage S-3).
+                         Replaces the old 32px LeftPathHeader. The header had been gone-empty
+                         after Stage S-2 consolidated all actions into the single LumiToolbar,
+                         so all that remained was a folder-name label that already lives on
+                         the toolbar's LumiAddressLabel. Now the only "where is focus" cue is
+                         this 1-2px amber outline:
+                           • B  — top 2px accent stripe across the pane
+                           • A  — 1px inner-edge stripe along the splitter side
+                         BorderThickness is static (no layout shift); only BorderBrush flips
+                         between LumiAmberBrush (active) and Transparent (inactive). Visible
+                         in split mode only — single mode has no second pane to disambiguate. -->
+                    <Border x:Name="LeftPaneAccent" Grid.RowSpan="4"
+                            BorderThickness="0,2,1,0"
+                            BorderBrush="{x:Bind LeftPaneActiveBrush(ViewModel.ActivePane), Mode=OneWay}"
+                            IsHitTestVisible="False"
+                            Visibility="{x:Bind IsSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}"/>
                 </Grid>
 
                 <!-- ===== RIGHT PANE ===== -->
@@ -1736,38 +1725,17 @@
                       AllowDrop="True" DragOver="OnPaneDragOver" Drop="OnPaneDrop" DragLeave="OnPaneDragLeave"
                       Visibility="{x:Bind IsSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>    <!-- Content -->
                         <RowDefinition Height="Auto"/> <!-- Git Status Bar -->
                         <RowDefinition Height="Auto"/> <!-- Path Bar (split mode only) -->
                     </Grid.RowDefinitions>
 
                     <!-- Drop overlay (cross-pane visual feedback) -->
-                    <Border x:Name="RightDropOverlay" Grid.RowSpan="4" Opacity="0" IsHitTestVisible="False"
+                    <Border x:Name="RightDropOverlay" Grid.RowSpan="3" Opacity="0" IsHitTestVisible="False"
                             Background="{ThemeResource SpanAccentBrush}" CornerRadius="4" Margin="4"/>
 
-                    <!-- Right Pane Path Header — same Stage S-2 simplification as LeftPathHeader.
-                         All nav / address / action / sort / view-mode / preview controls
-                         removed; only the active-pane indicator (PillBrush bg + amber folder
-                         label) remains. The single LumiToolbar at the top handles every
-                         action via ActiveExplorer binding. -->
-                    <Grid Grid.Row="0" x:Name="RightPathHeader" Height="32"
-                          Background="{x:Bind RightPaneActiveBrush(ViewModel.ActivePane), Mode=OneWay}"
-                          Tapped="OnRightPaneHeaderTapped">
-                        <StackPanel Orientation="Horizontal" Spacing="7"
-                                    VerticalAlignment="Center" Padding="14,0,14,0">
-                            <FontIcon Glyph="&#xE8B7;" FontSize="14" Foreground="{ThemeResource LumiAmberBrush}"/>
-                            <TextBlock Text="{x:Bind ViewModel.RightExplorer.CurrentFolderName, Mode=OneWay}"
-                                       FontFamily="{StaticResource LumiFontFamily}"
-                                       FontSize="{StaticResource LumiFontSizeBase}"
-                                       FontWeight="Medium"
-                                       Foreground="{x:Bind RightPaneActiveLabelBrush(ViewModel.ActivePane), Mode=OneWay}"
-                                       TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
-                    </Grid>
-
                     <!-- Right Pane Content -->
-                    <Grid Grid.Row="1">
+                    <Grid Grid.Row="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition x:Name="RightPreviewSplitterCol" Width="0"/>
@@ -2028,7 +1996,7 @@
                     </Grid>
 
                     <!-- Git Status Bar (Right) -->
-                    <Border x:Name="RightGitStatusBar" Grid.Row="2" Grid.ColumnSpan="3"
+                    <Border x:Name="RightGitStatusBar" Grid.Row="1" Grid.ColumnSpan="3"
                             Height="28" Background="{ThemeResource SpanBgLayer2Brush}"
                             BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="0,1,0,0"
                             Visibility="Collapsed">
@@ -2084,12 +2052,22 @@
                     <!-- Right Pane Path Bar — split mode only. Same pattern as LeftPanePathBar
                          but bound to RightExplorer so the breadcrumb tracks the right pane's
                          own current path. -->
-                    <appcontrols:LumiPanePathBar Grid.Row="3" Grid.ColumnSpan="3"
+                    <appcontrols:LumiPanePathBar Grid.Row="2" Grid.ColumnSpan="3"
                                                  x:Name="RightPanePathBar"
                                                  Mode="Right"
                                                  Height="{StaticResource LumiPathBarHeight}"
                                                  PathSegments="{x:Bind ViewModel.RightExplorer.PathSegments, Mode=OneWay}"
                                                  Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsSplitViewEnabled), Mode=OneWay}"/>
+
+                    <!-- Active-pane indicator — A+B miniaturized hybrid (Stage S-3).
+                         Mirror of LeftPaneAccent but with the inner-edge stripe on the LEFT
+                         side so it sits next to the splitter (the splitter-adjacent edge).
+                           • B  — top 2px accent stripe across the pane
+                           • A  — 1px inner-edge stripe along the splitter side -->
+                    <Border x:Name="RightPaneAccent" Grid.RowSpan="3"
+                            BorderThickness="1,2,0,0"
+                            BorderBrush="{x:Bind RightPaneActiveBrush(ViewModel.ActivePane), Mode=OneWay}"
+                            IsHitTestVisible="False"/>
                 </Grid>
 
                 <!-- Split divider (RightPaneContainer의 Margin="1,0,0,0"으로 생긴 1px 갭에 배치) -->

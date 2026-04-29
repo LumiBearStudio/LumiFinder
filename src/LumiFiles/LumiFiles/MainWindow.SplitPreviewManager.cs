@@ -100,12 +100,11 @@ namespace LumiFiles
         public Visibility IsSingleNonSettingsVisible(bool isSplitViewEnabled, Models.ViewMode mode)
             => (!isSplitViewEnabled && mode != Models.ViewMode.Settings && mode != Models.ViewMode.ActionLog) ? Visibility.Visible : Visibility.Collapsed;
 
-        /// <summary>
-        /// Left pane header (split mode): visible when split enabled (including Home mode for accent bar)
-        /// </summary>
-        public Visibility IsLeftPaneHeaderVisible(bool isSplitViewEnabled, Models.ViewMode mode)
-            => (isSplitViewEnabled && mode != Models.ViewMode.Settings && mode != Models.ViewMode.ActionLog)
-                ? Visibility.Visible : Visibility.Collapsed;
+        // Stage S-3: IsLeftPaneHeaderVisible / LeftPaneActiveLabelBrush /
+        // RightPaneActiveLabelBrush were used by the 32px LeftPathHeader /
+        // RightPathHeader Grids, which got removed once Stage S-2 stripped them
+        // of all controls and the single LumiToolbar absorbed every action. The
+        // header band itself was empty by then, so it's gone.
 
         public double LeftPaneAccentOpacity(ActivePane activePane)
             => activePane == ActivePane.Left ? 1.0 : 0.0;
@@ -113,39 +112,21 @@ namespace LumiFiles
         public double RightPaneAccentOpacity(ActivePane activePane)
             => activePane == ActivePane.Right ? 1.0 : 0.0;
 
-        // ── Active pane indicator (A combo) ─────────────────────────────────
-        // A: PathHeader Background carries the LumiPillBrush (subtle stadium fill, ~12% alpha)
-        // when the pane is active; otherwise transparent. The visible toolbar tone difference
-        // tells the user at a glance which pane has focus.
-        // The matching label-color piece (D combo) lands in the next phase together with
-        // the segmented 5-group mini toolbar layout.
-
+        // ── Active pane indicator (Stage S-3, A+B miniaturized hybrid) ──────
+        // Now drives LeftPaneAccent / RightPaneAccent Border.BorderBrush. Active
+        // pane = LumiAmberBrush, inactive = Transparent (BorderThickness stays
+        // static so there's no layout shift). The 32px PathHeader background-
+        // tint role this used to carry (stadium-shaped LumiPillBrush fill) is
+        // gone with the header itself.
         public Microsoft.UI.Xaml.Media.Brush LeftPaneActiveBrush(ActivePane activePane)
             => activePane == ActivePane.Left
-                ? (ThemeBrush("LumiPillBrush") ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent))
+                ? (ThemeBrush("LumiAmberBrush") ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent))
                 : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
 
         public Microsoft.UI.Xaml.Media.Brush RightPaneActiveBrush(ActivePane activePane)
             => activePane == ActivePane.Right
-                ? (ThemeBrush("LumiPillBrush") ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent))
+                ? (ThemeBrush("LumiAmberBrush") ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent))
                 : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
-
-        // D: folder-label brush — amber on the active pane, secondary tone otherwise.
-        // Mirrors the existing tab/Miller-column active-label pattern so the active
-        // pane reads with the same golden accent users see elsewhere.
-        public Microsoft.UI.Xaml.Media.Brush LeftPaneActiveLabelBrush(ActivePane activePane)
-            => activePane == ActivePane.Left
-                ? (ThemeBrush("LumiAmberBrush") ?? ThemeBrush("LumiTextPrimaryBrush")
-                   ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White))
-                : (ThemeBrush("LumiTextSecondaryBrush") ?? ThemeBrush("LumiTextPrimaryBrush")
-                   ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LightGray));
-
-        public Microsoft.UI.Xaml.Media.Brush RightPaneActiveLabelBrush(ActivePane activePane)
-            => activePane == ActivePane.Right
-                ? (ThemeBrush("LumiAmberBrush") ?? ThemeBrush("LumiTextPrimaryBrush")
-                   ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White))
-                : (ThemeBrush("LumiTextSecondaryBrush") ?? ThemeBrush("LumiTextPrimaryBrush")
-                   ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LightGray));
 
         #endregion
 
@@ -179,8 +160,10 @@ namespace LumiFiles
         /// 빈 공간 클릭 시에도 ActivePane을 전환하고 포커스를 이동.
         /// GotFocus는 포커스 가능 요소가 hit될 때만 발생하므로, 빈 공간에서는
         /// PointerPressed로 보완해야 함.
-        /// 패인 헤더 버튼 클릭 시에는 FocusActivePane()을 생략하여
-        /// Button의 pressed 상태를 보존 (Click 이벤트 정상 발생 보장).
+        /// Stage S-3: LeftPathHeader / RightPathHeader Grids are gone, so the
+        /// "skip FocusActivePane when click was inside the header buttons"
+        /// branch is dead code and removed. Right-click still skips focus move
+        /// since the ListView handles its own item selection.
         /// </summary>
         private void OnLeftPanePointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
         {
@@ -188,12 +171,8 @@ namespace LumiFiles
             if (ViewModel.ActivePane != ActivePane.Left)
             {
                 ViewModel.ActivePane = ActivePane.Left;
-                // 패인 헤더 내 버튼 클릭 시 FocusActivePane() 호출하면
-                // Low priority 디스패처가 Button 포커스를 빼앗아 Click 이벤트가 씹힘
-                // 우클릭(컨텍스트 메뉴) 시에도 FocusActivePane 생략 — 우클릭은
-                // ListView가 자체적으로 해당 항목을 선택하므로 추가 포커스 이동 불필요
                 var props = e.GetCurrentPoint(sender as UIElement).Properties;
-                if (!props.IsRightButtonPressed && !IsDescendant(LeftPathHeader, e.OriginalSource as DependencyObject))
+                if (!props.IsRightButtonPressed)
                     FocusActivePane();
             }
         }
@@ -205,20 +184,14 @@ namespace LumiFiles
             {
                 ViewModel.ActivePane = ActivePane.Right;
                 var props = e.GetCurrentPoint(sender as UIElement).Properties;
-                if (!props.IsRightButtonPressed && !IsDescendant(RightPathHeader, e.OriginalSource as DependencyObject))
+                if (!props.IsRightButtonPressed)
                     FocusActivePane();
             }
         }
 
-        private void OnLeftPaneHeaderTapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
-        {
-            ViewModel.ActivePane = ActivePane.Left;
-        }
-
-        private void OnRightPaneHeaderTapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
-        {
-            ViewModel.ActivePane = ActivePane.Right;
-        }
+        // Stage S-3: OnLeftPaneHeaderTapped / OnRightPaneHeaderTapped removed
+        // along with the LeftPathHeader / RightPathHeader Grids. The pane-level
+        // PointerPressed handlers above already cover header-area clicks.
 
         #endregion
 
