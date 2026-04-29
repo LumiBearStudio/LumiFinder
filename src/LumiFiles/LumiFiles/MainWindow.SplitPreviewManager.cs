@@ -112,22 +112,72 @@ namespace LumiFiles
         public double RightPaneAccentOpacity(ActivePane activePane)
             => activePane == ActivePane.Right ? 1.0 : 0.0;
 
-        // ── Active pane indicator brushes ───────────────────────────────────
-        // Stage S-3 used these for a 1-2px amber outline border around the
-        // active pane. The outline read as a "boxed-in" container that fought
-        // the glass tone of the rest of the UI, so Stage S-3.1 dropped the
-        // outline entirely. These helpers are kept (currently unused at the
-        // call site) for the upcoming selection-highlight / col-header tinting
-        // pass that will replace the outline with element-level color cues.
-        public Microsoft.UI.Xaml.Media.Brush LeftPaneActiveBrush(ActivePane activePane)
-            => activePane == ActivePane.Left
-                ? (ThemeBrush("LumiAmberBrush") ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent))
-                : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        // ── Active-pane indicator brushes (Stage S-3.2) ─────────────────────
+        // Replaces the boxed-in 1-2px amber outline (S-3 → S-3.1 dropped) with
+        // element-level color cues. Each pane container holds its own scoped
+        // SolidColorBrush instances under the keys LumiPaneColumnNameBrush and
+        // ListViewItemBackgroundSelected*. We mutate Color in place on the
+        // already-mounted brush instances so every consumer (Miller col-header
+        // text, every ListView/GridView item selection) repaints automatically
+        // — no Resources swap, no re-bind, no item rebuild.
+        //
+        // ACTIVE pane palette: amber (LumiAmberColor + LumiAmberDeepColor).
+        // INACTIVE pane palette: warm gray + slightly translucent white.
+        private static readonly Windows.UI.Color s_amber       = Microsoft.UI.ColorHelper.FromArgb(0xFF, 0xFF, 0xB8, 0x6B);
+        private static readonly Windows.UI.Color s_amberDeep   = Microsoft.UI.ColorHelper.FromArgb(0xFF, 0xD4, 0x80, 0x28);
+        private static readonly Windows.UI.Color s_inactiveWhite = Microsoft.UI.ColorHelper.FromArgb(0xFF, 0xFF, 0xFF, 0xFF);
+        private static readonly Windows.UI.Color s_inactiveGray  = Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x80, 0x80, 0x80);
 
-        public Microsoft.UI.Xaml.Media.Brush RightPaneActiveBrush(ActivePane activePane)
-            => activePane == ActivePane.Right
-                ? (ThemeBrush("LumiAmberBrush") ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent))
-                : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+        /// <summary>
+        /// Push the current ActivePane state into per-pane scoped brushes.
+        /// Cheap (4 brushes × 2 panes), safe to call any time.
+        /// </summary>
+        internal void RefreshActivePaneIndicators()
+        {
+            if (LeftPaneContainer == null || RightPaneContainer == null) return;
+
+            bool leftActive = ViewModel.ActivePane == ActivePane.Left;
+            bool rightActive = ViewModel.ActivePane == ActivePane.Right;
+
+            // In single-pane mode the right pane is hidden anyway; leave the
+            // left pane's amber tint intact so it matches single-pane styling.
+            if (!ViewModel.IsSplitViewEnabled)
+            {
+                leftActive = true;
+                rightActive = false;
+            }
+
+            ApplyPaneIndicatorBrushes(LeftPaneContainer, leftActive);
+            ApplyPaneIndicatorBrushes(RightPaneContainer, rightActive);
+        }
+
+        private static void ApplyPaneIndicatorBrushes(FrameworkElement pane, bool isActive)
+        {
+            // Active pane uses amber palette; inactive uses warm gray. Alpha
+            // values mirror WinUI's ListViewItemBackgroundSelected family so
+            // hover / pressed states stay visually distinct in both modes.
+            var nameColor = isActive
+                ? s_amber
+                : Microsoft.UI.ColorHelper.FromArgb(0x80, s_inactiveWhite.R, s_inactiveWhite.G, s_inactiveWhite.B);
+
+            var selBase = isActive ? s_amberDeep : s_inactiveGray;
+
+            SetBrush(pane, "LumiPaneColumnNameBrush", nameColor);
+            SetBrush(pane, "ListViewItemBackgroundSelected",
+                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0x55 : (byte)0x33, selBase.R, selBase.G, selBase.B));
+            SetBrush(pane, "ListViewItemBackgroundSelectedPointerOver",
+                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0x77 : (byte)0x55, selBase.R, selBase.G, selBase.B));
+            SetBrush(pane, "ListViewItemBackgroundSelectedPressed",
+                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0x99 : (byte)0x77, selBase.R, selBase.G, selBase.B));
+            SetBrush(pane, "ListViewItemBackgroundSelectedDisabled",
+                Microsoft.UI.ColorHelper.FromArgb(isActive ? (byte)0x33 : (byte)0x22, selBase.R, selBase.G, selBase.B));
+        }
+
+        private static void SetBrush(FrameworkElement pane, string key, Windows.UI.Color color)
+        {
+            if (pane.Resources.TryGetValue(key, out var v) && v is Microsoft.UI.Xaml.Media.SolidColorBrush brush)
+                brush.Color = color;
+        }
 
         #endregion
 
@@ -682,6 +732,11 @@ namespace LumiFiles
 
             // Initialize Git status bars
             InitializeGitStatusBars();
+
+            // Stage S-3.2: seed pane indicator brushes for the initial state
+            // (left active, right inactive). XAML literal colors already match
+            // this case, but call explicitly so future XAML edits don't drift.
+            RefreshActivePaneIndicators();
         }
 
         /// <summary>
@@ -936,6 +991,18 @@ namespace LumiFiles
                 UpdatePreviewButtonState();
                 ViewModel.UpdateStatusBar();
                 ViewModel.SyncNavigationHistoryState();
+                // Stage S-3.2: pane-scoped indicator brushes (col-header name +
+                // ListView selection) re-paint together so the active pane reads
+                // amber, the inactive pane reads warm gray.
+                RefreshActivePaneIndicators();
+            }
+            else if (e.PropertyName == nameof(MainViewModel.IsSplitViewEnabled))
+            {
+                // Single-pane mode forces the left pane's brushes back to amber
+                // (no second pane to differentiate against) — and re-coloring on
+                // entering split view is needed because RightPaneContainer's
+                // brushes were initialized as inactive at XAML load time.
+                RefreshActivePaneIndicators();
             }
             else if (e.PropertyName == nameof(MainViewModel.LeftViewMode)
                   || e.PropertyName == nameof(MainViewModel.RightViewMode))

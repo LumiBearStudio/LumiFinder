@@ -1309,6 +1309,23 @@
                 <Grid x:Name="LeftPaneContainer" AutomationProperties.AutomationId="LeftPane" Grid.Column="0" GotFocus="OnLeftPaneGotFocus"
                       Background="Transparent"
                       AllowDrop="True" DragOver="OnPaneDragOver" Drop="OnPaneDrop" DragLeave="OnPaneDragLeave">
+                    <!-- Stage S-3.2: per-pane scoped brushes for active-pane signaling.
+                         Code-behind (RefreshActivePaneIndicators) mutates these brushes'
+                         Color in place when ViewModel.ActivePane changes — same instance,
+                         so every ListView/GridView/col-header inside this pane re-paints
+                         automatically with no Resources swap or item re-bind needed.
+                         Initial colors here = "left pane is active" (amber). -->
+                    <Grid.Resources>
+                        <!-- Miller col-header active-column folder-name color -->
+                        <SolidColorBrush x:Key="LumiPaneColumnNameBrush" Color="#FFFFB86B"/>
+                        <!-- ListView/GridView selection background — overrides system defaults
+                             only within this pane's visual scope. Alpha matches WinUI's
+                             ListViewItemBackgroundSelected family (~33%/55%/77%). -->
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#55D48028"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#77D48028"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#99D48028"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedDisabled" Color="#33D48028"/>
+                    </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/> <!-- FilterBar -->
                         <RowDefinition Height="*"/>    <!-- Content -->
@@ -1405,12 +1422,13 @@
                                                                     <ColumnDefinition Width="Auto"/>
                                                                 </Grid.ColumnDefinitions>
                                                                 <Grid Grid.Column="0">
-                                                                    <!-- Active column: amber accent on the folder name -->
+                                                                    <!-- Active column: pane-scoped brush — amber on the active pane,
+                                                                         secondary tone on the inactive pane (Stage S-3.2). -->
                                                                     <TextBlock Text="{x:Bind Name, Mode=OneWay}"
                                                                                FontFamily="{StaticResource LumiFontFamily}"
                                                                                FontSize="{StaticResource LumiFontSizeColHeader}"
                                                                                FontWeight="Medium"
-                                                                               Foreground="{ThemeResource LumiAmberBrush}"
+                                                                               Foreground="{ThemeResource LumiPaneColumnNameBrush}"
                                                                                TextTrimming="CharacterEllipsis"
                                                                                Visibility="{x:Bind IsActiveColumnVisible, Mode=OneWay}"/>
                                                                     <!-- Inactive column: standard tertiary tone -->
@@ -1707,6 +1725,16 @@
                       Background="Transparent" Margin="1,0,0,0"
                       AllowDrop="True" DragOver="OnPaneDragOver" Drop="OnPaneDrop" DragLeave="OnPaneDragLeave"
                       Visibility="{x:Bind IsSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
+                    <!-- Stage S-3.2: same per-pane scoped brushes as LeftPaneContainer.
+                         Initial colors here = "right pane is inactive" (neutral gray).
+                         RefreshActivePaneIndicators flips Left vs Right colors live. -->
+                    <Grid.Resources>
+                        <SolidColorBrush x:Key="LumiPaneColumnNameBrush" Color="#80FFFFFF"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#33808080"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#55808080"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#77808080"/>
+                        <SolidColorBrush x:Key="ListViewItemBackgroundSelectedDisabled" Color="#22808080"/>
+                    </Grid.Resources>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>    <!-- Content -->
                         <RowDefinition Height="Auto"/> <!-- Git Status Bar -->
@@ -1765,12 +1793,13 @@
                                                                     <ColumnDefinition Width="Auto"/>
                                                                 </Grid.ColumnDefinitions>
                                                                 <Grid Grid.Column="0">
-                                                                    <!-- Active column: amber accent on the folder name -->
+                                                                    <!-- Active column: pane-scoped brush — amber on the active pane,
+                                                                         secondary tone on the inactive pane (Stage S-3.2). -->
                                                                     <TextBlock Text="{x:Bind Name, Mode=OneWay}"
                                                                                FontFamily="{StaticResource LumiFontFamily}"
                                                                                FontSize="{StaticResource LumiFontSizeColHeader}"
                                                                                FontWeight="Medium"
-                                                                               Foreground="{ThemeResource LumiAmberBrush}"
+                                                                               Foreground="{ThemeResource LumiPaneColumnNameBrush}"
                                                                                TextTrimming="CharacterEllipsis"
                                                                                Visibility="{x:Bind IsActiveColumnVisible, Mode=OneWay}"/>
                                                                     <!-- Inactive column: standard tertiary tone -->
