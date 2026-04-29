@@ -935,6 +935,10 @@ namespace LumiFiles
                     UnsubscribePreviewSelection(isLeft: true);
                     LeftPreviewPanel.UpdatePreview(null);
                 }
+                // Single toolbar's preview-toggle highlight follows the active pane's
+                // preview state — refresh when the active pane's flag flips.
+                if (!ViewModel.IsSplitViewEnabled || ViewModel.ActivePane == ActivePane.Left)
+                    UpdatePreviewButtonState();
             }
             else if (e.PropertyName == nameof(MainViewModel.IsRightPreviewEnabled))
             {
@@ -945,6 +949,28 @@ namespace LumiFiles
                     UnsubscribePreviewSelection(isLeft: false);
                     RightPreviewPanel.UpdatePreview(null);
                 }
+                if (ViewModel.IsSplitViewEnabled && ViewModel.ActivePane == ActivePane.Right)
+                    UpdatePreviewButtonState();
+            }
+            else if (e.PropertyName == nameof(MainViewModel.ActivePane))
+            {
+                // Stage S-2 sync — single LumiToolbar's view-mode segmented bar and
+                // preview-toggle color must follow the focused pane. Without this the
+                // toolbar stays frozen on whichever pane was active when the toolbar
+                // was last refreshed (typically the left pane).
+                UpdateViewModeIcon();
+                UpdatePreviewButtonState();
+                ViewModel.UpdateStatusBar();
+                ViewModel.SyncNavigationHistoryState();
+            }
+            else if (e.PropertyName == nameof(MainViewModel.LeftViewMode)
+                  || e.PropertyName == nameof(MainViewModel.RightViewMode))
+            {
+                // Pane-specific view mode changed (e.g. right pane switched from
+                // Miller to Details). Toolbar segment must reflect new mode whenever
+                // it belongs to the currently active pane.
+                UpdateViewModeIcon();
+                ViewModel.UpdateStatusBar();
             }
         }
 
@@ -1023,15 +1049,13 @@ namespace LumiFiles
                 var accentBrush = GetThemeBrush("SpanAccentBrush");
                 var defaultBrush = GetThemeBrush("SpanTextSecondaryBrush");
 
-                // 상단 미리보기 버튼 (비분할 모드용)
-                if (!ViewModel.IsSplitViewEnabled)
-                {
-                    bool isActive = ViewModel.IsLeftPreviewEnabled;
-                    PreviewToggleIcon.Foreground = isActive ? accentBrush : defaultBrush;
-                }
-
-                // Stage S-2: per-pane preview button removed. Single LumiToolbar's
-                // PreviewToggleIcon already covers the active pane via ActiveExplorer.
+                // Stage S-2: single LumiToolbar's PreviewToggleIcon covers both modes.
+                // In split view, follow the active pane's preview-enabled flag so the
+                // toolbar's amber-state matches whichever pane currently has focus.
+                bool isActive = (ViewModel.IsSplitViewEnabled && ViewModel.ActivePane == ActivePane.Right)
+                    ? ViewModel.IsRightPreviewEnabled
+                    : ViewModel.IsLeftPreviewEnabled;
+                PreviewToggleIcon.Foreground = isActive ? accentBrush : defaultBrush;
             }
             catch (Exception ex)
             {
@@ -1046,13 +1070,16 @@ namespace LumiFiles
         {
             try
             {
-                var mode = ViewModel.CurrentViewMode;
+                // Stage S-2: single LumiToolbar shared by both panes. In split view
+                // the toolbar must mirror the ACTIVE pane's view mode (RightViewMode
+                // when ActivePane=Right), otherwise focusing the right pane leaves
+                // the segmented bar stuck on the left pane's mode.
+                var mode = (ViewModel.IsSplitViewEnabled && ViewModel.ActivePane == ActivePane.Right)
+                    ? ViewModel.RightViewMode
+                    : ViewModel.CurrentViewMode;
                 string glyph = GetViewModeGlyph(mode);
 
                 ViewModeIcon.Glyph = glyph;
-
-                // Stage S-2: per-pane view-mode buttons removed. Single LumiToolbar's
-                // ViewModeIcon already reflects ActiveExplorer.CurrentViewMode.
 
                 // LumiToolbar View segmented bar — sync active highlight with current mode.
                 UpdateLumiViewModeButtons(mode);
