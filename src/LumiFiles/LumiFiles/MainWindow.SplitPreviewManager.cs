@@ -112,12 +112,13 @@ namespace LumiFiles
         public double RightPaneAccentOpacity(ActivePane activePane)
             => activePane == ActivePane.Right ? 1.0 : 0.0;
 
-        // ── Active pane indicator (Stage S-3, A+B miniaturized hybrid) ──────
-        // Now drives LeftPaneAccent / RightPaneAccent Border.BorderBrush. Active
-        // pane = LumiAmberBrush, inactive = Transparent (BorderThickness stays
-        // static so there's no layout shift). The 32px PathHeader background-
-        // tint role this used to carry (stadium-shaped LumiPillBrush fill) is
-        // gone with the header itself.
+        // ── Active pane indicator brushes ───────────────────────────────────
+        // Stage S-3 used these for a 1-2px amber outline border around the
+        // active pane. The outline read as a "boxed-in" container that fought
+        // the glass tone of the rest of the UI, so Stage S-3.1 dropped the
+        // outline entirely. These helpers are kept (currently unused at the
+        // call site) for the upcoming selection-highlight / col-header tinting
+        // pass that will replace the outline with element-level color cues.
         public Microsoft.UI.Xaml.Media.Brush LeftPaneActiveBrush(ActivePane activePane)
             => activePane == ActivePane.Left
                 ? (ThemeBrush("LumiAmberBrush") ?? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent))

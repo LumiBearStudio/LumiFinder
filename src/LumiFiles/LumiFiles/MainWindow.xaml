@@ -1700,23 +1700,6 @@
                                                  Height="{StaticResource LumiPathBarHeight}"
                                                  PathSegments="{x:Bind ViewModel.Explorer.PathSegments, Mode=OneWay}"
                                                  Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsSplitViewEnabled), Mode=OneWay}"/>
-
-                    <!-- Active-pane indicator — A+B miniaturized hybrid (Stage S-3).
-                         Replaces the old 32px LeftPathHeader. The header had been gone-empty
-                         after Stage S-2 consolidated all actions into the single LumiToolbar,
-                         so all that remained was a folder-name label that already lives on
-                         the toolbar's LumiAddressLabel. Now the only "where is focus" cue is
-                         this 1-2px amber outline:
-                           • B  — top 2px accent stripe across the pane
-                           • A  — 1px inner-edge stripe along the splitter side
-                         BorderThickness is static (no layout shift); only BorderBrush flips
-                         between LumiAmberBrush (active) and Transparent (inactive). Visible
-                         in split mode only — single mode has no second pane to disambiguate. -->
-                    <Border x:Name="LeftPaneAccent" Grid.RowSpan="4"
-                            BorderThickness="0,2,1,0"
-                            BorderBrush="{x:Bind LeftPaneActiveBrush(ViewModel.ActivePane), Mode=OneWay}"
-                            IsHitTestVisible="False"
-                            Visibility="{x:Bind IsSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}"/>
                 </Grid>
 
                 <!-- ===== RIGHT PANE ===== -->
@@ -2058,16 +2041,6 @@
                                                  Height="{StaticResource LumiPathBarHeight}"
                                                  PathSegments="{x:Bind ViewModel.RightExplorer.PathSegments, Mode=OneWay}"
                                                  Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsSplitViewEnabled), Mode=OneWay}"/>
-
-                    <!-- Active-pane indicator — A+B miniaturized hybrid (Stage S-3).
-                         Mirror of LeftPaneAccent but with the inner-edge stripe on the LEFT
-                         side so it sits next to the splitter (the splitter-adjacent edge).
-                           • B  — top 2px accent stripe across the pane
-                           • A  — 1px inner-edge stripe along the splitter side -->
-                    <Border x:Name="RightPaneAccent" Grid.RowSpan="3"
-                            BorderThickness="1,2,0,0"
-                            BorderBrush="{x:Bind RightPaneActiveBrush(ViewModel.ActivePane), Mode=OneWay}"
-                            IsHitTestVisible="False"/>
                 </Grid>
 
                 <!-- Split divider (RightPaneContainer의 Margin="1,0,0,0"으로 생긴 1px 갭에 배치) -->
