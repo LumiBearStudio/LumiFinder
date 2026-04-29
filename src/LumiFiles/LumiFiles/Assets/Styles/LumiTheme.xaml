@@ -53,16 +53,18 @@
          4. GLASS LAYERS
          (mockup HTML rgba alpha → #AARRGGBB)
          ============================================================ -->
-    <!-- Window frame: rgba(18,18,24,0.78) → rgba(12,12,16,0.88)
-         Stage S-3.10: brought back from 0.60/0.72 → 0.78/0.88. Content
-         text was getting lost against a colored desktop bleeding
-         straight through the frame. This level keeps the inner content
-         area readable while still letting a hint of vibrancy through
-         (Miller column items, Details list rows, etc. don't add their
-         own background, so the frame is the de-facto content backdrop). -->
+    <!-- Window frame: rgba(18,18,24,0.65) → rgba(12,12,16,0.78)
+         Stage S-3.12: with the outer wallpaper gap collapsed (S-3.11)
+         and corner radius zeroed (S-3.12 above), the WindowFrame is
+         now the entire visible window surface, so its alpha governs
+         how much DesktopAcrylic vibrancy reads through. S-3.10 was
+         0.78/0.88 (too opaque, user said 'transparency disappeared');
+         S-3.9 was 0.60/0.72 (too translucent, content text got lost).
+         0.65/0.78 splits the difference: glass is visible again,
+         dark/colored desktops still leave file names readable. -->
     <LinearGradientBrush x:Key="LumiWindowFrameBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#C7121218" />
-        <GradientStop Offset="1" Color="#E00C0C10" />
+        <GradientStop Offset="0" Color="#A6121218" />
+        <GradientStop Offset="1" Color="#C70C0C10" />
     </LinearGradientBrush>
 
     <!-- Sidebar (Layer 2, floating glass): rgba(30,28,40,0.55) → rgba(22,20,32,0.65)
@@ -206,17 +208,16 @@
          or by stacking multiple Rectangles with brushes at the lowest z.
          Base linear here; radials applied as separate brushes below.
          ============================================================ -->
-    <!-- Wallpaper base — Stage S-3.10 (Plan C tuning):
-         S-3.9's 0x55 (~33%) was too transparent; the user reported the
-         desktop bled through so strongly that the window read as a
-         colored band rather than a Tahoe-tinted glass surface, and the
-         24px rounded corner was visually lost in the bleed. Bumped to
-         0xB3 (~70%) — wallpaper still semi-translucent so DesktopAcrylic
-         vibrancy registers, but the dark-purple Tahoe wash is now the
-         dominant tone in the outer gap. -->
+    <!-- Wallpaper base — Stage S-3.12 tuning:
+         With the outer wallpaper gap collapsed (S-3.11), this brush only
+         shows in the area covered by WallpaperRoot but not by WindowFrame
+         (effectively zero now), and through any uncovered transparency in
+         WindowFrame. Lowered to 0x66 (~40%) so it doesn't dominate when
+         WindowFrame's alpha bleeds — the dark Tahoe wash becomes a tint,
+         not the floor — and DesktopAcrylic vibrancy registers more. -->
     <LinearGradientBrush x:Key="LumiWallpaperBaseBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Offset="0" Color="#B31A0E30" />
-        <GradientStop Offset="1" Color="#B30C0818" />
+        <GradientStop Offset="0" Color="#661A0E30" />
+        <GradientStop Offset="1" Color="#660C0818" />
     </LinearGradientBrush>
 
     <!-- Radial gradient brushes — five layers stacked over base.
@@ -269,7 +270,15 @@
     <!-- ============================================================
          11. GEOMETRY
          ============================================================ -->
-    <CornerRadius x:Key="LumiWindowCornerRadius">24</CornerRadius>
+    <!-- Stage S-3.12: was 24px to match the v3_glass mockup's outer Tahoe
+         frame, but with no outer wallpaper gap (S-3.11 collapsed it) the
+         24px curve sat INSIDE Win11's ~8px system chrome corner — the
+         16x16 patches of empty wallpaper at each corner read as four
+         dark squares around an inner rounded card. Setting to 0 lets the
+         system chrome corner be the only rounded shape, so the 4-corner
+         mismatch goes away. (If/when the vivid radial wallpaper is
+         restored and the outer gap comes back, raise this back to 24.) -->
+    <CornerRadius x:Key="LumiWindowCornerRadius">0</CornerRadius>
     <CornerRadius x:Key="LumiSidebarCornerRadius">18</CornerRadius>
     <CornerRadius x:Key="LumiPanelInnerCornerRadius">16</CornerRadius>
     <CornerRadius x:Key="LumiPillCornerRadius">999</CornerRadius>
