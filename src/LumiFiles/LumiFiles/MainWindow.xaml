@@ -1564,12 +1564,16 @@
                                                                     </local:FileSystemItemTemplateSelector>
                                                                 </ListView.ItemTemplateSelector>
                                                             </ListView>
-                                                            <!-- Loading indicator — visible while folder contents load -->
-                                                            <ProgressRing IsActive="{x:Bind IsLoading, Mode=OneWay}"
+                                                            <!-- Loading indicator — visible while folder contents load.
+                                                                 Grid.Row=1 anchors all overlay states (loading / empty /
+                                                                 error) to the ListView row, NOT the col-header row, so
+                                                                 the placeholder centers in the actual content area. -->
+                                                            <ProgressRing Grid.Row="1" IsActive="{x:Bind IsLoading, Mode=OneWay}"
                                                                           Width="20" Height="20"
                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             <!-- Empty folder message -->
-                                                            <StackPanel Visibility="{x:Bind viewmodels:FileSystemViewModel.ShowIfTrue(IsEmpty), Mode=OneWay}"
+                                                            <StackPanel Grid.Row="1"
+                                                                        Visibility="{x:Bind viewmodels:FileSystemViewModel.ShowIfTrue(IsEmpty), Mode=OneWay}"
                                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                         Spacing="4" Opacity="0.5">
                                                                 <FontIcon Glyph="&#xE8B7;" FontSize="24"
@@ -1580,7 +1584,8 @@
                                                                            HorizontalAlignment="Center"/>
                                                             </StackPanel>
                                                             <!-- Error state -->
-                                                            <StackPanel Visibility="{x:Bind viewmodels:FileSystemViewModel.ShowIfTrue(HasError), Mode=OneWay}"
+                                                            <StackPanel Grid.Row="1"
+                                                                        Visibility="{x:Bind viewmodels:FileSystemViewModel.ShowIfTrue(HasError), Mode=OneWay}"
                                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                         Spacing="8" Opacity="0.7">
                                                                 <FontIcon Glyph="{x:Bind ErrorIcon, Mode=OneWay}" FontSize="28"
@@ -1936,12 +1941,16 @@
                                                                     </local:FileSystemItemTemplateSelector>
                                                                 </ListView.ItemTemplateSelector>
                                                             </ListView>
-                                                            <!-- Loading indicator — visible while folder contents load -->
-                                                            <ProgressRing IsActive="{x:Bind IsLoading, Mode=OneWay}"
+                                                            <!-- Loading indicator — visible while folder contents load.
+                                                                 Grid.Row=1 anchors all overlay states (loading / empty /
+                                                                 error) to the ListView row, NOT the col-header row, so
+                                                                 the placeholder centers in the actual content area. -->
+                                                            <ProgressRing Grid.Row="1" IsActive="{x:Bind IsLoading, Mode=OneWay}"
                                                                           Width="20" Height="20"
                                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             <!-- Empty folder message -->
-                                                            <StackPanel Visibility="{x:Bind viewmodels:FileSystemViewModel.ShowIfTrue(IsEmpty), Mode=OneWay}"
+                                                            <StackPanel Grid.Row="1"
+                                                                        Visibility="{x:Bind viewmodels:FileSystemViewModel.ShowIfTrue(IsEmpty), Mode=OneWay}"
                                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                         Spacing="4" Opacity="0.5">
                                                                 <FontIcon Glyph="&#xE8B7;" FontSize="24"
@@ -1952,7 +1961,8 @@
                                                                            HorizontalAlignment="Center"/>
                                                             </StackPanel>
                                                             <!-- Error state -->
-                                                            <StackPanel Visibility="{x:Bind viewmodels:FileSystemViewModel.ShowIfTrue(HasError), Mode=OneWay}"
+                                                            <StackPanel Grid.Row="1"
+                                                                        Visibility="{x:Bind viewmodels:FileSystemViewModel.ShowIfTrue(HasError), Mode=OneWay}"
                                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                         Spacing="8" Opacity="0.7">
                                                                 <FontIcon Glyph="{x:Bind ErrorIcon, Mode=OneWay}" FontSize="28"
@@ -2079,9 +2089,14 @@
                                                  Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsSplitViewEnabled), Mode=OneWay}"/>
                 </Grid>
 
-                <!-- Split divider (RightPaneContainer의 Margin="1,0,0,0"으로 생긴 1px 갭에 배치) -->
+                <!-- Split divider (RightPaneContainer의 Margin="1,0,0,0"으로 생긴 1px 갭에 배치).
+                     Stage S-3.6: switched from SpanAccentDimBrush (amber 70%) to
+                     LumiDividerBrush (white 6%) so the gap reads as a neutral
+                     hairline rather than a yellow stripe between panes. The
+                     active-pane signal already lives on selection / col-header
+                     / path-bar tints — the divider doesn't need to carry it too. -->
                 <Border Grid.Column="2" Width="1" HorizontalAlignment="Left" IsHitTestVisible="False"
-                        Background="{ThemeResource SpanAccentDimBrush}"
+                        Background="{ThemeResource LumiDividerBrush}"
                         Visibility="{x:Bind IsSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}"/>
             </Grid>
 
