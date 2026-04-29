@@ -53,16 +53,24 @@
          4. GLASS LAYERS
          (mockup HTML rgba alpha → #AARRGGBB)
          ============================================================ -->
-    <!-- Window frame: rgba(18,18,24,0.88) → rgba(12,12,16,0.94) -->
+    <!-- Window frame: rgba(18,18,24,0.75) → rgba(12,12,16,0.85)
+         Stage S-3.8 (Plan C): alpha lowered from 0.88/0.94 so the
+         DesktopAcrylic backdrop bleeds through and the window reads as
+         glass rather than near-opaque dark. Still high enough that
+         text contrast inside content panels remains acceptable. -->
     <LinearGradientBrush x:Key="LumiWindowFrameBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#E0121218" />
-        <GradientStop Offset="1" Color="#F00C0C10" />
+        <GradientStop Offset="0" Color="#BF121218" />
+        <GradientStop Offset="1" Color="#D90C0C10" />
     </LinearGradientBrush>
 
-    <!-- Sidebar (Layer 2, floating glass): rgba(30,28,40,0.72) → rgba(22,20,32,0.78) -->
+    <!-- Sidebar (Layer 2, floating glass): rgba(30,28,40,0.55) → rgba(22,20,32,0.65)
+         Lowered from 0.72/0.78 in Stage S-3.8 so the sidebar reads as
+         a translucent floating panel over the desktop, matching the
+         macOS Finder sidebar vibrancy. Still keeps enough fill to
+         distinguish from main content. -->
     <LinearGradientBrush x:Key="LumiSidebarBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#B81E1C28" />
-        <GradientStop Offset="1" Color="#C7161420" />
+        <GradientStop Offset="0" Color="#8C1E1C28" />
+        <GradientStop Offset="1" Color="#A6161420" />
     </LinearGradientBrush>
 
     <!-- Content overlay: rgba(0,0,0,0.12) -->

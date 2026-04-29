@@ -18,6 +18,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml.Hosting;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Services.Store;
 
@@ -431,10 +432,29 @@ namespace LumiFiles
             // File Shelf initialization
             InitializeShelf();
 
-            // Tahoe Liquid Glass — disable Mica/Acrylic so our custom wallpaper
-            // (5 radial gradients + base linear) is the only visible backdrop.
-            // The 24px rounded WindowFrame Border sits on top of the wallpaper.
-            SystemBackdrop = null;
+            // Tahoe Liquid Glass + Win11 vibrancy hybrid (Stage S-3.8, Plan C).
+            // Earlier this was forced to null so the custom 5-radial wallpaper
+            // could be the only backdrop, but with the radials disabled the
+            // window read as flat dark — no glass at all. Re-enable the system
+            // backdrop so the desktop bleeds through the translucent
+            // WindowFrame / sidebar / path-bar layers (the macOS-Finder
+            // vibrancy effect the user is going for). DesktopAcrylic gives the
+            // strongest "see the desktop" feel; if the host doesn't support it
+            // (older Win10) fall back to Mica, then to no backdrop.
+            try
+            {
+                if (DesktopAcrylicController.IsSupported())
+                    SystemBackdrop = new DesktopAcrylicBackdrop();
+                else if (MicaController.IsSupported())
+                    SystemBackdrop = new MicaBackdrop();
+                else
+                    SystemBackdrop = null;
+            }
+            catch (System.Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[MainWindow] SystemBackdrop init failed: {ex.Message}");
+                SystemBackdrop = null;
+            }
 
             // ====================================================================
             // Stage 4 — LumiSidebar navigation dispatch (placeholder bindings).
