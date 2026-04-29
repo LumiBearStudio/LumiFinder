@@ -3,7 +3,6 @@ using LumiFiles.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.ObjectModel;
-using Microsoft.UI.Dispatching;
 
 namespace LumiFiles.Controls
 {
@@ -65,41 +64,6 @@ namespace LumiFiles.Controls
                 PaneMode.Right => vm.RightExplorer,
                 _ => vm.Explorer
             };
-        }
-
-        // ── Overflow handling (Stage S-3.4) ─────────────────────────────────
-        // Ported from AddressBarControl. When the breadcrumb content is wider
-        // than the scroller, auto-scroll to the right edge so the leaf segment
-        // (current folder) stays visible, and show OverflowIndicator on the
-        // left so the cut-off is explicit.
-
-        private void OnScrollerSizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            if (sender is ScrollViewer sv)
-            {
-                sv.ChangeView(sv.ScrollableWidth, null, null, true);
-                DispatcherQueue.GetForCurrentThread()?.TryEnqueue(() => UpdateOverflow(sv));
-            }
-        }
-
-        private void OnContentSizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            var sv = SegmentsScroller;
-            sv.ChangeView(sv.ScrollableWidth, null, null, true);
-            DispatcherQueue.GetForCurrentThread()?.TryEnqueue(() => UpdateOverflow(sv));
-        }
-
-        private void OnScrollerViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
-        {
-            if (sender is ScrollViewer sv)
-                UpdateOverflow(sv);
-        }
-
-        private void UpdateOverflow(ScrollViewer sv)
-        {
-            OverflowIndicator.Visibility = sv.HorizontalOffset > 0
-                ? Visibility.Visible
-                : Visibility.Collapsed;
         }
     }
 }
