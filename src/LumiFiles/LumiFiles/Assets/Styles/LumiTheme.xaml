@@ -304,7 +304,12 @@
     <CornerRadius x:Key="LumiPreviewCardCornerRadius">11</CornerRadius>
 
     <!-- Window padding: 6 left/top/bottom, 0 right (content flush right) -->
-    <Thickness x:Key="LumiWindowPadding">6,6,0,6</Thickness>
+    <!-- Stage S-3.11: collapsed the 6px outer gap to 0. The gap was meant to
+         expose a vivid Tahoe radial wallpaper through glass, but with the
+         radials disabled the gap just read as a dark band of unexplained
+         padding around the window. Until/unless the radials are brought
+         back, the WindowFrame should fill edge-to-edge (no visible gap). -->
+    <Thickness x:Key="LumiWindowPadding">0</Thickness>
     <!-- Sidebar margin: floating 4 sides (mockup glass card) -->
     <Thickness x:Key="LumiSidebarMargin">6,6,6,6</Thickness>
 
