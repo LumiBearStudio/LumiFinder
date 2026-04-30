@@ -2602,5 +2602,36 @@
         </Border>
     </Grid>
         </Border>
+
+        <!-- ============================================================
+             Stage S-3.31: Manual edge-resize zones.
+             8 invisible Borders at the WallpaperRoot level (siblings of
+             WindowFrame, rendered AFTER it = on top in z-order so pointer
+             input hits them first). They cover only the very window edges
+             so all inner UI stays interactive. Resize is implemented in
+             MainWindow.Resize.cs via mouse delta tracking + AppWindow.
+             MoveAndResize — no OS-level WS_THICKFRAME needed, so the
+             SetWindowRgn rounded corners survive untouched.
+
+             - 4 sides (Top/Bottom/Left/Right): 4px thick, inset 12px from
+               corners so the corner targets get priority.
+             - 4 corners: 12x12 squares for comfortable diagonal resize.
+             ============================================================ -->
+        <appcontrols:ResizeHandle Tag="Top"         Height="4"             Margin="12,0,12,0" VerticalAlignment="Top"    HorizontalAlignment="Stretch" Background="Transparent"
+                PointerEntered="OnResizePointerEntered" PointerPressed="OnResizePointerPressed" PointerMoved="OnResizePointerMoved" PointerReleased="OnResizePointerReleased" PointerCaptureLost="OnResizePointerCaptureLost"/>
+        <appcontrols:ResizeHandle Tag="Bottom"      Height="4"             Margin="12,0,12,0" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Background="Transparent"
+                PointerEntered="OnResizePointerEntered" PointerPressed="OnResizePointerPressed" PointerMoved="OnResizePointerMoved" PointerReleased="OnResizePointerReleased" PointerCaptureLost="OnResizePointerCaptureLost"/>
+        <appcontrols:ResizeHandle Tag="Left"        Width="4"              Margin="0,12,0,12" VerticalAlignment="Stretch" HorizontalAlignment="Left"  Background="Transparent"
+                PointerEntered="OnResizePointerEntered" PointerPressed="OnResizePointerPressed" PointerMoved="OnResizePointerMoved" PointerReleased="OnResizePointerReleased" PointerCaptureLost="OnResizePointerCaptureLost"/>
+        <appcontrols:ResizeHandle Tag="Right"       Width="4"              Margin="0,12,0,12" VerticalAlignment="Stretch" HorizontalAlignment="Right" Background="Transparent"
+                PointerEntered="OnResizePointerEntered" PointerPressed="OnResizePointerPressed" PointerMoved="OnResizePointerMoved" PointerReleased="OnResizePointerReleased" PointerCaptureLost="OnResizePointerCaptureLost"/>
+        <appcontrols:ResizeHandle Tag="TopLeft"     Width="12" Height="12"                    VerticalAlignment="Top"    HorizontalAlignment="Left"  Background="Transparent"
+                PointerEntered="OnResizePointerEntered" PointerPressed="OnResizePointerPressed" PointerMoved="OnResizePointerMoved" PointerReleased="OnResizePointerReleased" PointerCaptureLost="OnResizePointerCaptureLost"/>
+        <appcontrols:ResizeHandle Tag="TopRight"    Width="12" Height="12"                    VerticalAlignment="Top"    HorizontalAlignment="Right" Background="Transparent"
+                PointerEntered="OnResizePointerEntered" PointerPressed="OnResizePointerPressed" PointerMoved="OnResizePointerMoved" PointerReleased="OnResizePointerReleased" PointerCaptureLost="OnResizePointerCaptureLost"/>
+        <appcontrols:ResizeHandle Tag="BottomLeft"  Width="12" Height="12"                    VerticalAlignment="Bottom" HorizontalAlignment="Left"  Background="Transparent"
+                PointerEntered="OnResizePointerEntered" PointerPressed="OnResizePointerPressed" PointerMoved="OnResizePointerMoved" PointerReleased="OnResizePointerReleased" PointerCaptureLost="OnResizePointerCaptureLost"/>
+        <appcontrols:ResizeHandle Tag="BottomRight" Width="12" Height="12"                    VerticalAlignment="Bottom" HorizontalAlignment="Right" Background="Transparent"
+                PointerEntered="OnResizePointerEntered" PointerPressed="OnResizePointerPressed" PointerMoved="OnResizePointerMoved" PointerReleased="OnResizePointerReleased" PointerCaptureLost="OnResizePointerCaptureLost"/>
     </Grid>
 </Window>
