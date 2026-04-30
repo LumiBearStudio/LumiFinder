@@ -7073,10 +7073,18 @@ namespace LumiFiles
                 uint dpi = Helpers.NativeMethods.GetDpiForWindow(hwnd);
                 double scale = dpi > 0 ? dpi / 96.0 : 1.0;
 
-                // Match the visible LumiWindowCornerRadius (18) — radius is
-                // bumped 1px so the aliased OS region edge hides behind the
-                // anti-aliased XAML Border (DragShelf trick).
-                int radiusPx = (int)System.Math.Round(18 * scale);
+                // Stage S-3.26: OS region radius is intentionally +2 px LARGER
+                // than the XAML LumiWindowCornerRadius (18). SetWindowRgn uses
+                // GDI which gives a hard, pixel-aliased edge; XAML's
+                // CornerRadius is rendered by Direct2D which is anti-aliased.
+                // If the two radii match exactly, the OS aliased edge peeks
+                // out from behind the XAML curve and looks jagged. Pushing
+                // the OS radius outward by ~2px keeps the aliased edge
+                // strictly outside the XAML curve, so the only thing the
+                // user sees is the smooth Direct2D round of the WindowFrame
+                // Border. (DragShelf documents the same trick at radius+1;
+                // 18px curve at high DPI tolerates +2 with no visible gap.)
+                int radiusPx = (int)System.Math.Round(18 * scale) + 2;
 
                 // CreateRoundRectRgn coords are inclusive on top/left and
                 // exclusive on bottom/right; +1 prevents a 1px clip on the
