@@ -507,17 +507,23 @@ namespace LumiFiles
                     Helpers.NativeMethods.GWL_STYLE,
                     unchecked((int)style));
 
-                // Stage S-3.22: deliberately DO NOT call DwmSetWindowAttribute
-                // for the corner preference here. DragShelf's ShelfWindow.xaml.cs
-                // (the dock shelf, the one with CornerRadius="0,14,14,0") never
-                // sets DWMWA_WINDOW_CORNER_PREFERENCE — and that's exactly why
-                // its 14px corner reads at full size. As soon as we set
-                // DWMWCP_ROUND, Win11 starts clipping the window to its own
-                // ~8px corner mask, which then trims our 18px WindowFrame
-                // Border curve back to 8px. Skipping the call lets the
-                // self-drawn 18px round stay visible at its true size.
-                // (EphemeralShelfWindow uses ROUND because its own corner is
-                // also 8 — there's no clip mismatch in that case.)
+                // Stage S-3.23: explicitly DWMWCP_DONOTROUND. Earlier S-3.22
+                // dropped the corner-preference call entirely, mirroring
+                // DragShelf's ShelfWindow — but that only worked for
+                // ShelfWindow because IT also sets WS_EX_TOOLWINDOW, and
+                // TOOLWINDOW windows are exempt from Win11's default
+                // automatic ~8px corner clip. LumiFiles is a main window,
+                // not a tool window (it must show in taskbar / alt-tab),
+                // so just omitting the call leaves Win11's default ROUND
+                // behaviour active and the 18px WindowFrame still gets
+                // trimmed to ~8px. We have to ask DWM for DONOTROUND
+                // explicitly to suppress the default mask.
+                int pref = Helpers.NativeMethods.DWMWCP_DONOTROUND;
+                Helpers.NativeMethods.DwmSetWindowAttribute(
+                    hwnd,
+                    Helpers.NativeMethods.DWMWA_WINDOW_CORNER_PREFERENCE,
+                    ref pref,
+                    sizeof(int));
 
                 // Show the self-drawn caption buttons now that system chrome
                 // is gone (otherwise the user would have no way to close).
