@@ -326,11 +326,15 @@
          glass feel directly at the edges. -->
     <Thickness x:Key="LumiWindowPadding">0</Thickness>
     <!-- Sidebar margin: floating 4 sides (mockup glass card) -->
-    <!-- Stage S-3.18 (alternative B): 6 → 3. Halves the gutter between
-         WindowFrame and the inner sidebar/content cards so the outer
-         glass band reads thinner and the cards feel concentric with
-         the frame rather than islanded inside it. -->
-    <Thickness x:Key="LumiSidebarMargin">3</Thickness>
+    <!-- Stage S-3.27 (Finder-tone matching, Phase 1): 3 → 10.
+         macOS Finder lets the sidebar float well clear of the window
+         edge so DesktopAcrylic vibrancy reads as a glass band around
+         it. After borderless transition (S-3.21) we collapsed this to
+         3, but the result was a sidebar that looked stuck to the
+         window edge — no breathing room, no glass on the outer side.
+         10px gives the sidebar genuine "floating panel inside a glass
+         shell" presence and matches the Finder reference image. -->
+    <Thickness x:Key="LumiSidebarMargin">10</Thickness>
 
     <x:Double x:Key="LumiSidebarWidth">228</x:Double>
     <x:Double x:Key="LumiColumnWidth">260</x:Double>
