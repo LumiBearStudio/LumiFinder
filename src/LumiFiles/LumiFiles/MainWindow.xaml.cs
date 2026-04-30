@@ -507,13 +507,17 @@ namespace LumiFiles
                     Helpers.NativeMethods.GWL_STYLE,
                     unchecked((int)style));
 
-                // 4. Request rounded outer shape (Win11 only)
-                int pref = Helpers.NativeMethods.DWMWCP_ROUND;
-                Helpers.NativeMethods.DwmSetWindowAttribute(
-                    hwnd,
-                    Helpers.NativeMethods.DWMWA_WINDOW_CORNER_PREFERENCE,
-                    ref pref,
-                    sizeof(int));
+                // Stage S-3.22: deliberately DO NOT call DwmSetWindowAttribute
+                // for the corner preference here. DragShelf's ShelfWindow.xaml.cs
+                // (the dock shelf, the one with CornerRadius="0,14,14,0") never
+                // sets DWMWA_WINDOW_CORNER_PREFERENCE — and that's exactly why
+                // its 14px corner reads at full size. As soon as we set
+                // DWMWCP_ROUND, Win11 starts clipping the window to its own
+                // ~8px corner mask, which then trims our 18px WindowFrame
+                // Border curve back to 8px. Skipping the call lets the
+                // self-drawn 18px round stay visible at its true size.
+                // (EphemeralShelfWindow uses ROUND because its own corner is
+                // also 8 — there's no clip mismatch in that case.)
 
                 // Show the self-drawn caption buttons now that system chrome
                 // is gone (otherwise the user would have no way to close).
