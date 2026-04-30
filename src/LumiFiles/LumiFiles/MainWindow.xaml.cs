@@ -659,7 +659,8 @@ namespace LumiFiles
             ListView.ViewModel = ViewModel.Explorer;
             IconView.ViewModel = ViewModel.Explorer;
             HomeView.MainViewModel = ViewModel;
-            SettingsView.BackRequested += (s, e) => CloseCurrentSettingsTab();
+            // Stage S-3.32: SettingsView is gone (moved to SettingsWindow).
+            // The SettingsWindow itself wires its own BackRequested → Close().
             LogView.BackRequested += (s, e) => CloseCurrentActionLogTab();
 
             // AddressBarControl에 PathSegments/CurrentPath 바인딩
@@ -1426,6 +1427,12 @@ namespace LumiFiles
                 Helpers.DebugLogger.Log("[MainWindow.OnClosed] Starting cleanup...");
                 try { Sentry.SentrySdk.AddBreadcrumb($"Window closing: tearOff={_isTearOffWindow}, tabs={ViewModel?.Tabs?.Count ?? 0}, forceClose={_forceClose}", "window.close"); } catch { }
 
+                // Stage S-3.32: close any open SettingsWindow before tearing
+                // down. Without this the SettingsWindow can outlive its parent,
+                // leaving a stranded settings dialog with no main window
+                // behind it.
+                try { Services.SettingsWindowHost.CloseIfOpen(); } catch { }
+
                 // STEP 0: Block all queued DispatcherQueue callbacks and async continuations
                 _isClosed = true;
 
@@ -1715,8 +1722,11 @@ namespace LumiFiles
         //  Settings
         // =================================================================
 
-        // 커스텀 테마 목록 (Dark 기반 + 리소스 오버라이드)
-        internal static readonly HashSet<string> _customThemes = new() { "dracula", "tokyonight", "catppuccin", "gruvbox", "nord", "onedark", "monokai", "solarized-light" };
+        // 커스텀 테마 목록 — Stage S-3.32: 비활성화 (Light/Dark만 지원).
+        // HashSet은 호환성을 위해 유지하되 빈 상태. 레거시 settings.json에서
+        // "dracula" 등이 와도 _customThemes.Contains() == false 가 되어
+        // ApplyCustomThemeOverrides가 dict 제거 분기를 타고 기본 테마로 fallback.
+        internal static readonly HashSet<string> _customThemes = new();
 
 
 
@@ -2599,7 +2609,7 @@ namespace LumiFiles
             ListTabsHost.Visibility = mode == ViewMode.List ? Visibility.Visible : Visibility.Collapsed;
             IconTabsHost.Visibility = Helpers.ViewModeExtensions.IsIconMode(mode) ? Visibility.Visible : Visibility.Collapsed;
             HomeView.Visibility = mode == ViewMode.Home ? Visibility.Visible : Visibility.Collapsed;
-            SettingsView.Visibility = mode == ViewMode.Settings ? Visibility.Visible : Visibility.Collapsed;
+            // Stage S-3.32: SettingsView removed — Settings is now a separate window.
             LogView.Visibility = mode == ViewMode.ActionLog ? Visibility.Visible : Visibility.Collapsed;
             RecycleBinView.Visibility = mode == ViewMode.RecycleBin ? Visibility.Visible : Visibility.Collapsed;
             if (mode == ViewMode.RecycleBin)
@@ -2607,13 +2617,7 @@ namespace LumiFiles
                 SetSpecialModeAddressBar(ViewMode.RecycleBin);
                 _ = LoadRecycleBinViewAsync();
             }
-            if (mode == ViewMode.Settings)
-            {
-                SettingsView.RefreshSettings();
-                // Settings가 Visible이 된 직후 → 절대값 기반이므로 항상 정확
-                SettingsView.ApplyIconFontScale(Helpers.FontScaleService.Instance.Level);
-            }
-            else if (mode == ViewMode.ActionLog)
+            if (mode == ViewMode.ActionLog)
             {
                 LogView.Refresh();
             }
@@ -7122,33 +7126,33 @@ namespace LumiFiles
                 uint dpi = Helpers.NativeMethods.GetDpiForWindow(hwnd);
                 double scale = dpi > 0 ? dpi / 96.0 : 1.0;
 
-                // Stage S-3.26 → S-3.27: OS region radius is intentionally
-                // LARGER than the XAML LumiWindowCornerRadius (18). SetWindowRgn
-                // uses GDI which gives a hard, pixel-aliased edge; XAML's
-                // CornerRadius is rendered by Direct2D which is anti-aliased.
-                // If the two radii match exactly, the OS aliased edge peeks
-                // out from behind the XAML curve and looks jagged.
+                // Stage S-3.27 → S-3.32: OS region radius now MATCHES the XAML
+                // LumiWindowCornerRadius (18) exactly — pattern lifted from
+                // DragShelf ShelfWindow.UpdateXamlClip ("match XAML
+                // CornerRadius=12 so border covers aliased edge").
                 //
-                // Earlier this used +2 px headroom, but at 100% DPI the AA
-                // fade band of an 18px Direct2D curve spans 3-4 px and the
-                // GDI region was still nicking the outer fade pixels — the
-                // user reported visible staircase at the 4 corners. Bumped
-                // to +6 px so the OS clip is comfortably outside the entire
-                // AA gradient band; the result is that nothing OS-aliased is
-                // ever visible at the corners — only the smooth Direct2D
-                // round of the WindowFrame. The extra padding can't leak
-                // visible "extra" backdrop because the WindowFrame's
-                // background fully covers everything inside its 18px curve;
-                // beyond that curve, the alpha is 0 (Direct2D AA fade) and
-                // the OS region clips before the backdrop can bleed.
+                // Why we used to add +6 px and why we removed it:
+                //   With +6, the OS clip sat 6 px OUTSIDE the XAML curve.
+                //   Inside the XAML curve: WindowFrame body (acrylic + tint).
+                //   Between curve and OS clip: 6 px ring of acrylic ONLY
+                //   (no XAML fill). That ring made the actual visible window
+                //   edge sit 6 px OUTSIDE where the XAML 1 px BorderThickness
+                //   line was being drawn. Result: a hairline floating inside
+                //   the perceived window edge — looked weak / detached at
+                //   the rounded corners.
                 //
-                // Also expanded the bounding rect by +radiusPx on every side
-                // so the rounded-rect arc starts well outside the visible
-                // window. Combined with the +6 padding, no AA pixel of the
-                // XAML curve falls inside the GDI staircase region.
-                int xamlRadiusPx = (int)System.Math.Round(18 * scale);
-                int padPx = (int)System.Math.Round(6 * scale);
-                int radiusPx = xamlRadiusPx + padPx;
+                //   With +0 (current), the GDI clip is right where XAML's
+                //   1 px Border outline lives. The Direct2D anti-aliased
+                //   stroke is drawn on top of the GDI clip boundary. Since
+                //   XAML AA pixels at the curve are anywhere from 0%-100%
+                //   alpha and the GDI clip only either preserves or kills
+                //   each pixel, the visible curve = AA pixels that survive
+                //   the binary OS clip. The bright top of our gradient
+                //   BorderBrush (~22% white) makes that surviving edge
+                //   read as a clean, continuous hairline at the actual
+                //   window boundary — the corner finally looks "edged"
+                //   instead of "fuzzy".
+                int radiusPx = (int)System.Math.Round(18 * scale);
 
                 // CreateRoundRectRgn coords are inclusive on top/left and
                 // exclusive on bottom/right; +1 prevents a 1px clip on the

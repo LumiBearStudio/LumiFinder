@@ -25,102 +25,71 @@ namespace LumiFiles
         // =================================================================
 
         /// <summary>
-        /// 테마를 적용한다. Light/Dark/System/커스텀 테마를 처리하고,
-        /// 커스텀 테마인 경우 색상 오버라이드를 적용한다.
+        /// 테마를 적용한다. Light/Dark/System만 지원. 커스텀 테마(Dracula 등 8종)는
+        /// Stage S-3.32에서 제거됨 — 레거시 settings.json에 남아있는 값은
+        /// Default(system)로 fallback. 커스텀 액센트 색상 override는 별도 기능으로 유지.
         /// </summary>
         private void ApplyTheme(string theme)
         {
-            bool isCustom = _customThemes.Contains(theme);
-
             if (this.Content is FrameworkElement root)
             {
                 var targetTheme = theme switch
                 {
                     "light" => ElementTheme.Light,
-                    "dark" => ElementTheme.Dark,
-                    _ when isCustom && theme == "solarized-light" => ElementTheme.Light,
-                    _ when isCustom => ElementTheme.Dark, // 커스텀 테마는 Dark 기반
-                    _ => ElementTheme.Default
+                    "dark"  => ElementTheme.Dark,
+                    _       => ElementTheme.Default,  // system or any legacy custom-theme string
                 };
 
-                // ★ 중요: {ThemeResource} 바인딩 재평가는 **RequestedTheme 변경**이 트리거함.
-                //   dict 객체 교체만으로는 재평가 안 됨. 따라서 dict 작업은 반드시
-                //   "반대 테마 → dict 조작 → 대상 테마" 순서 안에 넣어야 함.
-                if (isCustom)
-                {
-                    bool isLightCustom = theme == "solarized-light";
-                    // 1) 반대 테마로 전환 (기존 리소스 해제 + 반대 테마로 재평가)
-                    root.RequestedTheme = isLightCustom ? ElementTheme.Dark : ElementTheme.Light;
-                    // 2) 커스텀 테마 팔레트 주입
-                    ApplyCustomThemeOverrides(root, theme);
-                    // 3) 사용자 커스텀 액센트 override (팔레트 액센트 위에 덮어씀)
-                    TryApplyCustomAccentOverride(root, theme);
-                    // 4) 대상 테마로 복귀 → 모든 {ThemeResource} 바인딩이 새 dict 값으로 재평가
-                    root.RequestedTheme = isLightCustom ? ElementTheme.Light : ElementTheme.Dark;
-                }
-                else
-                {
-                    // 비커스텀: 커스텀 팔레트 제거 + 커스텀 액센트(있으면) 주입
-                    ApplyCustomThemeOverrides(root, theme);
-                    TryApplyCustomAccentOverride(root, theme);
-                    // 반대 → 대상 토글로 {ThemeResource} 바인딩 강제 재평가
-                    root.RequestedTheme = targetTheme == ElementTheme.Light
-                        ? ElementTheme.Dark : ElementTheme.Light;
-                    root.RequestedTheme = targetTheme;
-                }
+                // 커스텀 팔레트가 root.Resources.ThemeDictionaries에 남아있을 수 있으니
+                // 매번 비워줌 (ApplyCustomThemeOverrides는 _customThemes에 없는 theme 인자에
+                // 대해 dict 제거 동작을 함).
+                ApplyCustomThemeOverrides(root, theme);
+                // 사용자 커스텀 액센트 override (Use Custom Accent 토글 ON 이면 활성)
+                TryApplyCustomAccentOverride(root, theme);
+
+                // ★ {ThemeResource} 바인딩 재평가는 RequestedTheme '변경'이 트리거.
+                //   반대 → 대상 토글로 강제 재평가.
+                root.RequestedTheme = targetTheme == ElementTheme.Light
+                    ? ElementTheme.Dark : ElementTheme.Light;
+                root.RequestedTheme = targetTheme;
             }
 
             // PathHighlight 캐시 무효화 (테마 색상 변경 반영)
             ViewModels.FileSystemViewModel.InvalidatePathHighlightCache();
 
             // 아이콘 색상 테마 보정 (라이트 테마에서 더 진한 색상 사용)
-            bool isLightForIcons = isCustom
-                ? theme == "solarized-light"
-                : theme == "light" || (theme == "system" && App.Current.RequestedTheme == ApplicationTheme.Light);
+            bool isLightForIcons = theme == "light" ||
+                (theme == "system" && App.Current.RequestedTheme == ApplicationTheme.Light);
             Services.IconService.Current?.UpdateTheme(isLightForIcons);
 
-            // 캡션 버튼 색상
+            // 캡션 버튼 색상 (라이트/다크 2분기)
             var titleBar = this.AppWindow.TitleBar;
-
-            if (isCustom)
+            bool isLight = theme == "light" ||
+                           (theme == "system" && App.Current.RequestedTheme == ApplicationTheme.Light);
+            if (isLight)
             {
-                var cap = GetCaptionColors(theme);
-                titleBar.ButtonForegroundColor = cap.fg;
-                titleBar.ButtonHoverForegroundColor = cap.hoverFg;
-                titleBar.ButtonHoverBackgroundColor = cap.hoverBg;
-                titleBar.ButtonPressedForegroundColor = cap.pressedFg;
-                titleBar.ButtonPressedBackgroundColor = cap.pressedBg;
-                titleBar.ButtonInactiveForegroundColor = cap.inactiveFg;
+                titleBar.ButtonForegroundColor = Windows.UI.Color.FromArgb(255, 26, 26, 26);
+                titleBar.ButtonHoverForegroundColor = Windows.UI.Color.FromArgb(255, 0, 0, 0);
+                titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(20, 0, 0, 0);
+                titleBar.ButtonPressedForegroundColor = Windows.UI.Color.FromArgb(255, 0, 0, 0);
+                titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(40, 0, 0, 0);
+                titleBar.ButtonInactiveForegroundColor = Windows.UI.Color.FromArgb(255, 140, 140, 140);
             }
             else
             {
-                bool isLight = theme == "light" ||
-                               (theme == "system" && App.Current.RequestedTheme == ApplicationTheme.Light);
-
-                if (isLight)
-                {
-                    titleBar.ButtonForegroundColor = Windows.UI.Color.FromArgb(255, 26, 26, 26);
-                    titleBar.ButtonHoverForegroundColor = Windows.UI.Color.FromArgb(255, 0, 0, 0);
-                    titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(20, 0, 0, 0);
-                    titleBar.ButtonPressedForegroundColor = Windows.UI.Color.FromArgb(255, 0, 0, 0);
-                    titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(40, 0, 0, 0);
-                    titleBar.ButtonInactiveForegroundColor = Windows.UI.Color.FromArgb(255, 140, 140, 140);
-                }
-                else
-                {
-                    titleBar.ButtonForegroundColor = Windows.UI.Color.FromArgb(255, 255, 255, 255);
-                    titleBar.ButtonHoverForegroundColor = Windows.UI.Color.FromArgb(255, 255, 255, 255);
-                    titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(15, 255, 255, 255);
-                    titleBar.ButtonPressedForegroundColor = Windows.UI.Color.FromArgb(255, 255, 255, 255);
-                    titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(20, 255, 255, 255);
-                    titleBar.ButtonInactiveForegroundColor = Windows.UI.Color.FromArgb(255, 120, 120, 120);
-                }
+                titleBar.ButtonForegroundColor = Windows.UI.Color.FromArgb(255, 255, 255, 255);
+                titleBar.ButtonHoverForegroundColor = Windows.UI.Color.FromArgb(255, 255, 255, 255);
+                titleBar.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(15, 255, 255, 255);
+                titleBar.ButtonPressedForegroundColor = Windows.UI.Color.FromArgb(255, 255, 255, 255);
+                titleBar.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(20, 255, 255, 255);
+                titleBar.ButtonInactiveForegroundColor = Windows.UI.Color.FromArgb(255, 120, 120, 120);
             }
             titleBar.ButtonBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
             titleBar.ButtonInactiveBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
 
-            // DWM 윈도우 보더 색상 → 테마 배경색에 맞춰 최대화 시 흰색 라인 방지
-            UpdateDwmBorderColor(theme, isCustom);
+            // DWM 윈도우 보더 색상 → 테마 배경색에 맞춰 최대화 시 흰색 라인 방지.
+            // (isCustom 매개변수는 더 이상 의미 없으니 항상 false 전달)
+            UpdateDwmBorderColor(theme, false);
 
             // 코드-비하인드에서 생성된 캐시 요소들 (인디케이터, 버튼 등) 테마 색상 갱신
             RefreshCachedAccentColors();
@@ -178,8 +147,9 @@ namespace LumiFiles
                 UpdatePreviewButtonState();
                 UpdateSplitViewButtonState();
 
-                // SettingsModeView 사이드바 선택 항목 배경 (코드-비하인드 직접 할당이라 수동 갱신 필요)
-                SettingsView?.RefreshSelectedNavItemAccent();
+                // Stage S-3.32: SettingsView removed from MainWindow. The
+                // separate SettingsWindow's nav-item accent will refresh via
+                // its own theme subscription path.
             }
             catch (Exception ex)
             {
@@ -1092,11 +1062,11 @@ namespace LumiFiles
             // Global UI (toolbar, tab bar, status bar) — 여전히 tree walker
             ApplyIconFontScaleToGlobalUI(newLevel);
 
-            // Settings page — Collapsed 상태에선 VisualTree 순회 불가하므로 Visible일 때만 적용
-            if (SettingsView.Visibility == Visibility.Visible)
-                SettingsView.ApplyIconFontScale(newLevel);
+            // Stage S-3.32: SettingsView removed (now a separate SettingsWindow).
+            // The standalone SettingsWindow's content gets icon-font scale via
+            // SettingChanged event subscription within SettingsModeView itself.
 
-            // Home page — 동일하게 Visible일 때만 적용
+            // Home page — Collapsed 상태에선 VisualTree 순회 불가하므로 Visible일 때만 적용
             if (HomeView.Visibility == Visibility.Visible)
                 HomeView.ApplyIconFontScale(newLevel);
 
@@ -1385,15 +1355,24 @@ namespace LumiFiles
         }
 
         /// <summary>
-        /// Settings 탭을 열거나 기존 탭으로 전환 (UI 연동 포함).
+        /// Stage S-3.32: Open the Settings window (single instance).
+        ///
+        /// Renamed semantics: this no longer opens a "tab" — it spawns a
+        /// separate borderless rounded SettingsWindow centered over the
+        /// current main window. The original ViewMode.Settings tab path is
+        /// dead code now; all callers (sidebar, command palette, keyboard
+        /// shortcut, etc.) flow through this single method, so changing
+        /// just the body retargets every entry point at once.
+        ///
+        /// We deliberately keep the method name OpenSettingsTab to avoid
+        /// touching the ~5 callers in KeyboardHandler / CommandPalette /
+        /// SettingsHandler in this commit. A follow-up rename pass can
+        /// rename to OpenSettingsWindow once the ViewMode.Settings cleanup
+        /// (Phase 4) is in.
         /// </summary>
         private void OpenSettingsTab()
         {
-            ViewModel.OpenOrSwitchToSettingsTab();
-            ResubscribeLeftExplorer();
-            UpdateViewModeVisibility();
-            // Tab count changed — update passthrough region
-            Helpers.DispatcherHelper.SafeEnqueue(DispatcherQueue, Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, UpdateTitleBarRegions);
+            Services.SettingsWindowHost.ShowOrFocus(this);
         }
 
         /// <summary>
@@ -1491,11 +1470,23 @@ namespace LumiFiles
         }
 
         /// <summary>
-        /// 설정 버튼 클릭 이벤트. 설정 탭을 열다.
+        /// 설정 버튼 클릭 이벤트.
+        /// Stage S-3.32: 별도의 SettingsWindow를 띄움 (single-instance).
+        /// 기존 OpenSettingsTab() 경로는 ViewMode.Settings 정리 후 제거됨.
         /// </summary>
         private void OnSettingsClick(object sender, RoutedEventArgs e)
         {
-            OpenSettingsTab();
+            Services.SettingsWindowHost.ShowOrFocus(this);
+        }
+
+        /// <summary>
+        /// LumiSidebar 하단 Settings 영역 클릭 핸들러.
+        /// 기존엔 핸들러가 없어서 클릭 무반응이었음. S-3.32에서 wire-up.
+        /// </summary>
+        private void OnLumiSidebarSettingsTapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            Services.SettingsWindowHost.ShowOrFocus(this);
+            e.Handled = true;
         }
 
         private void OnLogClick(object sender, RoutedEventArgs e)

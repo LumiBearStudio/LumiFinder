@@ -19,10 +19,13 @@ namespace LumiFiles.ViewModels
         /// </summary>
         public void SwitchViewMode(ViewMode mode)
         {
-            // Settings mode: 별도 탭으로 열기
+            // Stage S-3.32: ViewMode.Settings branch removed. Settings is now
+            // a separate window — callers should invoke
+            // SettingsWindowHost.ShowOrFocus(...) directly. If a stray call
+            // with ViewMode.Settings still arrives (e.g. legacy session restore),
+            // we silently no-op rather than create an obsolete settings tab.
             if (mode == ViewMode.Settings)
             {
-                OpenOrSwitchToSettingsTab();
                 return;
             }
 

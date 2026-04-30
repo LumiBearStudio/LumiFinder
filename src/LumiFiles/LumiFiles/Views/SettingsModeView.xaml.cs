@@ -166,19 +166,15 @@ public sealed partial class SettingsModeView : UserControl
             SystemTrayToggle.IsOn = _settings.MinimizeToTray;
             WindowPositionToggle.IsOn = _settings.RememberWindowPosition;
 
-            // Appearance
+            // Appearance — Stage S-3.32: only System/Light/Dark.
+            // Legacy custom-theme strings (dracula, tokyonight, catppuccin,
+            // gruvbox, solarized-light, nord, onedark, monokai) coming from
+            // an older settings.json fall through to "system" via the lack
+            // of a matching radio.
             var theme = _settings.Theme;
-            ThemeSystem.IsChecked = theme == "system";
-            ThemeLight.IsChecked = theme == "light";
-            ThemeDark.IsChecked = theme == "dark";
-            ThemeDracula.IsChecked = theme == "dracula";
-            ThemeTokyoNight.IsChecked = theme == "tokyonight";
-            ThemeCatppuccin.IsChecked = theme == "catppuccin";
-            ThemeGruvbox.IsChecked = theme == "gruvbox";
-            ThemeSolarizedLight.IsChecked = theme == "solarized-light";
-            ThemeNord.IsChecked = theme == "nord";
-            ThemeOneDark.IsChecked = theme == "onedark";
-            ThemeMonokai.IsChecked = theme == "monokai";
+            ThemeSystem.IsChecked = theme == "system" || (theme != "light" && theme != "dark");
+            ThemeLight.IsChecked  = theme == "light";
+            ThemeDark.IsChecked   = theme == "dark";
 
             // Custom accent override
             UseCustomAccentToggle.IsOn = _settings.UseCustomAccent;
@@ -356,17 +352,13 @@ public sealed partial class SettingsModeView : UserControl
         SystemTrayToggle.Toggled += (s, e) => { if (!_isLoading) _settings.MinimizeToTray = SystemTrayToggle.IsOn; };
         WindowPositionToggle.Toggled += (s, e) => { if (!_isLoading) _settings.RememberWindowPosition = WindowPositionToggle.IsOn; };
 
+        // Stage S-3.32: only System/Light/Dark wired up. Custom theme
+        // RadioButtons (Dracula, TokyoNight, Catppuccin, Gruvbox, Solarized,
+        // Nord, OneDark, Monokai) were removed from XAML; their handlers
+        // are gone with them.
         ThemeSystem.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "system"; };
-        ThemeLight.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "light"; };
-        ThemeDark.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "dark"; };
-        ThemeDracula.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "dracula"; };
-        ThemeTokyoNight.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "tokyonight"; };
-        ThemeCatppuccin.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "catppuccin"; };
-        ThemeGruvbox.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "gruvbox"; };
-        ThemeSolarizedLight.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "solarized-light"; };
-        ThemeNord.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "nord"; };
-        ThemeOneDark.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "onedark"; };
-        ThemeMonokai.Checked += (s, e) => { if (!_isLoading) _settings.Theme = "monokai"; };
+        ThemeLight.Checked  += (s, e) => { if (!_isLoading) _settings.Theme = "light";  };
+        ThemeDark.Checked   += (s, e) => { if (!_isLoading) _settings.Theme = "dark";   };
 
         Density0.Checked += (s, e) => { if (!_isLoading) _settings.Density = "0"; };
         Density1.Checked += (s, e) => { if (!_isLoading) _settings.Density = "1"; };
@@ -463,10 +455,10 @@ public sealed partial class SettingsModeView : UserControl
         DefaultFileManagerToggle.Toggled += OnDefaultFileManagerToggled;
 
         // Hand cursor on all clickable card items
+        // Stage S-3.32: removed 8 custom theme RadioButtons from this list
+        // (Dracula/TokyoNight/Catppuccin/Gruvbox/Solarized/Nord/OneDark/Monokai)
         foreach (var rb in new[] {
-            ThemeSystem, ThemeLight, ThemeDark, ThemeDracula,
-            ThemeTokyoNight, ThemeCatppuccin, ThemeGruvbox,
-            ThemeSolarizedLight, ThemeNord, ThemeOneDark, ThemeMonokai,
+            ThemeSystem, ThemeLight, ThemeDark,
             Tab1StartupHome, Tab1StartupRestore, Tab1StartupCustom,
             Tab2StartupHome, Tab2StartupRestore, Tab2StartupCustom,
             Density0, Density1, Density2, Density3, Density4, Density5,
@@ -702,14 +694,10 @@ public sealed partial class SettingsModeView : UserControl
             CustomAccentDesc.Text = _loc.Get("Settings_CustomAccentDesc");
             AccentOverrideBadgeText.Text = _loc.Get("Settings_AccentOverrideBadge");
             ResetAccentText.Text = _loc.Get("Settings_ResetAccent");
-            DraculaDescText.Text = _loc.Get("Theme_DraculaDesc");
-            TokyoNightDescText.Text = _loc.Get("Theme_TokyoNightDesc");
-            CatppuccinDescText.Text = _loc.Get("Theme_CatppuccinDesc");
-            GruvboxDescText.Text = _loc.Get("Theme_GruvboxDesc");
-            SolarizedLightDescText.Text = _loc.Get("Theme_SolarizedLightDesc");
-            NordDescText.Text = _loc.Get("Theme_NordDesc");
-            OneDarkDescText.Text = _loc.Get("Theme_OneDarkDesc");
-            MonokaiDescText.Text = _loc.Get("Theme_MonokaiDesc");
+            // Stage S-3.32: removed 8 custom theme description text fields
+            // (DraculaDescText, TokyoNightDescText, CatppuccinDescText,
+            // GruvboxDescText, SolarizedLightDescText, NordDescText,
+            // OneDarkDescText, MonokaiDescText) along with their RadioButtons.
 
             // Browsing
             BrowsingTitle.Text = _loc.Get("Settings_Browsing");

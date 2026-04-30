@@ -1251,37 +1251,8 @@ namespace LumiFiles.ViewModels
 
         #endregion
 
-        /// <summary>
-        /// Settings 탭을 열거나, 이미 열려있으면 해당 탭으로 전환.
-        /// Settings 탭은 Explorer가 null이며, 최대 1개만 허용.
-        /// </summary>
-        public void OpenOrSwitchToSettingsTab()
-        {
-            // 기존 Settings 탭 검색
-            for (int i = 0; i < Tabs.Count; i++)
-            {
-                if (Tabs[i].ViewMode == ViewMode.Settings)
-                {
-                    if (i != ActiveTabIndex)
-                        SwitchToTab(i);
-                    return;
-                }
-            }
-
-            // 새 Settings 탭 생성 (Explorer 없음)
-            var tab = new TabItem
-            {
-                Header = App.Current.Services.GetService<LocalizationService>()?.Get("Settings") ?? "Settings",
-                Path = "",
-                ViewMode = ViewMode.Settings,
-                IconSize = ViewMode.IconMedium,
-                IsActive = false,
-                Explorer = null
-            };
-            Tabs.Add(tab);
-            SwitchToTab(Tabs.Count - 1);
-            Helpers.DebugLogger.Log($"[MainViewModel] Settings tab opened (total: {Tabs.Count})");
-        }
+        // Stage S-3.32: OpenOrSwitchToSettingsTab removed. Settings is now a
+        // standalone SettingsWindow opened via Services.SettingsWindowHost.
 
         /// <summary>
         /// 작업 로그 탭을 열거나, 이미 열려있으면 해당 탭으로 전환.

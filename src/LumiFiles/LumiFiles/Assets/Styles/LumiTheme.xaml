@@ -128,8 +128,26 @@
         <GradientStop Offset="1.00" Color="#00FFFFFF" />
     </LinearGradientBrush>
 
-    <!-- Window outer hairline: rgba(255,255,255,0.08) -->
-    <SolidColorBrush x:Key="LumiWindowHairlineBrush" Color="#14FFFFFF" />
+    <!-- Window outer hairline.
+         Stage S-3.32: replaced flat SolidColorBrush with a top-lit
+         LinearGradientBrush (pattern ported from DragShelf
+         ShelfWindow.xaml). Solid 1 px BorderBrush at low alpha (0.08-0.25)
+         loses brightness at the rounded corners because Direct2D AA
+         distributes the stroke across 2-3 sub-pixels along the curve —
+         each sub-pixel ends up at ~40% of the source alpha, so the
+         corner reads ~60% fainter than the straight edges.
+         The vertical gradient sidesteps that by giving the TOP edge a
+         strong 22% highlight (still smooth at the corners because each
+         sub-pixel along the curve picks up the gradient's actual sample
+         value, not a divided-down version of a flat alpha) while
+         tapering to subtle near-black at the bottom for a "card floating
+         on glass" shadow hint. Net result: 1 px BorderThickness reads
+         continuous around the entire rounded outline. -->
+    <LinearGradientBrush x:Key="LumiWindowHairlineBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#38FFFFFF" Offset="0.00" />   <!-- top highlight  ~22% white -->
+        <GradientStop Color="#14FFFFFF" Offset="0.45" />   <!-- mid             ~8%  white -->
+        <GradientStop Color="#08000000" Offset="1.00" />   <!-- bottom shadow   ~3%  black -->
+    </LinearGradientBrush>
 
     <!-- ============================================================
          6. SELECTION / ACTIVE GRADIENTS
@@ -350,9 +368,12 @@
          it. After borderless transition (S-3.21) we collapsed this to
          3, but the result was a sidebar that looked stuck to the
          window edge — no breathing room, no glass on the outer side.
-         10px gives the sidebar genuine "floating panel inside a glass
-         shell" presence and matches the Finder reference image. -->
-    <Thickness x:Key="LumiSidebarMargin">10</Thickness>
+         Stage S-3.32: tightened from 10 → 5 per user request — the 10 px
+         gap was reading as "too much air" between the WindowFrame hairline
+         (added in S-3.32) and the sidebar card. 5 px keeps a visible
+         acrylic strip on all four sides without making the sidebar feel
+         lost inside the window. -->
+    <Thickness x:Key="LumiSidebarMargin">5</Thickness>
 
     <x:Double x:Key="LumiSidebarWidth">228</x:Double>
     <x:Double x:Key="LumiColumnWidth">260</x:Double>

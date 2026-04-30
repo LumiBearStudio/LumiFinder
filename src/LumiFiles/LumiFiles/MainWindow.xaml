@@ -32,7 +32,9 @@
                 CornerRadius="{StaticResource LumiWindowCornerRadius}"
                 Margin="{StaticResource LumiWindowPadding}"
                 Background="{ThemeResource LumiWindowFrameBrush}"
-                BorderThickness="0">
+                BorderBrush="{ThemeResource LumiWindowHairlineBrush}"
+                BorderThickness="1"
+                UseLayoutRounding="True">
     <Grid x:Name="RootGrid" Background="Transparent">
         <Grid.Resources>
             <!-- FileIconConverter removed: icons are now in ViewModels -->
@@ -376,9 +378,11 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Bottom: Settings -->
+                <!-- Bottom: Settings (Stage S-3.32: opens separate SettingsWindow) -->
                 <Border Grid.Row="2" Padding="8,6,8,8" BorderBrush="{ThemeResource LumiDividerSoftBrush}" BorderThickness="0,1,0,0">
-                    <Grid Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9">
+                    <Grid Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
+                          Background="Transparent"
+                          Tapped="OnLumiSidebarSettingsTapped">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="20"/>
                             <ColumnDefinition Width="*"/>
@@ -1743,9 +1747,9 @@
                             <views:HomeModeView x:Name="HomeView"
                                                 Visibility="Collapsed"/>
 
-                            <!-- Settings View (Left only) -->
-                            <views:SettingsModeView x:Name="SettingsView"
-                                                    Visibility="Collapsed"/>
+                            <!-- Stage S-3.32: SettingsView UserControl removed.
+                                 Settings now lives in a separate SettingsWindow
+                                 (Views/SettingsWindow.xaml). -->
 
                             <!-- Action Log View (Left only) -->
                             <views:LogModeView x:Name="LogView"
@@ -2577,8 +2581,12 @@
                                       Margin="40"/>
         </Grid>
 
-        <!-- Toast Notification Overlay -->
-        <Border x:Name="ToastOverlay" Grid.Row="2"
+        <!-- Toast Notification Overlay
+             Stage S-3.32: moved into the main content column (Grid.Column=1)
+             so it shows at the BOTTOM CENTER of the explorer area, not
+             trapped inside the 228 px sidebar column where it was before
+             (no Grid.Column meant default column 0 = sidebar). -->
+        <Border x:Name="ToastOverlay" Grid.Row="2" Grid.Column="1"
                 HorizontalAlignment="Center" VerticalAlignment="Bottom"
                 Margin="0,0,0,16" Padding="16,10"
                 Background="{ThemeResource SpanBgLayer1Brush}"

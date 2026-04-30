@@ -203,215 +203,261 @@
     </UserControl.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="{StaticResource LumiSidebarGridWidth}"/>  <!-- Lumi Sidebar (full height, mirrors MainWindow) -->
+            <ColumnDefinition Width="*"/>                                       <!-- Content -->
+        </Grid.ColumnDefinitions>
 
-        <!-- Header (주소창 영역과 동일 사이즈) -->
-        <Grid Grid.Row="0" Height="{StaticResource CommandBarHeight}"
-              Background="{ThemeResource SpanBgLayer1Brush}"
-              BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="0,0,0,1"
-              Padding="12,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <FontIcon Grid.Column="0" Glyph="&#xE713;" FontSize="14"
-                      Foreground="{ThemeResource SpanAccentBrush}"
-                      VerticalAlignment="Center"/>
-            <TextBlock x:Name="SettingsTitle" Grid.Column="1" Text="설정" FontSize="13" FontWeight="SemiBold"
-                       VerticalAlignment="Center" Margin="8,0,0,0"/>
-        </Grid>
+        <!-- ============================================================
+             LUMI SIDEBAR — mirrors MainWindow's LumiSidebar pattern:
+             floating glass card with 12 px round + 5 px margin, 1 px
+             LumiEdgeSideBrush hairline + glass streak rectangles. The
+             top section (LumiSidebarTopGridHeight = 36) hosts the amber
+             logo + "Settings" name and serves as the OS drag region.
+             ============================================================ -->
+        <Border Grid.Column="0"
+                Margin="{StaticResource LumiSidebarMargin}"
+                CornerRadius="{StaticResource LumiSidebarCornerRadius}"
+                Background="{ThemeResource LumiSidebarBrush}"
+                BorderBrush="{ThemeResource LumiEdgeSideBrush}"
+                BorderThickness="1"
+                UseLayoutRounding="True">
+            <Grid x:Name="SettingsSidebarGrid" SizeChanged="OnSettingsSidebarSizeChanged">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="{StaticResource LumiSidebarTopGridHeight}"/>  <!-- Logo + name (drag region) -->
+                    <RowDefinition Height="*"/>                                            <!-- Sections -->
+                    <RowDefinition Height="Auto"/>                                         <!-- LumiBear panel -->
+                </Grid.RowDefinitions>
 
-        <!-- 사이드바 + 콘텐츠 (탐색기 사이드바와 동일 구조) -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+                <!-- Top: amber logo + "Settings" name (mirrors MainWindow.LumiSidebar top) -->
+                <Grid x:Name="SettingsSidebarHeader" Grid.Row="0" Padding="16,0" ColumnSpacing="7">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Width="14" Height="14" CornerRadius="4"
+                            Background="{ThemeResource LumiCatAmberBrush}" VerticalAlignment="Center">
+                        <Border.Shadow>
+                            <ThemeShadow/>
+                        </Border.Shadow>
+                    </Border>
+                    <TextBlock x:Name="SettingsTitle" Grid.Column="1" Text="Settings"
+                               VerticalAlignment="Center"
+                               FontFamily="{StaticResource LumiFontFamily}"
+                               FontSize="{StaticResource LumiFontSizeSbName}"
+                               FontWeight="Medium"
+                               Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
+                </Grid>
 
-            <!-- 사이드바: 탐색기와 완전 동일 -->
-            <Border Grid.Column="0" Background="{ThemeResource SpanBgLayer1Brush}"
-                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="0,0,1,0">
-                <Grid x:Name="SettingsSidebarGrid" SizeChanged="OnSettingsSidebarSizeChanged">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Padding="0,4">
+                <ScrollViewer Grid.Row="1" Padding="8,4,8,10" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="2">
                         <!-- 그룹: 설정 -->
                         <TextBlock x:Name="NavGroupSettings" Text="설정"
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource SpanTextTertiaryBrush}" FontWeight="SemiBold"
-                                   Margin="16,4,16,4"/>
-                        <Grid x:Name="NavGeneral" Height="28" Padding="12,0" Tag="General"
+                                   FontFamily="{StaticResource LumiFontFamily}"
+                                   FontSize="{StaticResource LumiFontSizeSbHeader}"
+                                   FontWeight="Medium"
+                                   Foreground="{ThemeResource LumiTextSecondaryBrush}"
+                                   Margin="4,10,4,3"/>
+                        <Grid x:Name="NavGeneral" Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9" Tag="General"
                               Background="{ThemeResource SpanBgSelectedBrush}"
                               Tapped="OnNavItemTapped"
                               PointerEntered="OnNavItemPointerEntered" PointerExited="OnNavItemPointerExited"
                               helpers:CursorHelper.IsHandCursor="True">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="&#xE713;" FontSize="16"
-                                      Foreground="{ThemeResource SpanTextSecondaryBrush}"
-                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Grid.Column="1" Text="일반" FontSize="13"
+                            <FontIcon Grid.Column="0" Glyph="&#xE713;" FontSize="14"
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="일반"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
-                        <Grid x:Name="NavAppearance" Height="28" Padding="12,0" Tag="Appearance"
+                        <Grid x:Name="NavAppearance" Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9" Tag="Appearance"
                               Background="Transparent"
                               Tapped="OnNavItemTapped"
                               PointerEntered="OnNavItemPointerEntered" PointerExited="OnNavItemPointerExited"
                               helpers:CursorHelper.IsHandCursor="True">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="&#xE790;" FontSize="16"
-                                      Foreground="{ThemeResource SpanTextSecondaryBrush}"
-                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Grid.Column="1" Text="모양" FontSize="13"
+                            <FontIcon Grid.Column="0" Glyph="&#xE790;" FontSize="14"
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="모양"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
                         <!-- 그룹: 탐색기 -->
                         <TextBlock x:Name="NavGroupExplorer" Text="탐색기"
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource SpanTextTertiaryBrush}" FontWeight="SemiBold"
-                                   Margin="16,12,16,4"/>
-                        <Grid x:Name="NavBrowsing" Height="28" Padding="12,0" Tag="Browsing"
+                                   FontFamily="{StaticResource LumiFontFamily}"
+                                   FontSize="{StaticResource LumiFontSizeSbHeader}"
+                                   FontWeight="Medium"
+                                   Foreground="{ThemeResource LumiTextSecondaryBrush}"
+                                   Margin="4,10,4,3"/>
+                        <Grid x:Name="NavBrowsing" Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9" Tag="Browsing"
                               Background="Transparent"
                               Tapped="OnNavItemTapped"
                               PointerEntered="OnNavItemPointerEntered" PointerExited="OnNavItemPointerExited"
                               helpers:CursorHelper.IsHandCursor="True">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="&#xE8B0;" FontSize="16"
-                                      Foreground="{ThemeResource SpanTextSecondaryBrush}"
-                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Grid.Column="1" Text="탐색" FontSize="13"
+                            <FontIcon Grid.Column="0" Glyph="&#xE8B0;" FontSize="14"
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="탐색"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
-                        <Grid x:Name="NavSidebar" Height="28" Padding="12,0" Tag="Sidebar"
+                        <Grid x:Name="NavSidebar" Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9" Tag="Sidebar"
                               Background="Transparent"
                               Tapped="OnNavItemTapped"
                               PointerEntered="OnNavItemPointerEntered" PointerExited="OnNavItemPointerExited"
                               helpers:CursorHelper.IsHandCursor="True">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="&#xE700;" FontSize="16"
-                                      Foreground="{ThemeResource SpanTextSecondaryBrush}"
-                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock x:Name="NavSidebarText" Grid.Column="1" Text="사이드바" FontSize="13"
+                            <FontIcon Grid.Column="0" Glyph="&#xE700;" FontSize="14"
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock x:Name="NavSidebarText" Grid.Column="1" Text="사이드바"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
                         <!-- 그룹: 고급 -->
                         <TextBlock x:Name="NavGroupAdvanced" Text="고급"
-                                   Style="{StaticResource CaptionTextBlockStyle}"
-                                   Foreground="{ThemeResource SpanTextTertiaryBrush}" FontWeight="SemiBold"
-                                   Margin="16,12,16,4"/>
-                        <Grid x:Name="NavTools" Height="28" Padding="12,0" Tag="Tools"
+                                   FontFamily="{StaticResource LumiFontFamily}"
+                                   FontSize="{StaticResource LumiFontSizeSbHeader}"
+                                   FontWeight="Medium"
+                                   Foreground="{ThemeResource LumiTextSecondaryBrush}"
+                                   Margin="4,10,4,3"/>
+                        <Grid x:Name="NavTools" Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9" Tag="Tools"
                               Background="Transparent"
                               Tapped="OnNavItemTapped"
                               PointerEntered="OnNavItemPointerEntered" PointerExited="OnNavItemPointerExited"
                               helpers:CursorHelper.IsHandCursor="True">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="&#xE756;" FontSize="16"
-                                      Foreground="{ThemeResource SpanTextSecondaryBrush}"
-                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Grid.Column="1" Text="도구" FontSize="13"
+                            <FontIcon Grid.Column="0" Glyph="&#xE756;" FontSize="14"
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="도구"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
-                        <Grid x:Name="NavShortcuts" Height="28" Padding="12,0" Tag="Shortcuts"
+                        <Grid x:Name="NavShortcuts" Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9" Tag="Shortcuts"
                               Background="Transparent"
                               Tapped="OnNavItemTapped"
                               PointerEntered="OnNavItemPointerEntered" PointerExited="OnNavItemPointerExited"
                               helpers:CursorHelper.IsHandCursor="True">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="&#xEDA7;" FontSize="16"
-                                      Foreground="{ThemeResource SpanTextSecondaryBrush}"
-                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Grid.Column="1" Text="단축키" FontSize="13"
+                            <FontIcon Grid.Column="0" Glyph="&#xEDA7;" FontSize="14"
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="단축키"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
-                        <Grid x:Name="NavAdvanced" Height="28" Padding="12,0" Tag="Advanced"
+                        <Grid x:Name="NavAdvanced" Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9" Tag="Advanced"
                               Background="Transparent"
                               Tapped="OnNavItemTapped"
                               PointerEntered="OnNavItemPointerEntered" PointerExited="OnNavItemPointerExited"
                               helpers:CursorHelper.IsHandCursor="True">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="&#xE90F;" FontSize="16"
-                                      Foreground="{ThemeResource SpanTextSecondaryBrush}"
-                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Grid.Column="1" Text="고급" FontSize="13"
+                            <FontIcon Grid.Column="0" Glyph="&#xE90F;" FontSize="14"
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="고급"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
-                        <Rectangle Height="1" Fill="{ThemeResource SpanBorderSubtleBrush}" Margin="12,12"/>
-                        <Grid x:Name="NavAbout" Height="28" Padding="12,0" Tag="About"
+                        <Rectangle Height="1" Fill="{ThemeResource LumiDividerSoftBrush}" Margin="4,12,4,8"/>
+                        <Grid x:Name="NavAbout" Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9" Tag="About"
                               Background="Transparent"
                               Tapped="OnNavItemTapped"
                               PointerEntered="OnNavItemPointerEntered" PointerExited="OnNavItemPointerExited"
                               helpers:CursorHelper.IsHandCursor="True">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="&#xE946;" FontSize="16"
-                                      Foreground="{ThemeResource SpanTextSecondaryBrush}"
-                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Grid.Column="1" Text="정보" FontSize="13"
+                            <FontIcon Grid.Column="0" Glyph="&#xE946;" FontSize="14"
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="정보"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
-                        <Grid x:Name="NavSupport" Height="28" Padding="12,0" Tag="Support"
+                        <Grid x:Name="NavSupport" Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9" Tag="Support"
                               Background="Transparent"
                               Tapped="OnNavItemTapped"
                               PointerEntered="OnNavItemPointerEntered" PointerExited="OnNavItemPointerExited"
                               helpers:CursorHelper.IsHandCursor="True">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="&#xEB52;" FontSize="16"
+                            <FontIcon Grid.Column="0" Glyph="&#xEB52;" FontSize="14"
                                       Foreground="#FF69B4"
-                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock x:Name="NavSupportText" Grid.Column="1" Text="후원" FontSize="13"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock x:Name="NavSupportText" Grid.Column="1" Text="후원"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
-                        <Grid x:Name="NavOpenSource" Height="28" Padding="12,0" Tag="OpenSource"
+                        <Grid x:Name="NavOpenSource" Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9" Tag="OpenSource"
                               Background="Transparent"
                               Tapped="OnNavItemTapped"
                               PointerEntered="OnNavItemPointerEntered" PointerExited="OnNavItemPointerExited"
                               helpers:CursorHelper.IsHandCursor="True">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <FontIcon Grid.Column="0" Glyph="&#xE943;" FontSize="16"
-                                      Foreground="{ThemeResource SpanTextSecondaryBrush}"
-                                      VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Grid.Column="1" Text="오픈소스" FontSize="13"
+                            <FontIcon Grid.Column="0" Glyph="&#xE943;" FontSize="14"
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="오픈소스"
+                                       FontFamily="{StaticResource LumiFontFamily}"
+                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        VerticalAlignment="Center"/>
                         </Grid>
                     </StackPanel>
                 </ScrollViewer>
 
                 <!-- LumiBear 도트 애니메이션 (하단 고정) -->
-                <Grid x:Name="LumiBearPanel" Grid.Row="1" Width="130" Height="90" HorizontalAlignment="Center" Margin="0,4,0,8" Visibility="Collapsed">
+                <Grid x:Name="LumiBearPanel" Grid.Row="2" Width="130" Height="90" HorizontalAlignment="Center" Margin="0,4,0,8" Visibility="Collapsed">
                     <Grid.Resources>
                         <Storyboard x:Name="HeartAnimation" RepeatBehavior="Forever">
                             <DoubleAnimation Storyboard.TargetName="Heart1Transform" Storyboard.TargetProperty="Y"
@@ -452,11 +498,32 @@
                         <FontIcon.RenderTransform><TranslateTransform x:Name="Heart3Transform"/></FontIcon.RenderTransform>
                     </FontIcon>
                 </Grid>
+
+                <!-- ============================================================
+                     SIDEBAR GLASS EDGES — same Finder-style polished glass
+                     highlights as MainWindow.LumiSidebar (top + bottom 1 px
+                     gradient streaks). RowSpan=3 covers all sidebar rows;
+                     IsHitTestVisible=False so they never block clicks.
+                     ============================================================ -->
+                <Rectangle Grid.Row="0" Grid.RowSpan="3"
+                           VerticalAlignment="Top"
+                           Height="1"
+                           Margin="20,0,20,0"
+                           Fill="{ThemeResource LumiSidebarTopStreakBrush}"
+                           UseLayoutRounding="True"
+                           IsHitTestVisible="False"/>
+                <Rectangle Grid.Row="0" Grid.RowSpan="3"
+                           VerticalAlignment="Bottom"
+                           Height="1"
+                           Margin="20,0,20,0"
+                           Fill="{ThemeResource LumiSidebarBottomStreakBrush}"
+                           UseLayoutRounding="True"
+                           IsHitTestVisible="False"/>
                 </Grid>
             </Border>
 
-            <!-- 콘텐츠 영역 -->
-            <Grid Grid.Column="1">
+            <!-- 콘텐츠 영역 (top padding 36 reserved for SettingsWindow caption overlay) -->
+            <Grid Grid.Column="1" Margin="0,36,0,0">
                     <!-- ===== General Section ===== -->
                     <ScrollViewer x:Name="GeneralSection" AutomationProperties.AutomationId="SettingsScrollViewer" Visibility="Visible">
                         <StackPanel Padding="20" Spacing="0">
@@ -2382,6 +2449,5 @@
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
-            </Grid>
         </Grid>
 </UserControl>
