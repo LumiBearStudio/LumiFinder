@@ -110,6 +110,24 @@
     <SolidColorBrush x:Key="LumiEdgeBottomBrush" Color="#0AFFFFFF" />
     <SolidColorBrush x:Key="LumiEdgeSideBrush" Color="#0FFFFFFF" />
 
+    <!-- Sidebar glass streak (Finder-style): horizontal gradient that fades to
+         transparent on both ends, creating a subtle "polished glass" highlight.
+         Mirrors the .sidebar::before / ::after gradient streaks in the v3 mockup
+         (12px inset each side). Uses solid stops at 30%/70% with rgba alpha
+         encoded in the leading byte. -->
+    <LinearGradientBrush x:Key="LumiSidebarTopStreakBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Offset="0.00" Color="#00FFFFFF" />
+        <GradientStop Offset="0.30" Color="#38FFFFFF" />
+        <GradientStop Offset="0.70" Color="#38FFFFFF" />
+        <GradientStop Offset="1.00" Color="#00FFFFFF" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="LumiSidebarBottomStreakBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Offset="0.00" Color="#00FFFFFF" />
+        <GradientStop Offset="0.30" Color="#0FFFFFFF" />
+        <GradientStop Offset="0.70" Color="#0FFFFFFF" />
+        <GradientStop Offset="1.00" Color="#00FFFFFF" />
+    </LinearGradientBrush>
+
     <!-- Window outer hairline: rgba(255,255,255,0.08) -->
     <SolidColorBrush x:Key="LumiWindowHairlineBrush" Color="#14FFFFFF" />
 

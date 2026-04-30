@@ -88,6 +88,7 @@
                 CornerRadius="{StaticResource LumiSidebarCornerRadius}"
                 Background="{ThemeResource LumiSidebarBrush}"
                 BorderThickness="0"
+                UseLayoutRounding="True"
                 IsHitTestVisible="False"/>
 
         <Border x:Name="LumiSidebar"
@@ -95,7 +96,9 @@
                 Margin="{StaticResource LumiSidebarMargin}"
                 CornerRadius="{StaticResource LumiSidebarCornerRadius}"
                 Background="{ThemeResource LumiSidebarBrush}"
-                BorderThickness="0">
+                BorderBrush="{ThemeResource LumiEdgeSideBrush}"
+                BorderThickness="1"
+                UseLayoutRounding="True">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="{StaticResource LumiSidebarTopGridHeight}"/>  <!-- Logo + name (drag region) -->
@@ -388,6 +391,32 @@
                                    Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
                     </Grid>
                 </Border>
+
+                <!-- ============================================================
+                     SIDEBAR GLASS EDGES — Finder-style polished glass highlights
+                     (mockup .sidebar::before / ::after). Painted ABOVE all rows
+                     via Grid.RowSpan=3, hit-test-disabled so they don't block
+                     interaction.
+
+                     Margin=20 (≥ CornerRadius 18 + 1px hairline + 1px safety)
+                     so the streak fully clears the rounded corner curve and
+                     never appears clipped or jagged at the corners. Pixel-
+                     snapped via UseLayoutRounding to avoid sub-pixel blur.
+                     ============================================================ -->
+                <Rectangle Grid.Row="0" Grid.RowSpan="3"
+                           VerticalAlignment="Top"
+                           Height="1"
+                           Margin="20,0,20,0"
+                           Fill="{ThemeResource LumiSidebarTopStreakBrush}"
+                           UseLayoutRounding="True"
+                           IsHitTestVisible="False"/>
+                <Rectangle Grid.Row="0" Grid.RowSpan="3"
+                           VerticalAlignment="Bottom"
+                           Height="1"
+                           Margin="20,0,20,0"
+                           Fill="{ThemeResource LumiSidebarBottomStreakBrush}"
+                           UseLayoutRounding="True"
+                           IsHitTestVisible="False"/>
             </Grid>
         </Border>
 

@@ -45,6 +45,22 @@ namespace LumiFiles
         private const int WM_DEVICECHANGE = 0x0219;
         private const int DBT_DEVNODES_CHANGED = 0x0007;
 
+        // --- WM_GETMINMAXINFO: borderless 윈도우 최대화 시 작업표시줄 영역 침범 방지 ---
+        private const int WM_GETMINMAXINFO = 0x0024;
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private struct MINMAXINFO
+        {
+            public Helpers.NativeMethods.POINT ptReserved;
+            public Helpers.NativeMethods.POINT ptMaxSize;
+            public Helpers.NativeMethods.POINT ptMaxPosition;
+            public Helpers.NativeMethods.POINT ptMinTrackSize;
+            public Helpers.NativeMethods.POINT ptMaxTrackSize;
+        }
+
         private delegate IntPtr SUBCLASSPROC(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, IntPtr uIdSubclass, IntPtr dwRefData);
 
         [DllImport("comctl32.dll", SetLastError = true)]
@@ -1635,6 +1651,39 @@ namespace LumiFiles
                 _deviceChangeDebounceTimer?.Stop();
                 _deviceChangeDebounceTimer?.Start();
                 Helpers.DebugLogger.Log("[MainWindow] WM_DEVICECHANGE: Device change detected");
+            }
+            else if (uMsg == WM_GETMINMAXINFO)
+            {
+                // Borderless 윈도우(SetBorderAndTitleBar(false,false))는 OS가 caption/border를
+                // 갖고 있다고 판단해서, 최대화 시 ptMaxPosition을 음수로 보정해 화면 밖으로
+                // 밀어버린다. 그 결과 작업표시줄 영역까지 덮어써 가려지는 문제가 발생한다.
+                // → MONITORINFO.rcWork(작업영역)에 맞춰 직접 ptMaxPosition / ptMaxSize를 잡아준다.
+                try
+                {
+                    IntPtr hMonitor = MonitorFromWindow(hWnd, Helpers.NativeMethods.MONITOR_DEFAULTTONEAREST);
+                    if (hMonitor != IntPtr.Zero)
+                    {
+                        var monInfo = new Helpers.NativeMethods.MONITORINFO();
+                        monInfo.cbSize = System.Runtime.InteropServices.Marshal.SizeOf<Helpers.NativeMethods.MONITORINFO>();
+                        if (Helpers.NativeMethods.GetMonitorInfo(hMonitor, ref monInfo))
+                        {
+                            var mmi = System.Runtime.InteropServices.Marshal.PtrToStructure<MINMAXINFO>(lParam);
+                            // rcWork: 작업표시줄을 제외한 영역 (DPI 고려된 물리 픽셀)
+                            mmi.ptMaxPosition.X = monInfo.rcWork.Left - monInfo.rcMonitor.Left;
+                            mmi.ptMaxPosition.Y = monInfo.rcWork.Top  - monInfo.rcMonitor.Top;
+                            mmi.ptMaxSize.X     = monInfo.rcWork.Right  - monInfo.rcWork.Left;
+                            mmi.ptMaxSize.Y     = monInfo.rcWork.Bottom - monInfo.rcWork.Top;
+                            mmi.ptMaxTrackSize.X = mmi.ptMaxSize.X;
+                            mmi.ptMaxTrackSize.Y = mmi.ptMaxSize.Y;
+                            System.Runtime.InteropServices.Marshal.StructureToPtr(mmi, lParam, false);
+                            return IntPtr.Zero; // 처리 완료
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Helpers.DebugLogger.Log($"[MainWindow] WM_GETMINMAXINFO error: {ex.Message}");
+                }
             }
             return DefSubclassProc(hWnd, uMsg, wParam, lParam);
         }
@@ -7073,18 +7122,33 @@ namespace LumiFiles
                 uint dpi = Helpers.NativeMethods.GetDpiForWindow(hwnd);
                 double scale = dpi > 0 ? dpi / 96.0 : 1.0;
 
-                // Stage S-3.26: OS region radius is intentionally +2 px LARGER
-                // than the XAML LumiWindowCornerRadius (18). SetWindowRgn uses
-                // GDI which gives a hard, pixel-aliased edge; XAML's
+                // Stage S-3.26 → S-3.27: OS region radius is intentionally
+                // LARGER than the XAML LumiWindowCornerRadius (18). SetWindowRgn
+                // uses GDI which gives a hard, pixel-aliased edge; XAML's
                 // CornerRadius is rendered by Direct2D which is anti-aliased.
                 // If the two radii match exactly, the OS aliased edge peeks
-                // out from behind the XAML curve and looks jagged. Pushing
-                // the OS radius outward by ~2px keeps the aliased edge
-                // strictly outside the XAML curve, so the only thing the
-                // user sees is the smooth Direct2D round of the WindowFrame
-                // Border. (DragShelf documents the same trick at radius+1;
-                // 18px curve at high DPI tolerates +2 with no visible gap.)
-                int radiusPx = (int)System.Math.Round(18 * scale) + 2;
+                // out from behind the XAML curve and looks jagged.
+                //
+                // Earlier this used +2 px headroom, but at 100% DPI the AA
+                // fade band of an 18px Direct2D curve spans 3-4 px and the
+                // GDI region was still nicking the outer fade pixels — the
+                // user reported visible staircase at the 4 corners. Bumped
+                // to +6 px so the OS clip is comfortably outside the entire
+                // AA gradient band; the result is that nothing OS-aliased is
+                // ever visible at the corners — only the smooth Direct2D
+                // round of the WindowFrame. The extra padding can't leak
+                // visible "extra" backdrop because the WindowFrame's
+                // background fully covers everything inside its 18px curve;
+                // beyond that curve, the alpha is 0 (Direct2D AA fade) and
+                // the OS region clips before the backdrop can bleed.
+                //
+                // Also expanded the bounding rect by +radiusPx on every side
+                // so the rounded-rect arc starts well outside the visible
+                // window. Combined with the +6 padding, no AA pixel of the
+                // XAML curve falls inside the GDI staircase region.
+                int xamlRadiusPx = (int)System.Math.Round(18 * scale);
+                int padPx = (int)System.Math.Round(6 * scale);
+                int radiusPx = xamlRadiusPx + padPx;
 
                 // CreateRoundRectRgn coords are inclusive on top/left and
                 // exclusive on bottom/right; +1 prevents a 1px clip on the
