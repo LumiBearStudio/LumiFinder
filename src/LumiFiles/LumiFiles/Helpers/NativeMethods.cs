@@ -59,6 +59,23 @@ namespace LumiFiles.Helpers
         [DllImport("dwmapi.dll")]
         internal static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref MARGINS pMarInset);
 
+        // SetWindowRgn — clip the actual window hit-area to a rounded shape.
+        // Stage S-3.24: needed because Win11's DWMWCP_DONOTROUND only stops
+        // the system from rounding the hit-area; it doesn't make the corners
+        // transparent, so the 4 outer-corner triangles (between our 18px
+        // round Border and the still-square hit-area) get filled with the
+        // DesktopAcrylic backdrop, reading as dark "leftover" patches.
+        // Pattern ported from DragShelf ShelfWindow.UpdateXamlClip.
+        [DllImport("gdi32.dll")]
+        internal static extern IntPtr CreateRoundRectRgn(int x1, int y1, int x2, int y2, int cx, int cy);
+
+        [DllImport("gdi32.dll")]
+        internal static extern bool DeleteObject(IntPtr hObject);
+
+        [DllImport("user32.dll")]
+        internal static extern int SetWindowRgn(IntPtr hWnd, IntPtr hRgn, bool bRedraw);
+        // GetDpiForWindow already declared further down.
+
         // Note: GetWindowLong / SetWindowLong are already declared below with
         // int signatures (legacy). For S-3.21 borderless transition we treat
         // the style word as uint via unchecked casts at the call site.

@@ -528,6 +528,19 @@ namespace LumiFiles
                 // Show the self-drawn caption buttons now that system chrome
                 // is gone (otherwise the user would have no way to close).
                 CaptionButtonsHost.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+
+                // Stage S-3.24: clip the OS window hit-area itself to a
+                // rounded rect via SetWindowRgn. Without this, DONOTROUND
+                // leaves the hit-area square, and the 4 outer-corner
+                // triangles between our 18px round Border and the square
+                // hit-area get painted with DesktopAcrylic — the user sees
+                // them as dark leftover patches in the corners. Pattern
+                // ported from DragShelf ShelfWindow.UpdateXamlClip.
+                ApplyRoundedWindowRegion();
+                if (RootGrid != null)
+                {
+                    RootGrid.SizeChanged += (_, __) => ApplyRoundedWindowRegion();
+                }
             }
             catch (System.Exception ex)
             {
@@ -7021,6 +7034,57 @@ namespace LumiFiles
         private void OnCaptionCloseClick(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        /// <summary>
+        /// Stage S-3.24: clip the OS window hit-area to a rounded rect so the
+        /// 4 outer corners are actually transparent (not painted with backdrop).
+        /// Pattern ported from DragShelf ShelfWindow.UpdateXamlClip.
+        ///
+        /// Steps:
+        ///   - Compute current pixel size from RootGrid (DIP) × DPI scale.
+        ///   - Build a HRGN with CreateRoundRectRgn at radius matching
+        ///     LumiWindowCornerRadius (currently 18) scaled by DPI.
+        ///   - Pass it to SetWindowRgn(_hwnd, rgn, redraw=true). The OS now
+        ///     owns the region; we don't DeleteObject it.
+        /// </summary>
+        private void ApplyRoundedWindowRegion()
+        {
+            try
+            {
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                if (hwnd == IntPtr.Zero) return;
+
+                // Pull the actual pixel size from the AppWindow (already in
+                // physical pixels; RootGrid.ActualSize is DIP and we'd have
+                // to multiply by scale anyway).
+                int widthPx  = AppWindow.Size.Width;
+                int heightPx = AppWindow.Size.Height;
+                if (widthPx <= 0 || heightPx <= 0) return;
+
+                uint dpi = Helpers.NativeMethods.GetDpiForWindow(hwnd);
+                double scale = dpi > 0 ? dpi / 96.0 : 1.0;
+
+                // Match the visible LumiWindowCornerRadius (18) — radius is
+                // bumped 1px so the aliased OS region edge hides behind the
+                // anti-aliased XAML Border (DragShelf trick).
+                int radiusPx = (int)System.Math.Round(18 * scale);
+
+                // CreateRoundRectRgn coords are inclusive on top/left and
+                // exclusive on bottom/right; +1 prevents a 1px clip on the
+                // far edge.
+                IntPtr rgn = Helpers.NativeMethods.CreateRoundRectRgn(
+                    0, 0, widthPx + 1, heightPx + 1,
+                    radiusPx * 2, radiusPx * 2);
+                if (rgn == IntPtr.Zero) return;
+
+                // SetWindowRgn takes ownership; do NOT DeleteObject.
+                Helpers.NativeMethods.SetWindowRgn(hwnd, rgn, true);
+            }
+            catch (System.Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[MainWindow] ApplyRoundedWindowRegion failed: {ex.Message}");
+            }
         }
 
     }
