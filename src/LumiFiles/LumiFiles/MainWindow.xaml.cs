@@ -489,10 +489,19 @@ namespace LumiFiles
                 };
                 Helpers.NativeMethods.DwmExtendFrameIntoClientArea(hwnd, ref margins);
 
-                // 3. Strip WS_OVERLAPPEDWINDOW bits + add WS_POPUP | WS_THICKFRAME.
-                //    Keeping WS_THICKFRAME preserves edge-resize hit-test even
-                //    though there's no visible border (DragShelf is fixed-size
-                //    so they drop it; LumiFiles is resizable so we keep it).
+                // 3. Strip WS_OVERLAPPEDWINDOW bits + add WS_POPUP only.
+                //    Stage S-3.25: dropped WS_THICKFRAME. Earlier we kept it
+                //    so the OS would still hit-test edge-resize, but THICKFRAME
+                //    also makes the OS reserve a 1px non-client border on
+                //    every side and paint it during composition. That painted
+                //    1px is visible as the top "검은 라인" + the small square
+                //    leftover patches at the four rounded corners — exactly
+                //    what DragShelf's ShelfWindow avoids by NOT including
+                //    THICKFRAME (the dock shelf is fixed-size).
+                //    Trade-off: edge-drag-to-resize is lost. Maximize / restore
+                //    via the caption buttons still works through
+                //    OverlappedPresenter. If the user wants edge-drag back,
+                //    Option B (WM_NCCALCSIZE subclass) is the next step.
                 //    NativeMethods.GetWindowLong / SetWindowLong return int
                 //    (legacy signatures); unchecked casts bridge to the uint
                 //    style flags.
@@ -500,8 +509,7 @@ namespace LumiFiles
                     hwnd, Helpers.NativeMethods.GWL_STYLE));
                 style &= ~Helpers.NativeMethods.WS_OVERLAPPEDWINDOW;
                 style |= Helpers.NativeMethods.WS_POPUP
-                       | Helpers.NativeMethods.WS_CLIPCHILDREN
-                       | Helpers.NativeMethods.WS_THICKFRAME;
+                       | Helpers.NativeMethods.WS_CLIPCHILDREN;
                 Helpers.NativeMethods.SetWindowLong(
                     hwnd,
                     Helpers.NativeMethods.GWL_STYLE,
