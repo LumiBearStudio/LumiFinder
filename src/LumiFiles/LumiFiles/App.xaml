@@ -103,6 +103,50 @@
                         <GradientStop Color="#1C000000" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </LinearGradientBrush>
+
+                    <!-- ============================================================
+                         S-3.36 Dark theme: AccentButton 토큰을 Lumi Amber로 override.
+                         Application.Resources 최상위에서는 XamlControlsResources의 동명
+                         Dark theme dict 정의에 가려지므로 반드시 이 블록 안에서 정의해야 한다.
+                         ============================================================ -->
+                    <!-- Legacy AccentButton tokens (WinUI 3 ≤ 1.4) — literal hex로 단순화하여
+                         StaticResource scope 이슈 회피. -->
+                    <SolidColorBrush x:Key="AccentButtonBackground" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#33FFB86B" />
+                    <SolidColorBrush x:Key="AccentButtonForeground" Color="#FF1A1A1F" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FF1A1A1F" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FF1A1A1F" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#7F1A1A1F" />
+                    <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="Transparent" />
+
+                    <!-- Modern Fluent AccentFillColor tokens (WinUI 3 ≥ 1.5) — Legacy 토큰만으로
+                         override 안 잡히는 경우 대비. AccentButtonBackground는 내부적으로
+                         {ThemeResource AccentFillColorDefaultBrush}를 가리키도록 변경된 케이스가 있다. -->
+                    <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="AccentFillColorDisabledBrush" Color="#33FFB86B" />
+                    <SolidColorBrush x:Key="TextOnAccentFillColorPrimaryBrush" Color="#FF1A1A1F" />
+                    <SolidColorBrush x:Key="TextOnAccentFillColorSecondaryBrush" Color="#FF1A1A1F" />
+                    <SolidColorBrush x:Key="TextOnAccentFillColorDisabledBrush" Color="#7F1A1A1F" />
+                    <!-- 토글스위치/체크박스 등에서도 같은 액센트 사용 -->
+                    <SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="SystemAccentColorLight2" Color="#FFFFD27A" />
+                    <Color x:Key="SystemAccentColor">#FFFFB86B</Color>
+                    <Color x:Key="SystemAccentColorDark1">#FFD48028</Color>
+                    <Color x:Key="SystemAccentColorLight1">#FFFFD27A</Color>
+
+                    <!-- 다이얼로그 전용 — LumiSidebarBrush보다 훨씬 불투명한 글래스 (반투명 약간만).
+                         #1E1C28 / #161420 위에 알파 0xF0(94%) → 거의 솔리드. -->
+                    <LinearGradientBrush x:Key="LumiDialogBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#F01E1C28" />
+                        <GradientStop Offset="1" Color="#F5161420" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="ContentDialogBackground" Color="#F01E1C28" />
                 </ResourceDictionary>
 
                 <!-- ==================== LIGHT THEME ==================== -->
@@ -180,6 +224,38 @@
                         <GradientStop Color="#0C000000" Offset="0"/>
                         <GradientStop Color="Transparent" Offset="1"/>
                     </LinearGradientBrush>
+
+                    <!-- S-3.36 Light theme: 다크 글래스 디자인을 그대로 적용 (Lumi 디자인은 다크 기본). -->
+                    <SolidColorBrush x:Key="AccentButtonBackground" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundPointerOver" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundPressed" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#33FFB86B" />
+                    <SolidColorBrush x:Key="AccentButtonForeground" Color="#FF1A1A1F" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#FF1A1A1F" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#FF1A1A1F" />
+                    <SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#7F1A1A1F" />
+                    <SolidColorBrush x:Key="AccentButtonBorderBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="AccentButtonBorderBrushPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="AccentButtonBorderBrushPressed" Color="Transparent" />
+
+                    <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="AccentFillColorDisabledBrush" Color="#33FFB86B" />
+                    <SolidColorBrush x:Key="TextOnAccentFillColorPrimaryBrush" Color="#FF1A1A1F" />
+                    <SolidColorBrush x:Key="TextOnAccentFillColorSecondaryBrush" Color="#FF1A1A1F" />
+                    <SolidColorBrush x:Key="TextOnAccentFillColorDisabledBrush" Color="#7F1A1A1F" />
+                    <SolidColorBrush x:Key="SystemControlBackgroundAccentBrush" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="SystemAccentColorLight2" Color="#FFFFD27A" />
+                    <Color x:Key="SystemAccentColor">#FFFFB86B</Color>
+                    <Color x:Key="SystemAccentColorDark1">#FFD48028</Color>
+                    <Color x:Key="SystemAccentColorLight1">#FFFFD27A</Color>
+
+                    <LinearGradientBrush x:Key="LumiDialogBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#F01E1C28" />
+                        <GradientStop Offset="1" Color="#F5161420" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="ContentDialogBackground" Color="#F01E1C28" />
                 </ResourceDictionary>
 
             </ResourceDictionary.ThemeDictionaries>
@@ -213,6 +289,109 @@
             <FontFamily x:Key="RemixIcons">/Assets/Fonts/remixicon.ttf#RemixIcon, /Assets/Fonts/remixicon.ttf#remixicon</FontFamily>
             <FontFamily x:Key="AppFont">Segoe UI Variable, Segoe UI, Malgun Gothic, Microsoft YaHei UI, Microsoft JhengHei UI, Yu Gothic UI</FontFamily>
             <FontFamily x:Key="MonoFont">Cascadia Code, Consolas, Malgun Gothic, Microsoft YaHei UI, Microsoft JhengHei UI, Yu Gothic UI</FontFamily>
+
+            <!-- ============================================================
+                 S-3.36 (Tier 1+2): MenuFlyout 전역 Lumi 스타일
+                 - 시스템 기본 회색 메뉴를 LumiSidebar 글래스 톤으로 통일.
+                 - Theme-independent (Application.Resources 최상위) — Dark/Light 모두 적용.
+                   Lumi 디자인 자체가 다크 글래스 기반이므로 라이트 테마에서도 동일한
+                   Lumi 톤 메뉴가 표시된다.
+                 - 적용 범위: 사이드바 우클릭, 파일/폴더 우클릭, 탭 우클릭, Shelf,
+                   주소바, Tray icon, 정렬/뷰모드 드롭다운 — 모든 MenuFlyout 동시.
+                 ============================================================ -->
+
+            <!-- Theme-resource overrides for MenuFlyoutItem visual states -->
+            <SolidColorBrush x:Key="MenuFlyoutItemBackground" Color="Transparent" />
+            <StaticResource x:Key="MenuFlyoutItemBackgroundPointerOver" ResourceKey="LumiHoverBrush" />
+            <SolidColorBrush x:Key="MenuFlyoutItemBackgroundPressed" Color="#1FFFFFFF" />
+            <StaticResource x:Key="MenuFlyoutItemForeground" ResourceKey="LumiTextPrimaryBrush" />
+            <StaticResource x:Key="MenuFlyoutItemForegroundPointerOver" ResourceKey="LumiTextPrimaryBrush" />
+            <StaticResource x:Key="MenuFlyoutItemForegroundPressed" ResourceKey="LumiTextPrimaryBrush" />
+            <StaticResource x:Key="MenuFlyoutItemForegroundDisabled" ResourceKey="LumiTextTertiaryBrush" />
+            <StaticResource x:Key="MenuFlyoutSeparatorThemeBrush" ResourceKey="LumiDividerSoftBrush" />
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForeground" ResourceKey="LumiTextSecondaryBrush" />
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForegroundPointerOver" ResourceKey="LumiTextSecondaryBrush" />
+            <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForegroundPressed" ResourceKey="LumiTextSecondaryBrush" />
+            <StaticResource x:Key="MenuFlyoutSubItemBackgroundSubMenuOpened" ResourceKey="LumiHoverBrush" />
+            <StaticResource x:Key="MenuFlyoutSubItemForegroundSubMenuOpened" ResourceKey="LumiTextPrimaryBrush" />
+            <StaticResource x:Key="MenuFlyoutSubItemChevron" ResourceKey="LumiTextSecondaryBrush" />
+            <StaticResource x:Key="MenuFlyoutSubItemChevronPointerOver" ResourceKey="LumiTextPrimaryBrush" />
+
+            <!-- Implicit Style (no x:Key) — applies to ALL MenuFlyoutPresenter automatically.
+                 WinUI 3 popups가 Application.Resources implicit style를 인식하지만 일부 케이스에서
+                 누락 위험이 있어 named 'LumiMenuFlyoutPresenterStyle'도 함께 정의 (코드 측에서 명시 적용 가능). -->
+            <Style TargetType="MenuFlyoutPresenter" x:Key="LumiMenuFlyoutPresenterStyle">
+                <Setter Property="Background" Value="{ThemeResource LumiSidebarBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource LumiEdgeSideBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="{StaticResource LumiSidebarCornerRadius}" />
+                <Setter Property="Padding" Value="4" />
+                <Setter Property="MinWidth" Value="200" />
+                <Setter Property="FontFamily" Value="{StaticResource LumiFontFamily}" />
+                <Setter Property="FontSize" Value="{StaticResource LumiFontSizeBase}" />
+                <Setter Property="UseLayoutRounding" Value="True" />
+            </Style>
+            <Style TargetType="MenuFlyoutPresenter" BasedOn="{StaticResource LumiMenuFlyoutPresenterStyle}"/>
+
+            <!-- Implicit MenuFlyoutItem Style — corner radius for hover highlight + tighter padding -->
+            <Style TargetType="MenuFlyoutItem">
+                <Setter Property="CornerRadius" Value="{StaticResource LumiSidebarItemCornerRadius}" />
+                <Setter Property="Padding" Value="12,7" />
+                <Setter Property="FontFamily" Value="{StaticResource LumiFontFamily}" />
+                <Setter Property="FontSize" Value="{StaticResource LumiFontSizeBase}" />
+            </Style>
+
+            <Style TargetType="ToggleMenuFlyoutItem">
+                <Setter Property="CornerRadius" Value="{StaticResource LumiSidebarItemCornerRadius}" />
+                <Setter Property="Padding" Value="12,7" />
+                <Setter Property="FontFamily" Value="{StaticResource LumiFontFamily}" />
+                <Setter Property="FontSize" Value="{StaticResource LumiFontSizeBase}" />
+            </Style>
+
+            <Style TargetType="MenuFlyoutSubItem">
+                <Setter Property="CornerRadius" Value="{StaticResource LumiSidebarItemCornerRadius}" />
+                <Setter Property="Padding" Value="12,7" />
+                <Setter Property="FontFamily" Value="{StaticResource LumiFontFamily}" />
+                <Setter Property="FontSize" Value="{StaticResource LumiFontSizeBase}" />
+            </Style>
+
+            <!-- ============================================================
+                 S-3.36 (실제 적용 대상): ContentDialog 전역 Lumi 스타일.
+                 사용자가 의도한 "사이드바에서 나오는 창" = OnBrowseNetworkTapped /
+                 OnConnectToServerTapped 등 18개의 ContentDialog. 시스템 기본
+                 회색 다이얼로그 + 파란 액센트 버튼을 LumiSidebar 글래스 + Amber
+                 액센트로 통일.
+                 ============================================================ -->
+
+            <!-- ContentDialog 본체 ThemeResource 오버라이드 -->
+            <StaticResource x:Key="ContentDialogBackground" ResourceKey="LumiSidebarBrush" />
+            <StaticResource x:Key="ContentDialogForeground" ResourceKey="LumiTextPrimaryBrush" />
+            <StaticResource x:Key="ContentDialogBorderBrush" ResourceKey="LumiEdgeSideBrush" />
+            <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="Transparent" />
+            <StaticResource x:Key="ContentDialogSeparatorBorderBrush" ResourceKey="LumiDividerSoftBrush" />
+
+            <!-- ⚠ ContentDialogButtonBackground override는 WinUI 3에서 Primary 버튼까지 덮어
+                 AccentButton의 amber 색상을 가린다. 따라서 제거 — 비-Primary는 시스템 기본 사용,
+                 Primary는 AccentButton 토큰(아래 ThemeDictionaries에 정의)이 적용된다. -->
+            <!-- (ContentDialogButton* removed) -->
+
+            <!-- NOTE: AccentButton 토큰 (AccentButtonBackground 등)은 Application.Resources 최상위에
+                 두면 XamlControlsResources의 ThemeDictionaries[Dark/Light]에 있는 동명 키에 가려진다.
+                 따라서 아래 ThemeDictionaries Dark/Light 블록 안으로 이동시켜 우선순위 확보. -->
+            <!-- (AccentButton overrides moved to ThemeDictionaries below) -->
+
+            <!-- 다이얼로그 외곽 모서리/패딩/그림자 — Background는 LumiDialogBackgroundBrush
+                 (LumiSidebarBrush보다 훨씬 불투명한 글래스, 반투명 약간만 유지). -->
+            <Style TargetType="ContentDialog" x:Key="LumiContentDialogStyle">
+                <Setter Property="Background" Value="{ThemeResource LumiDialogBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource LumiEdgeSideBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="{StaticResource LumiSidebarCornerRadius}" />
+                <Setter Property="FontFamily" Value="{StaticResource LumiFontFamily}" />
+                <Setter Property="Foreground" Value="{ThemeResource LumiTextPrimaryBrush}" />
+                <Setter Property="UseLayoutRounding" Value="True" />
+            </Style>
+            <Style TargetType="ContentDialog" BasedOn="{StaticResource LumiContentDialogStyle}"/>
 
             <!-- Styles -->
 

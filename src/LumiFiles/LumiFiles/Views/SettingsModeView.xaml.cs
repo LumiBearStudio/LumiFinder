@@ -1486,6 +1486,7 @@ public sealed partial class SettingsModeView : UserControl
                 XamlRoot = this.XamlRoot,
                 DefaultButton = ContentDialogButton.Close
             };
+            Helpers.DialogStyleHelper.ApplyLumiStyle(dialog);
             var result = await dialog.ShowAsync();
             if (result != ContentDialogResult.Primary) return;
 
@@ -1513,6 +1514,7 @@ public sealed partial class SettingsModeView : UserControl
                 XamlRoot = this.XamlRoot,
                 DefaultButton = ContentDialogButton.Close
             };
+            Helpers.DialogStyleHelper.ApplyLumiStyle(dialog);
             var result = await dialog.ShowAsync();
             if (result != ContentDialogResult.Primary) return;
 
@@ -1972,6 +1974,7 @@ public sealed partial class SettingsModeView : UserControl
             CloseButtonText = "OK",
             XamlRoot = this.XamlRoot
         };
+        Helpers.DialogStyleHelper.ApplyLumiStyle(dialog);
         await dialog.ShowAsync();
     }
 

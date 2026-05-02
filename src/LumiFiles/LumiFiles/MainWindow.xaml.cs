@@ -3801,6 +3801,7 @@ namespace LumiFiles
                 return;
 
             var flyout = new MenuFlyout();
+            ApplyLumiFlyoutStyle(flyout);
 
             var currentFontFamily = new Microsoft.UI.Xaml.Media.FontFamily(
                 Services.IconService.Current?.FontFamilyPath ?? "/Assets/Fonts/remixicon.ttf#remixicon");
@@ -4008,6 +4009,10 @@ namespace LumiFiles
                 return ContentDialogResult.None;
             }
 
+            // S-3.36 (옵션 A): ContentDialog의 비-액센트 버튼에 LumiSecondaryButtonStyle을 명시 적용.
+            // 이 헬퍼를 거치는 모든 dialog가 자동으로 통일된 Lumi 스타일을 가짐.
+            ApplyLumiDialogStyle(dialog);
+
             // WinUI 3 XYFocusNavigation 버그 방지: 화살표 키로 다이얼로그 밖으로 포커스 탈출 차단
             dialog.KeyDown += Dialog_SuppressArrowKeys;
 
@@ -4139,6 +4144,7 @@ namespace LumiFiles
             if (sender is FrameworkElement fe && fe.DataContext is FavoriteItem fav)
             {
                 var flyout = _contextMenuService.BuildFavoriteMenu(fav, this);
+                ApplyLumiFlyoutStyle(flyout);
                 flyout.ShowAt(fe, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions
                 {
                     Position = e.GetPosition(fe)
@@ -4677,12 +4683,93 @@ namespace LumiFiles
             if (sender is Grid grid && grid.DataContext is DriveItem drive)
             {
                 var flyout = _contextMenuService.BuildDriveMenu(drive, this);
+                ApplyLumiFlyoutStyle(flyout);
                 flyout.ShowAt(grid, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions
                 {
                     Position = e.GetPosition(grid)
                 });
                 e.Handled = true;
             }
+        }
+
+        /// <summary>
+        /// S-3.36: MenuFlyout에 Lumi 글래스 스타일 (LumiMenuFlyoutPresenterStyle)을 명시 적용.
+        /// WinUI 3 popup이 Application.Resources의 implicit Style을 일부 케이스에서
+        /// 무시할 수 있어, 사이드바 컨텍스트 메뉴에서는 명시 할당으로 보장한다.
+        /// </summary>
+        private void ApplyLumiFlyoutStyle(MenuFlyout flyout)
+        {
+            try
+            {
+                if (App.Current.Resources.TryGetValue("LumiMenuFlyoutPresenterStyle", out var styleObj)
+                    && styleObj is Microsoft.UI.Xaml.Style style)
+                {
+                    flyout.MenuFlyoutPresenterStyle = style;
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[ApplyLumiFlyoutStyle] failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// S-3.36: ContentDialog의 비-액센트 버튼에 LumiSecondaryButtonStyle 적용.
+        /// 실제 구현은 Helpers.DialogStyleHelper.ApplyLumiStyle(dlg) 정적 헬퍼.
+        /// MainWindow 외부 (ContextMenuService, SettingsModeView 등) 에서도 동일 헬퍼 사용.
+        /// </summary>
+        private void ApplyLumiDialogStyle(ContentDialog dlg)
+            => Helpers.DialogStyleHelper.ApplyLumiStyle(dlg);
+
+        // =================================================================
+        //  S-3.35: LumiSidebar Recycle Bin 우클릭 — 열기 + 비우기 컨텍스트 메뉴
+        // =================================================================
+        private void OnLumiRecycleBinRightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement fe) return;
+
+            var flyout = new MenuFlyout();
+            ApplyLumiFlyoutStyle(flyout);
+            var iconFontFamily = new Microsoft.UI.Xaml.Media.FontFamily(
+                Services.IconService.Current?.FontFamilyPath ?? "/Assets/Fonts/remixicon.ttf#remixicon");
+
+            // 열기 — 기존 OnRecycleBinTapped 재사용 (휴지통 모드 진입)
+            var openItem = new MenuFlyoutItem
+            {
+                Text = _loc.Get("Open"),
+                Icon = new FontIcon
+                {
+                    Glyph = "",
+                    FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe Fluent Icons"),
+                    FontSize = 16
+                }
+            };
+            openItem.Click += (s, args) => OnRecycleBinTapped(s, null!);
+            flyout.Items.Add(openItem);
+
+            flyout.Items.Add(new MenuFlyoutSeparator());
+
+            // 휴지통 비우기 — 기존 OnRecycleBinEmptyRequested 재사용 (확인 다이얼로그 + 비우기)
+            // 비어있는 상태(RecycleBinIsEmpty)면 비활성.
+            var emptyItem = new MenuFlyoutItem
+            {
+                Text = _loc.Get("RecycleBin_Empty"),
+                Icon = new FontIcon
+                {
+                    Glyph = "",
+                    FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe Fluent Icons"),
+                    FontSize = 16
+                },
+                IsEnabled = !ViewModel.RecycleBinIsEmpty
+            };
+            emptyItem.Click += (s, args) => OnRecycleBinEmptyRequested(s, EventArgs.Empty);
+            flyout.Items.Add(emptyItem);
+
+            flyout.ShowAt(fe, new Microsoft.UI.Xaml.Controls.Primitives.FlyoutShowOptions
+            {
+                Position = e.GetPosition(fe)
+            });
+            e.Handled = true;
         }
 
         // =================================================================

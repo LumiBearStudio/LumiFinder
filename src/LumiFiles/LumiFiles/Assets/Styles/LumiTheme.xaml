@@ -421,4 +421,134 @@
     <x:Double x:Key="LumiFontSizePreviewTitle">14</x:Double>
     <x:Double x:Key="LumiFontSizePreviewRow">12</x:Double>
 
+    <!-- ============================================================
+         S-3.36 (최종 설계): 다이얼로그 버튼 통합 스타일.
+         사용자 요구:
+           - 양쪽 버튼 라운드 6px (항상)
+           - 포커스 있는 버튼만 amber, 비포커스는 다크 글래스
+           - Tab 이동 시 amber가 따라감
+         WinUI 3 ContentDialog의 DefaultButtonStates는 포커스를 따라 PrimaryAsDefault →
+         CloseAsDefault VisualState로 전환되며 해당 버튼의 Style을 AccentButtonStyle로 setter.
+         이 setter는 Local Value보다 우선순위가 높으므로 코드에서 PrimaryButtonStyle을
+         지정해도 VisualState 활성 시 덮인다.
+         → 해법: AccentButtonStyle과 LumiSecondaryButtonStyle을 시각적으로 동일하게
+         정의 (둘 다 ControlTemplate에 FocusStates: Focused → amber). 어느 쪽이 swap
+         되어도 결과 일관됨. 자기가 포커스 받으면 amber, 아니면 gray.
+         ============================================================ -->
+
+    <SolidColorBrush x:Key="LumiDefaultButtonBackgroundBrush" Color="#1FFFFFFF" />
+    <SolidColorBrush x:Key="LumiDefaultButtonBackgroundPointerOverBrush" Color="#33FFFFFF" />
+    <SolidColorBrush x:Key="LumiDefaultButtonBackgroundPressedBrush" Color="#14FFFFFF" />
+    <SolidColorBrush x:Key="LumiDefaultButtonBackgroundDisabledBrush" Color="#0AFFFFFF" />
+    <SolidColorBrush x:Key="LumiDefaultButtonBorderBrush" Color="#1FFFFFFF" />
+
+    <!-- 공통 ControlTemplate Body — Style 재사용 위해 다음 스타일 둘 다 동일한 ControlTemplate 사용.
+         LumiSecondaryButtonStyle이랑 AccentButtonStyle이 시각적으로 동일하게 동작하도록 통일. -->
+
+    <!-- LumiSecondaryButtonStyle: ContentDialog 비-액센트 버튼용. 코드에서 명시 할당.
+         포커스 받으면 amber, 아니면 다크 글래스. 라운드 6px. -->
+    <Style x:Key="LumiSecondaryButtonStyle" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource LumiTextPrimaryBrush}" />
+        <Setter Property="Background" Value="{StaticResource LumiDefaultButtonBackgroundBrush}" />
+        <Setter Property="BackgroundSizing" Value="OuterBorderEdge" />
+        <Setter Property="BorderBrush" Value="{StaticResource LumiDefaultButtonBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="FontFamily" Value="{StaticResource LumiFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource LumiFontSizeBase}" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="Padding" Value="11,5,11,6" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="UseSystemFocusVisuals" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <!-- Border 래퍼: ContentPresenter가 amber Background 변경 시
+                         CornerRadius 렌더링이 일관되지 않는 경우 대비 — Border로 강제
+                         clip + corner. ContentPresenter는 padding + content 표시만. -->
+                    <Border x:Name="RootBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            BackgroundSizing="{TemplateBinding BackgroundSizing}">
+                        <ContentPresenter x:Name="ContentPresenter"
+                                      Foreground="{TemplateBinding Foreground}"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      ContentTransitions="{TemplateBinding ContentTransitions}"
+                                      Padding="{TemplateBinding Padding}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      AutomationProperties.AccessibilityView="Raw">
+                        <VisualStateManager.VisualStateGroups>
+                            <!-- CommonStates: Normal/PointerOver/Pressed/Disabled — Background 변화.
+                                 (Focus는 별도 FocusStates 그룹에서 처리하지 않고 Pressed의 amber 적용으로 통합 처리.
+                                  WinUI 3 Button은 키보드 포커스 시 자체적으로 PointerOver/Pressed가 아닌 Normal 상태이므로
+                                  Focused 시각 효과는 PointerFocused/Focused 그룹이 필요.) -->
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootBorder" Storyboard.TargetProperty="Background">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource LumiDefaultButtonBackgroundPointerOverBrush}" />
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootBorder" Storyboard.TargetProperty="Background">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource LumiAccentDeepSolidBrush}" />
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootBorder" Storyboard.TargetProperty="Background">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{StaticResource LumiDefaultButtonBackgroundDisabledBrush}" />
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+                            </VisualStateGroup>
+                            <!-- FocusStates VisualStateGroup 제거됨: WinUI 3 ButtonBase는
+                                 GoToState("Focused")를 호출하지 않음 (Button은 CommonStates만 가짐).
+                                 포커스 따라가는 amber 배경은 DialogStyleHelper에서 코드로 직접 처리. -->
+                        </VisualStateManager.VisualStateGroups>
+                    </ContentPresenter>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================================
+         AccentButtonStyle 재정의 (Lumi Amber).
+         WinUI 3 v1.8 generic.xaml의 ContentDialog는 DefaultButton=Primary 시
+         VisualState `PrimaryAsDefaultButton`이 `<Setter Target="PrimaryButton.Style"
+         Value="{StaticResource AccentButtonStyle}"/>`를 적용한다. 이 StaticResource는
+         리소스 lookup chain에서 가장 가까운 AccentButtonStyle을 찾는다.
+
+         LumiTheme.xaml은 Application.Resources.MergedDictionaries에서 마지막에
+         로드되므로, 같은 x:Key를 정의하면 XamlControlsResources의 기본을 shadow한다.
+         AccentButtonBackground/AccentFillColorDefaultBrush 등 ThemeResource 체인 override는
+         실제 적용이 안 되어 (WinUI 3 popup scope 이슈 추정), Style 자체를 갈아끼우는 것이
+         가장 확실한 방법.
+         ============================================================ -->
+    <SolidColorBrush x:Key="LumiAccentSolidBrush" Color="#FFFFB86B" />
+    <SolidColorBrush x:Key="LumiAccentSoftSolidBrush" Color="#FFFFD27A" />
+    <SolidColorBrush x:Key="LumiAccentDeepSolidBrush" Color="#FFD48028" />
+    <SolidColorBrush x:Key="LumiAccentDisabledSolidBrush" Color="#33FFB86B" />
+    <SolidColorBrush x:Key="LumiAccentForegroundBrush" Color="#FF1A1A1F" />
+    <SolidColorBrush x:Key="LumiAccentForegroundDisabledBrush" Color="#7F1A1A1F" />
+
+    <!-- AccentButtonStyle = LumiSecondaryButtonStyle 시각적으로 동일.
+         WinUI 3 ContentDialog의 DefaultButtonStates VisualState가 PrimaryAsDefault →
+         CloseAsDefault 등으로 PrimaryButton.Style을 AccentButtonStyle로 swap할 때 어느
+         쪽이 적용되든 양쪽 버튼 모양/동작이 같도록 BasedOn으로 alias. 결과: 자기가
+         포커스 받으면 amber, 아니면 다크 글래스. -->
+    <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource LumiSecondaryButtonStyle}"/>
+
 </ResourceDictionary>

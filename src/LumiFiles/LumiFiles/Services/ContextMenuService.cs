@@ -1473,6 +1473,7 @@ namespace LumiFiles.Services
                     CloseButtonText = _loc.Get("OK") ?? "확인",
                     XamlRoot = xamlRoot
                 };
+                Helpers.DialogStyleHelper.ApplyLumiStyle(dialog);
 
                 try { await dialog.ShowAsync(); }
                 catch { /* ignore if another dialog is open */ }

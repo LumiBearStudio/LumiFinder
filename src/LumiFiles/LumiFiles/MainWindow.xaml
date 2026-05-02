@@ -103,7 +103,8 @@
                 Background="{ThemeResource LumiSidebarBrush}"
                 BorderBrush="{ThemeResource LumiEdgeSideBrush}"
                 BorderThickness="1"
-                UseLayoutRounding="True">
+                UseLayoutRounding="True"
+                RightTapped="OnSidebarEmptyRightTapped"><!-- S-3.35: 빈 영역 우클릭 → Browse Network / Connect to Server (FTP/SFTP 추가) -->
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="{StaticResource LumiSidebarTopGridHeight}"/>  <!-- Logo + name (drag region) -->
@@ -164,6 +165,7 @@
                                               Background="Transparent"
                                               ToolTipService.ToolTip="{x:Bind Path}"
                                               Tapped="OnLumiFavoriteItemTapped"
+                                              RightTapped="OnFavoritesFlatItemRightTapped"
                                               Tag="{x:Bind Path}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="20"/>
@@ -212,6 +214,7 @@
                                               Background="Transparent"
                                               ToolTipService.ToolTip="{x:Bind TooltipText}"
                                               Tapped="OnLumiDriveItemTapped"
+                                              RightTapped="OnSidebarDriveRightTapped"
                                               Visibility="{x:Bind helpers:ConverterHelpers.NotNetworkDriveVisibility(IsNetworkDrive)}"
                                               Tag="{x:Bind Path}">
                                             <Grid.ColumnDefinitions>
@@ -262,6 +265,7 @@
                                               Background="Transparent"
                                               ToolTipService.ToolTip="{x:Bind TooltipText}"
                                               Tapped="OnLumiDriveItemTapped"
+                                              RightTapped="OnSidebarDriveRightTapped"
                                               Tag="{x:Bind Path}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="20"/>
@@ -314,6 +318,7 @@
                                               Background="Transparent"
                                               ToolTipService.ToolTip="{x:Bind TooltipText}"
                                               Tapped="OnLumiDriveItemTapped"
+                                              RightTapped="OnSidebarDriveRightTapped"
                                               Tag="{x:Bind Path}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="20"/>
@@ -347,6 +352,7 @@
                               Background="Transparent"
                               ToolTipService.ToolTip="Recycle Bin"
                               Tapped="OnRecycleBinTapped"
+                              RightTapped="OnLumiRecycleBinRightTapped"
                               AllowDrop="True"
                               DragOver="OnRecycleBinDragOver"
                               Drop="OnRecycleBinDrop"
@@ -2589,13 +2595,18 @@
              so it shows at the BOTTOM CENTER of the explorer area, not
              trapped inside the 228 px sidebar column where it was before
              (no Grid.Column meant default column 0 = sidebar). -->
+        <!-- S-3.36: Toast — Span* tokens → Lumi* tokens (사이드바 / 메뉴와 동일 글래스 톤).
+             CornerRadius 8 → 12 (LumiSidebarCornerRadius), 1px LumiEdgeSideBrush hairline,
+             icon은 LumiAmberBrush로 액센트, 폰트는 LumiFontFamily 통일. -->
         <Border x:Name="ToastOverlay" Grid.Row="2" Grid.Column="1"
                 HorizontalAlignment="Center" VerticalAlignment="Bottom"
                 Margin="0,0,0,16" Padding="16,10"
-                Background="{ThemeResource SpanBgLayer1Brush}"
-                BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
-                CornerRadius="8" Opacity="0" IsHitTestVisible="False"
-                RenderTransformOrigin="0.5,1">
+                Background="{ThemeResource LumiSidebarBrush}"
+                BorderBrush="{ThemeResource LumiEdgeSideBrush}" BorderThickness="1"
+                CornerRadius="{StaticResource LumiSidebarCornerRadius}"
+                Opacity="0" IsHitTestVisible="False"
+                RenderTransformOrigin="0.5,1"
+                UseLayoutRounding="True">
             <Border.RenderTransform>
                 <TranslateTransform x:Name="ToastTranslate" Y="20"/>
             </Border.RenderTransform>
@@ -2604,9 +2615,11 @@
             </Border.Shadow>
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <FontIcon x:Name="ToastIcon" Glyph="&#xE73E;" FontSize="14"
-                          Foreground="{ThemeResource SpanAccentBrush}"/>
-                <TextBlock x:Name="ToastText" Text="" FontSize="13"
-                           Foreground="{ThemeResource SpanTextPrimaryBrush}"
+                          Foreground="{ThemeResource LumiAmberBrush}"/>
+                <TextBlock x:Name="ToastText" Text=""
+                           FontFamily="{StaticResource LumiFontFamily}"
+                           FontSize="{StaticResource LumiFontSizeBase}"
+                           Foreground="{ThemeResource LumiTextPrimaryBrush}"
                            VerticalAlignment="Center" MaxWidth="500"
                            TextWrapping="WrapWholeWords"/>
             </StackPanel>

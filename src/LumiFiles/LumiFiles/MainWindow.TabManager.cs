@@ -1888,6 +1888,7 @@ namespace LumiFiles
                 XamlRoot = Content.XamlRoot,
                 DefaultButton = ContentDialogButton.Primary
             };
+            Helpers.DialogStyleHelper.ApplyLumiStyle(dialog);
 
             var result = await dialog.ShowAsync();
             if (result != ContentDialogResult.Primary) return;
@@ -1918,6 +1919,7 @@ namespace LumiFiles
                     XamlRoot = Content.XamlRoot,
                     DefaultButton = ContentDialogButton.Primary
                 };
+                Helpers.DialogStyleHelper.ApplyLumiStyle(overwriteDialog);
                 var overwriteResult = await overwriteDialog.ShowAsync();
                 if (overwriteResult != ContentDialogResult.Primary) return;
                 id = existing.Id;
@@ -2016,6 +2018,7 @@ namespace LumiFiles
                             XamlRoot = Content.XamlRoot,
                             DefaultButton = ContentDialogButton.Primary
                         };
+                        Helpers.DialogStyleHelper.ApplyLumiStyle(dlg);
                         if (await dlg.ShowAsync() == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(nameBox.Text))
                             await workspaceService.RenameWorkspaceAsync(captured.Id, nameBox.Text.Trim());
                     };
