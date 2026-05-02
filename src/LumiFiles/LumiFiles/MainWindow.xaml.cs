@@ -48,6 +48,11 @@ namespace LumiFiles
         // --- WM_GETMINMAXINFO: borderless 윈도우 최대화 시 작업표시줄 영역 침범 방지 ---
         private const int WM_GETMINMAXINFO = 0x0024;
 
+        // --- WM_DPICHANGED: 듀얼 모니터에서 다른 DPI 모니터로 이동 시 발생 (S-3.34 재시도) ---
+        // wParam LOWORD = 새 X축 DPI, lParam = RECT* (Windows 권장 위치/크기).
+        // 안 처리하면: 새 DPI scale로 region이 재계산되지 않아 stale 상태가 됨 → 자글거림 심해짐.
+        private const int WM_DPICHANGED = 0x02E0;
+
         [DllImport("user32.dll")]
         private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
@@ -1658,6 +1663,33 @@ namespace LumiFiles
                 _deviceChangeDebounceTimer?.Stop();
                 _deviceChangeDebounceTimer?.Start();
                 Helpers.DebugLogger.Log("[MainWindow] WM_DEVICECHANGE: Device change detected");
+            }
+            else if (uMsg == WM_DPICHANGED)
+            {
+                // S-3.34 재시도: 듀얼 모니터에서 DPI 다른 모니터로 옮겼을 때 발생.
+                // 1) lParam의 권장 RECT로 SetWindowPos — Windows 가이드 준수
+                // 2) DispatcherQueue로 ApplyRoundedWindowRegion 재호출 → 새 DPI scale로 radius 재계산
+                try
+                {
+                    if (lParam != IntPtr.Zero)
+                    {
+                        var suggested = System.Runtime.InteropServices.Marshal.PtrToStructure<Helpers.NativeMethods.RECT>(lParam);
+                        Helpers.NativeMethods.SetWindowPos(
+                            hWnd, IntPtr.Zero,
+                            suggested.Left, suggested.Top,
+                            suggested.Right - suggested.Left,
+                            suggested.Bottom - suggested.Top,
+                            Helpers.NativeMethods.SWP_NOZORDER | Helpers.NativeMethods.SWP_NOACTIVATE);
+                    }
+                    DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+                        () => { if (!_isClosed) ApplyRoundedWindowRegion(); });
+                    Helpers.DebugLogger.Log($"[MainWindow] WM_DPICHANGED: dpi={(int)wParam & 0xFFFF}");
+                }
+                catch (Exception ex)
+                {
+                    Helpers.DebugLogger.Log($"[MainWindow] WM_DPICHANGED error: {ex.Message}");
+                }
+                return IntPtr.Zero;
             }
             else if (uMsg == WM_GETMINMAXINFO)
             {
@@ -7152,7 +7184,14 @@ namespace LumiFiles
                 //   read as a clean, continuous hairline at the actual
                 //   window boundary — the corner finally looks "edged"
                 //   instead of "fuzzy".
-                int radiusPx = (int)System.Math.Round(18 * scale);
+                // S-3.34 (incremental fix #1, single-step retry): Round → Floor.
+                //   125%(18*1.25=22.5)/175%(18*1.75=31.5) 같은 fractional DPI에서
+                //   Round는 GDI radius를 XAML curve보다 0.5px 크게 만들어 acrylic 링이
+                //   노출되며 그 가장자리에 binary stair-step이 보임. Floor는 GDI radius
+                //   ≤ XAML radius를 보장 → 보이는 곡선 = AA'd XAML border (계단은 stroke
+                //   내부에 가려져 시각적으로 안 보임).
+                int radiusPx = (int)System.Math.Floor(18 * scale);
+                if (radiusPx < 1) radiusPx = 1;
 
                 // CreateRoundRectRgn coords are inclusive on top/left and
                 // exclusive on bottom/right; +1 prevents a 1px clip on the

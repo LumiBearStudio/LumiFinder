@@ -598,7 +598,7 @@
                                                 <TextBlock x:Name="Tab1Label" Text="왼쪽 탐색기" FontSize="13" FontWeight="SemiBold"
                                                            Foreground="{ThemeResource SpanTextPrimaryBrush}" />
                                                 <RadioButton x:Name="Tab1StartupHome" GroupName="Tab1Startup" IsChecked="True" MinHeight="28" Padding="8,4,0,0">
-                                                    <TextBlock x:Name="Tab1HomeText" Text="내 PC (홈) 열기" FontSize="13" />
+                                                    <TextBlock x:Name="Tab1HomeText" Text="기본 드라이브 열기" FontSize="13" />
                                                 </RadioButton>
                                                 <RadioButton x:Name="Tab1StartupRestore" GroupName="Tab1Startup" MinHeight="28" Padding="8,4,0,0">
                                                     <TextBlock x:Name="Tab1RestoreText" Text="마지막 세션 복원" FontSize="13" />
@@ -642,7 +642,7 @@
                                                 <TextBlock x:Name="Tab2Label" Text="오른쪽 탐색기" FontSize="13" FontWeight="SemiBold"
                                                            Foreground="{ThemeResource SpanTextPrimaryBrush}" />
                                                 <RadioButton x:Name="Tab2StartupHome" GroupName="Tab2Startup" IsChecked="True" MinHeight="28" Padding="8,4,0,0">
-                                                    <TextBlock x:Name="Tab2HomeText" Text="내 PC (홈) 열기" FontSize="13" />
+                                                    <TextBlock x:Name="Tab2HomeText" Text="기본 드라이브 열기" FontSize="13" />
                                                 </RadioButton>
                                                 <RadioButton x:Name="Tab2StartupRestore" GroupName="Tab2Startup" MinHeight="28" Padding="8,4,0,0">
                                                     <TextBlock x:Name="Tab2RestoreText" Text="마지막 세션 복원" FontSize="13" />

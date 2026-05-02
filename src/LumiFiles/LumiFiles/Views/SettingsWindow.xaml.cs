@@ -53,6 +53,9 @@ namespace LumiFiles.Views
 
         private const int WM_GETMINMAXINFO = 0x0024;
 
+        // S-3.34 재시도: WM_DPICHANGED — 듀얼 모니터에서 다른 DPI 이동 시 발생.
+        private const int WM_DPICHANGED = 0x02E0;
+
         [StructLayout(LayoutKind.Sequential)]
         private struct MINMAXINFO
         {
@@ -288,7 +291,32 @@ namespace LumiFiles.Views
 
         private IntPtr WndProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, IntPtr uIdSubclass, IntPtr dwRefData)
         {
-            if (uMsg == WM_GETMINMAXINFO)
+            if (uMsg == WM_DPICHANGED)
+            {
+                // S-3.34 재시도: DPI 변경 시 권장 RECT로 SetWindowPos 후 region 재계산.
+                try
+                {
+                    if (lParam != IntPtr.Zero)
+                    {
+                        var suggested = Marshal.PtrToStructure<Helpers.NativeMethods.RECT>(lParam);
+                        Helpers.NativeMethods.SetWindowPos(
+                            hWnd, IntPtr.Zero,
+                            suggested.Left, suggested.Top,
+                            suggested.Right - suggested.Left,
+                            suggested.Bottom - suggested.Top,
+                            Helpers.NativeMethods.SWP_NOZORDER | Helpers.NativeMethods.SWP_NOACTIVATE);
+                    }
+                    DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+                        () => { if (!_isClosed) ApplyRoundedWindowRegion(); });
+                    Helpers.DebugLogger.Log($"[SettingsWindow] WM_DPICHANGED: dpi={(int)wParam & 0xFFFF}");
+                }
+                catch (Exception ex)
+                {
+                    Helpers.DebugLogger.Log($"[SettingsWindow] WM_DPICHANGED error: {ex.Message}");
+                }
+                return IntPtr.Zero;
+            }
+            else if (uMsg == WM_GETMINMAXINFO)
             {
                 // Defensive: even though IsMaximizable=false, lock the max
                 // size to the work area to prevent any accidental coverage
@@ -343,7 +371,9 @@ namespace LumiFiles.Views
                 // Border outline sitting at the actual visible window edge,
                 // making the gradient hairline read as a sharp continuous
                 // line at the corners. Pattern lifted from DragShelf.
-                int radiusPx = (int)Math.Round(18 * scale);
+                // S-3.34 (incremental fix #1): Math.Round → Math.Floor — fractional DPI 자글거림 제거.
+                int radiusPx = (int)Math.Floor(18 * scale);
+                if (radiusPx < 1) radiusPx = 1;
 
                 IntPtr rgn = Helpers.NativeMethods.CreateRoundRectRgn(
                     0, 0, widthPx + 1, heightPx + 1,

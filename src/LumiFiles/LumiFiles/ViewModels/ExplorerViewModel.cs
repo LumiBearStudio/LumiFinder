@@ -50,6 +50,20 @@ namespace LumiFiles.ViewModels
         public FolderViewModel? CurrentFolder => Columns.LastOrDefault();
 
         /// <summary>
+        /// Miller Column 스왑(Remove → Delay → Insert)이 시작되기 직전에 발생.
+        /// MainWindow는 이 이벤트를 구독하여 ItemsControl.MinWidth를 현재 ActualWidth로 잠금
+        /// → Remove로 인한 ScrollViewer ExtentWidth 축소를 방지 → 스크롤 자동 클램프 차단.
+        /// 화살표 키로 형제 폴더 간 이동 시 우측 컬럼이 사라졌다 나타나면서 스크롤이
+        /// 좌→우로 점프하던 시각적 흔들림(Stage S-3.33 이전)을 제거하기 위함.
+        /// </summary>
+        public event Action? ColumnSwapStarting;
+
+        /// <summary>
+        /// Miller Column 스왑이 완료된 직후 발생. MainWindow는 ItemsControl.MinWidth 잠금을 해제.
+        /// </summary>
+        public event Action? ColumnSwapCompleted;
+
+        /// <summary>
         /// 현재 표시할 항목 리스트 (Details/Icon 모드용)
         /// </summary>
         public ObservableCollection<FileSystemViewModel> CurrentItems =>
@@ -1483,12 +1497,26 @@ namespace LumiFiles.ViewModels
                     // Replace notification은 WinUI ItemsControl에서 ListView tear-down/build-up을
                     // 한 프레임 안에 강제 → virtualizer race → Microsoft.UI.Xaml.dll native 크래시.
                     // rc2: Task.Yield() → Task.Delay(32)로 최소 2 프레임 경계 확보 (Yield는 queue 양보만).
-                    Columns.RemoveAt(nextIndex);
-                    await Task.Delay(32);
-                    if (token.IsCancellationRequested) return;
-                    if (Columns.IndexOf(parentFolder) != parentIndex) return;
-                    if (parentFolder.SelectedChild != selectedFolder) return;
-                    Columns.Insert(nextIndex, selectedFolder);
+                    //
+                    // S-3.33 (Scroll-stable column swap):
+                    //   ColumnSwapStarting/Completed 이벤트로 MainWindow에 스왑 구간을 알려
+                    //   ItemsControl.MinWidth를 잠가 Remove → 32ms Delay → Insert 동안
+                    //   ScrollViewer ExtentWidth가 축소되어 HorizontalOffset이 자동
+                    //   클램프되는 현상을 방지. 스왑 후 잠금 해제로 정상 동작 복구.
+                    ColumnSwapStarting?.Invoke();
+                    try
+                    {
+                        Columns.RemoveAt(nextIndex);
+                        await Task.Delay(32);
+                        if (token.IsCancellationRequested) return;
+                        if (Columns.IndexOf(parentFolder) != parentIndex) return;
+                        if (parentFolder.SelectedChild != selectedFolder) return;
+                        Columns.Insert(nextIndex, selectedFolder);
+                    }
+                    finally
+                    {
+                        ColumnSwapCompleted?.Invoke();
+                    }
                 }
                 else
                 {

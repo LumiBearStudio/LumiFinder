@@ -20,12 +20,13 @@
          ============================================================ -->
     <Grid x:Name="WallpaperRoot">
         <Rectangle Fill="{ThemeResource LumiWallpaperBaseBrush}"/>
+        <!-- S-3.34 Tier 2 (rev 2): BorderThickness 1.5 → 2. -->
         <Border x:Name="WindowFrame"
                 CornerRadius="{StaticResource LumiWindowCornerRadius}"
                 Margin="{StaticResource LumiWindowPadding}"
                 Background="{ThemeResource LumiWindowFrameBrush}"
                 BorderBrush="{ThemeResource LumiWindowHairlineBrush}"
-                BorderThickness="1"
+                BorderThickness="2"
                 UseLayoutRounding="True">
             <Grid x:Name="RootGrid" Background="Transparent">
                 <Grid.ColumnDefinitions>

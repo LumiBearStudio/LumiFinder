@@ -76,10 +76,40 @@ namespace LumiFiles.ViewModels
         #region Tab Management
 
         /// <summary>
-        /// Add a new Home tab and switch to it.
+        /// Add a new tab opening the Windows system drive (typically C:\) and
+        /// switch to it. Stage S-3.33: replaces the legacy Home dashboard tab
+        /// — the Home view is no longer the default landing experience.
+        /// Falls back to a Home tab only if the system drive can't be resolved.
         /// </summary>
         public void AddNewTab()
         {
+            var systemDrive = System.IO.Path.GetPathRoot(Environment.SystemDirectory);
+            if (!string.IsNullOrEmpty(systemDrive) && System.IO.Directory.Exists(systemDrive))
+            {
+                var driveName = systemDrive.TrimEnd('\\', '/');
+                if (string.IsNullOrEmpty(driveName)) driveName = systemDrive;
+
+                var rootD = new FolderItem { Name = "PC", Path = "PC" };
+                var explorerD = new ExplorerViewModel(rootD, _fileService);
+                // Default new-tab view mode = Miller Columns (matches startup default).
+                explorerD.EnableAutoNavigation = ShouldAutoNavigate(ViewMode.MillerColumns);
+
+                var driveTab = new TabItem
+                {
+                    Header = driveName,
+                    Path = systemDrive,
+                    ViewMode = ViewMode.MillerColumns,
+                    IconSize = ViewMode.IconMedium,
+                    IsActive = false,
+                    Explorer = explorerD
+                };
+                Tabs.Add(driveTab);
+                SwitchToTab(Tabs.Count - 1);
+                Helpers.DebugLogger.Log($"[MainViewModel] New tab added → {systemDrive} (total: {Tabs.Count})");
+                return;
+            }
+
+            // Fallback — system drive unavailable, open legacy Home.
             var root = new FolderItem { Name = "PC", Path = "PC" };
             var explorer = new ExplorerViewModel(root, _fileService);
             explorer.EnableAutoNavigation = ShouldAutoNavigate(ViewMode.Home);
@@ -95,7 +125,7 @@ namespace LumiFiles.ViewModels
             };
             Tabs.Add(tab);
             SwitchToTab(Tabs.Count - 1);
-            Helpers.DebugLogger.Log($"[MainViewModel] New tab added (total: {Tabs.Count})");
+            Helpers.DebugLogger.Log($"[MainViewModel] New tab added (Home fallback, total: {Tabs.Count})");
         }
 
         /// <summary>
@@ -668,17 +698,21 @@ namespace LumiFiles.ViewModels
                     // Fallback to Home if path invalid
                     goto case 0;
 
-                case 0: // Default — open Desktop (was: Home dashboard, removed per UX redesign)
+                case 0: // Default — open the system drive (Windows install drive, e.g. C:\).
+                        // Was: Desktop (Stage S-3.32 retired), originally: Home dashboard.
                 default:
                 {
-                    // Resolve the user's Desktop path so each profile lands on its own
-                    // Desktop folder. Falls back to the original Home behavior only if the
-                    // Desktop path can't be resolved or doesn't exist (extremely rare).
-                    var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                    if (!string.IsNullOrEmpty(desktopPath) && System.IO.Directory.Exists(desktopPath))
+                    // Resolve the drive letter Windows is installed on (typically "C:\")
+                    // via Environment.SystemDirectory ("C:\Windows\system32"). This handles
+                    // non-default installs (D:\Windows etc.) by following the actual install
+                    // root rather than hardcoding "C:\".
+                    var systemDrive = System.IO.Path.GetPathRoot(Environment.SystemDirectory);
+                    if (!string.IsNullOrEmpty(systemDrive) && System.IO.Directory.Exists(systemDrive))
                     {
-                        var deskName = System.IO.Path.GetFileName(desktopPath.TrimEnd('\\'));
-                        if (string.IsNullOrEmpty(deskName)) deskName = desktopPath;
+                        // Drive label: "C:" (without trailing backslash) so the tab header
+                        // reads "C:" not "C:\".
+                        var driveName = systemDrive.TrimEnd('\\', '/');
+                        if (string.IsNullOrEmpty(driveName)) driveName = systemDrive;
 
                         var rootD = new FolderItem { Name = "PC", Path = "PC" };
                         var explorerD = new ExplorerViewModel(rootD, _fileService);
@@ -686,8 +720,8 @@ namespace LumiFiles.ViewModels
 
                         return new TabItem
                         {
-                            Header = deskName,
-                            Path = desktopPath,
+                            Header = driveName,
+                            Path = systemDrive,
                             ViewMode = startupViewMode,
                             IconSize = ViewMode.IconMedium,
                             IsActive = false,
@@ -695,7 +729,7 @@ namespace LumiFiles.ViewModels
                         };
                     }
 
-                    // Fallback (Desktop unavailable) — keep legacy Home so the app still launches.
+                    // Fallback (system drive unresolvable) — keep legacy Home so the app still launches.
                     var root0 = new FolderItem { Name = "PC", Path = "PC" };
                     var explorer0 = new ExplorerViewModel(root0, _fileService);
                     explorer0.EnableAutoNavigation = ShouldAutoNavigate(ViewMode.Home);

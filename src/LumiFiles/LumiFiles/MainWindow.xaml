@@ -28,12 +28,15 @@
         <!-- Window inner frame: rounded 24px, padded so wallpaper shows on left/top/bottom (right flush).
              Background semi-transparent (LumiWindowFrameBrush ~0.88-0.94) lets a hint of wallpaper
              bleed through; the sidebar sits floating over this frame at LumiSidebarMargin (6 sides). -->
+        <!-- S-3.34 Tier 2 (rev 2): BorderThickness 1 → 2. fractional DPI(125/175%)
+             에서 GDI clip의 binary stair-step을 XAML AA 스트로크 폭이 시각적으로
+             가려주도록 AA 영역을 더 넓힘. 1.5에서 2로 추가 증가. -->
         <Border x:Name="WindowFrame"
                 CornerRadius="{StaticResource LumiWindowCornerRadius}"
                 Margin="{StaticResource LumiWindowPadding}"
                 Background="{ThemeResource LumiWindowFrameBrush}"
                 BorderBrush="{ThemeResource LumiWindowHairlineBrush}"
-                BorderThickness="1"
+                BorderThickness="2"
                 UseLayoutRounding="True">
     <Grid x:Name="RootGrid" Background="Transparent">
         <Grid.Resources>
