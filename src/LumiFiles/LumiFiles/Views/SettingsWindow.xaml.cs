@@ -242,7 +242,9 @@ namespace LumiFiles.Views
         /// <summary>
         /// Resize the window to the design size (1000 x 750 DIP) and center
         /// over the given owner window. Called by SettingsWindowHost after
-        /// Activate() so the OS has finalized DPI.
+        /// Activate() so the OS has finalized DPI. The computed rect is
+        /// clamped to the target monitor's work area so the title bar is
+        /// always reachable (matches MainWindow.RestoreWindowPlacement).
         /// </summary>
         public void ResizeAndCenterOver(Window owner)
         {
@@ -274,6 +276,49 @@ namespace LumiFiles.Views
                     x = 100; y = 100;
                 }
 
+                // ── Monitor work-area nudge ──
+                // 정책: 설정창은 항상 owner(메인 창) 중앙에 떠야 한다. 단 그 결과가
+                // 작업영역을 벗어나 타이틀바가 잡히지 않으면 owner-centered 좌표를
+                // 작업영역 안으로 밀어 넣는다 (모니터 중앙으로 점프시키지 않음 —
+                // 메인 창이 가장자리에 있을 때 설정창이 멀어지는 걸 방지).
+                var targetRect = new Helpers.NativeMethods.RECT
+                {
+                    Left = x, Top = y, Right = x + w, Bottom = y + h
+                };
+                var hMonitor = Helpers.NativeMethods.MonitorFromRect(
+                    ref targetRect, Helpers.NativeMethods.MONITOR_DEFAULTTONEAREST);
+                if (hMonitor != IntPtr.Zero)
+                {
+                    var monInfo = new Helpers.NativeMethods.MONITORINFO();
+                    monInfo.cbSize = Marshal.SizeOf<Helpers.NativeMethods.MONITORINFO>();
+                    if (Helpers.NativeMethods.GetMonitorInfo(hMonitor, ref monInfo))
+                    {
+                        var work = monInfo.rcWork;
+                        int workW = work.Right - work.Left;
+                        int workH = work.Bottom - work.Top;
+                        int origX = x, origY = y, origW = w, origH = h;
+
+                        // 1) 작업영역보다 크면 축소
+                        if (w > workW) w = workW;
+                        if (h > workH) h = workH;
+
+                        // 2) 위치 클램프: 창이 작업영역 안에 완전히 들어오도록 nudge
+                        //    (size를 먼저 줄였으므로 항상 fit 가능)
+                        if (x + w > work.Right)  x = work.Right  - w;
+                        if (y + h > work.Bottom) y = work.Bottom - h;
+                        if (x < work.Left)       x = work.Left;
+                        if (y < work.Top)        y = work.Top;
+
+                        if (origX != x || origY != y || origW != w || origH != h)
+                        {
+                            Helpers.DebugLogger.Log(
+                                $"[SettingsWindow] nudged into work area " +
+                                $"{work.Left},{work.Top} {workW}x{workH}: " +
+                                $"({origX},{origY} {origW}x{origH}) → ({x},{y} {w}x{h})");
+                        }
+                    }
+                }
+
                 Helpers.NativeMethods.SetWindowPos(
                     _hwnd, IntPtr.Zero, x, y, w, h,
                     Helpers.NativeMethods.SWP_NOZORDER | Helpers.NativeMethods.SWP_NOACTIVATE);
@@ -287,6 +332,45 @@ namespace LumiFiles.Views
         private void OnCaptionCloseClick(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        // Hover state for the custom-shaped close button. Mirrors the
+        // MainWindow pattern.
+        private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush _captionCloseHoverBrush
+            = new(Windows.UI.Color.FromArgb(0xFF, 0xE8, 0x11, 0x23));
+        private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush _captionCloseHoverGlyphBrush
+            = new(Microsoft.UI.Colors.White);
+
+        private void OnCaptionClosePointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            try
+            {
+                if (CaptionCloseHoverBg != null) CaptionCloseHoverBg.Background = _captionCloseHoverBrush;
+                if (CaptionCloseGlyph != null)  CaptionCloseGlyph.Foreground  = _captionCloseHoverGlyphBrush;
+            }
+            catch { }
+        }
+
+        private void OnCaptionClosePointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            try
+            {
+                if (CaptionCloseHoverBg != null)
+                    CaptionCloseHoverBg.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                if (CaptionCloseGlyph != null)
+                {
+                    if (Application.Current.Resources.ThemeDictionaries.TryGetValue(
+                            this.Content is FrameworkElement fe && fe.ActualTheme == ElementTheme.Light ? "Light" : "Dark",
+                            out var dictObj)
+                        && dictObj is ResourceDictionary dict
+                        && dict.TryGetValue("LumiTextTertiaryBrush", out var brushObj)
+                        && brushObj is Microsoft.UI.Xaml.Media.SolidColorBrush brush)
+                    {
+                        CaptionCloseGlyph.Foreground = brush;
+                    }
+                }
+            }
+            catch { }
         }
 
         private IntPtr WndProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, IntPtr uIdSubclass, IntPtr dwRefData)

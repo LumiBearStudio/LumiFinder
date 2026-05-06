@@ -687,17 +687,13 @@ public sealed partial class SettingsModeView : UserControl
             AnimationsEnabledDesc.Text = _loc.Get("Settings_AnimationsDesc");
             FontLabel.Text = _loc.Get("Settings_Font");
             FontDesc.Text = _loc.Get("Settings_FontDesc");
-            // Custom themes
-            CustomThemesLabel.Text = _loc.Get("Settings_CustomThemes");
-            CustomThemesDesc.Text = _loc.Get("Settings_CustomThemesDesc");
             CustomAccentLabel.Text = _loc.Get("Settings_CustomAccent");
             CustomAccentDesc.Text = _loc.Get("Settings_CustomAccentDesc");
             AccentOverrideBadgeText.Text = _loc.Get("Settings_AccentOverrideBadge");
             ResetAccentText.Text = _loc.Get("Settings_ResetAccent");
-            // Stage S-3.32: removed 8 custom theme description text fields
-            // (DraculaDescText, TokyoNightDescText, CatppuccinDescText,
-            // GruvboxDescText, SolarizedLightDescText, NordDescText,
-            // OneDarkDescText, MonokaiDescText) along with their RadioButtons.
+            // Custom themes (Solarized/Nord/OneDark/Dracula/TokyoNight/Catppuccin/
+            // Gruvbox/Monokai) and the CustomThemes section heading were removed —
+            // only System/Light/Dark are exposed.
 
             // Browsing
             BrowsingTitle.Text = _loc.Get("Settings_Browsing");

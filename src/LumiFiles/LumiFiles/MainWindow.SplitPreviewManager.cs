@@ -1100,6 +1100,7 @@ namespace LumiFiles
             {
                 var accentBrush = GetThemeBrush("SpanAccentBrush");
                 var defaultBrush = GetThemeBrush("SpanTextSecondaryBrush");
+                var pillDefaultBrush = GetThemeBrush("LumiTextPrimaryBrush");
 
                 // Stage S-2: single LumiToolbar's PreviewToggleIcon covers both modes.
                 // In split view, follow the active pane's preview-enabled flag so the
@@ -1107,7 +1108,14 @@ namespace LumiFiles
                 bool isActive = (ViewModel.IsSplitViewEnabled && ViewModel.ActivePane == ActivePane.Right)
                     ? ViewModel.IsRightPreviewEnabled
                     : ViewModel.IsLeftPreviewEnabled;
-                PreviewToggleIcon.Foreground = isActive ? accentBrush : defaultBrush;
+
+                // Address-bar toolbar icon (visible only in single-pane mode)
+                if (PreviewToggleIcon != null)
+                    PreviewToggleIcon.Foreground = isActive ? accentBrush : defaultBrush;
+
+                // Pill-bar icon (LumiToolbar; visible in both single and split modes)
+                if (LumiPreviewIcon != null)
+                    LumiPreviewIcon.Foreground = isActive ? accentBrush : pillDefaultBrush;
             }
             catch (Exception ex)
             {
@@ -1226,8 +1234,16 @@ namespace LumiFiles
             {
                 var accentBrush = GetThemeBrush("SpanAccentBrush");
                 var defaultBrush = GetThemeBrush("SpanTextSecondaryBrush");
+                var pillDefaultBrush = GetThemeBrush("LumiTextPrimaryBrush");
+                bool isActive = ViewModel.IsSplitViewEnabled;
 
-                SplitViewIcon.Foreground = ViewModel.IsSplitViewEnabled ? accentBrush : defaultBrush;
+                // Address-bar toolbar icon (visible only when not in special modes)
+                if (SplitViewIcon != null)
+                    SplitViewIcon.Foreground = isActive ? accentBrush : defaultBrush;
+
+                // Pill-bar icon (LumiToolbar; always visible)
+                if (LumiSplitIcon != null)
+                    LumiSplitIcon.Foreground = isActive ? accentBrush : pillDefaultBrush;
             }
             catch (Exception ex)
             {

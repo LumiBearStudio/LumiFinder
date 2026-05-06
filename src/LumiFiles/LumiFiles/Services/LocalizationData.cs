@@ -325,12 +325,6 @@ namespace LumiFiles.Services
             ("Settings_System", "System", "시스템", "システム", "系统", "系統", "System", "Sistema", "Système", "Sistema"),
             ("Settings_Light", "Light", "라이트", "ライト", "浅色", "淺色", "Hell", "Claro", "Clair", "Claro"),
             ("Settings_Dark", "Dark", "다크", "ダーク", "深色", "深色", "Dunkel", "Oscuro", "Sombre", "Escuro"),
-            ("Settings_ProThemes", "Pro-only themes", "Pro 전용 테마", "Pro専用テーマ", "Pro 专属主题", "Pro 專屬佈景主題", "Pro-exklusive Designs", "Temas exclusivos de Pro", "Thèmes réservés à Pro", "Temas exclusivos Pro"),
-            ("Settings_ProThemesDesc", "Unlock premium themes for developers", "개발자를 위한 프리미엄 테마 잠금 해제", "開発者向けプレミアムテーマのロック解除", "解锁面向开发者的高级主题", "解鎖面向開發者的進階佈景主題", "Premium-Designs für Entwickler freischalten", "Desbloquear temas premium para desarrolladores", "Débloquer les thèmes premium pour développeurs", "Desbloquear temas premium para desenvolvedores"),
-            ("Settings_MidnightGoldDesc", "Black & Gold accent", "블랙 & 골드 포인트", "ブラック＆ゴールドアクセント", "黑色 & 金色点缀", "黑色 & 金色重點", "Schwarz & Gold-Akzent", "Acento negro y dorado", "Accent noir et or", "Destaque preto e dourado"),
-            ("Settings_CyberpunkDesc", "Neon purple & cyan", "네온 퍼플 & 사이언", "ネオンパープル＆シアン", "霓虹紫 & 青色", "霓虹紫 & 青色", "Neon-Lila & Cyan", "Púrpura neón y cian", "Violet néon et cyan", "Roxo neon e ciano"),
-            ("Settings_NordicDesc", "Calm blue-gray", "차분한 블루 그레이", "落ち着いたブルーグレー", "沉静蓝灰", "沉靜藍灰", "Ruhiges Blaugrau", "Gris azulado tranquilo", "Bleu-gris apaisant", "Azul-cinza calmo"),
-            ("Settings_UpgradeProThemes", "Upgrade to Pro and unlock", "Pro로 업그레이드하고 잠금 해제", "Proにアップグレードしてロック解除", "升级到 Pro 并解锁", "升級到 Pro 並解鎖", "Auf Pro upgraden und freischalten", "Actualizar a Pro y desbloquear", "Passer à Pro et débloquer", "Atualizar para Pro e desbloquear"),
             ("Settings_LayoutDensity", "Layout density", "레이아웃 밀도", "レイアウト密度", "布局密度", "版面配置密度", "Layoutdichte", "Densidad del diseño", "Densité de la disposition", "Densidade do layout"),
             ("Settings_LayoutDensityDesc", "Adjust spacing between list items", "목록 항목 간격 조절", "リスト項目の間隔調整", "调整列表项之间的间距", "調整清單項目之間的間距", "Abstand zwischen Listenelementen anpassen", "Ajustar espaciado entre elementos", "Ajuster l'espacement entre les éléments", "Ajustar espaçamento entre itens da lista"),
             ("Settings_ListWidth", "List view item width", "리스트 뷰 아이템 너비", "リストビュー項目の幅", "列表视图项目宽度", "清單檢視項目寬度", "Listenansicht-Elementbreite", "Ancho de elementos en vista de lista", "Largeur des éléments en vue liste", "Largura dos itens na exibição de lista"),
@@ -615,21 +609,11 @@ namespace LumiFiles.Services
             ("Op_UndoItemNotFound", "Cannot undo: item not found at {0}", "되돌리기 불가: {0}에서 항목을 찾을 수 없음", "元に戻せません: {0}に項目が見つかりません", "无法撤消: 在 {0} 找不到项目", "無法復原: 在 {0} 找不到項目", "Rückgängig nicht möglich: Element nicht gefunden bei {0}", "No se puede deshacer: elemento no encontrado en {0}", "Impossible d'annuler : élément introuvable à {0}", "Não é possível desfazer: item não encontrado em {0}"),
             ("Op_UndoNameTaken", "Cannot undo: name '{0}' is already taken", "되돌리기 불가: '{0}' 이름이 이미 사용 중", "元に戻せません: 名前「{0}」は既に使用中", "无法撤消: 名称\u201C{0}\u201D已被占用", "無法復原: 名稱「{0}」已被使用", "Rückgängig nicht möglich: Name '{0}' ist bereits vergeben", "No se puede deshacer: el nombre '{0}' ya está en uso", "Impossible d'annuler : le nom « {0} » est déjà utilisé", "Não é possível desfazer: nome '{0}' já está em uso"),
 
-            // ── Settings - Custom Themes section ─────────────────────────────
-            ("Settings_CustomThemes", "Custom Themes", "커스텀 테마", "カスタムテーマ", "自定义主题", "自訂主題", "Benutzerdefinierte Designs", "Temas personalizados", "Thèmes personnalisés", "Temas personalizados"),
-            ("Settings_CustomThemesDesc", "Popular developer color themes", "인기 개발자 컬러 테마", "人気の開発者カラーテーマ", "热门开发者配色方案", "熱門開發者配色方案", "Beliebte Entwickler-Farbthemen", "Temas de color populares para desarrolladores", "Thèmes de couleurs populaires pour développeurs", "Temas de cores populares para desenvolvedores"),
+            // ── Settings - Custom Accent (Light/Dark/System only — custom themes removed) ─
             ("Settings_CustomAccent", "Custom accent color", "커스텀 액센트 컬러", "カスタムアクセントカラー", "自定义强调色", "自訂輔色", "Benutzerdefinierte Akzentfarbe", "Color de acento personalizado", "Couleur d'accent personnalisée", "Cor de destaque personalizada"),
             ("Settings_CustomAccentDesc", "Override only the accent color of the selected theme", "선택한 테마의 액센트 컬러만 원하는 색으로 덮어씁니다", "選択中のテーマのアクセントカラーのみ上書きします", "仅覆盖所选主题的强调色", "僅覆蓋所選佈景主題的輔色", "Überschreibt nur die Akzentfarbe des ausgewählten Designs", "Sobrescribe solo el color de acento del tema seleccionado", "Remplace uniquement la couleur d'accent du thème sélectionné", "Substitui apenas a cor de destaque do tema selecionado"),
             ("Settings_AccentOverrideBadge", "Custom accent active", "커스텀 액센트 적용 중", "カスタムアクセント適用中", "自定义强调色已启用", "自訂輔色使用中", "Benutzerdefinierter Akzent aktiv", "Acento personalizado activo", "Accent personnalisé actif", "Destaque personalizado ativo"),
             ("Settings_ResetAccent", "Reset", "초기화", "リセット", "重置", "重設", "Zurücksetzen", "Restablecer", "Réinitialiser", "Redefinir"),
-            ("Theme_DraculaDesc", "Purple dark classic", "퍼플 다크 클래식", "パープルダーククラシック", "紫色暗色经典", "紫色暗色經典", "Lila-dunkler Klassiker", "Púrpura oscuro clásico", "Violet foncé classique", "Roxo escuro clássico"),
-            ("Theme_TokyoNightDesc", "Navy + cyan accent", "네이비 + 시안 포인트", "ネイビー＋シアンアクセント", "海军蓝+青色", "海軍藍+青色", "Navy + Cyan-Akzent", "Azul marino + cian", "Marine + accent cyan", "Azul marinho + ciano"),
-            ("Theme_CatppuccinDesc", "Warm pastel dark", "따뜻한 파스텔 다크", "暖色パステルダーク", "暖色柔和暗色", "暖色柔和暗色", "Warmes Pastell-Dunkel", "Pastel oscuro cálido", "Pastel sombre chaud", "Pastel escuro quente"),
-            ("Theme_GruvboxDesc", "Retro warm earth tone", "레트로 웜 어스톤", "レトロウォームアーストーン", "复古暖色调", "復古暖色調", "Retro warmer Erdton", "Tono tierra cálido retro", "Rétro tons chauds terreux", "Tom terroso quente retrô"),
-            ("Theme_SolarizedLightDesc", "Solarized", "솔라라이즈드", "ソラライズド", "日光化", "日光化", "Solarisiert", "Solarizado", "Solarisé", "Solarizado"),
-            ("Theme_NordDesc", "Nord", "노드", "ノルド", "北极", "北極", "Nord", "Nord", "Nord", "Nord"),
-            ("Theme_OneDarkDesc", "One Dark", "원 다크", "ワンダーク", "一暗色", "一暗色", "One Dark", "One Dark", "One Dark", "One Dark"),
-            ("Theme_MonokaiDesc", "Monokai", "모노카이", "モノカイ", "暗色经典", "暗色經典", "Monokai", "Monokai", "Monokai", "Monokai"),
 
             // ── Settings - Undo count display ────────────────────────────────
             ("Settings_UndoCount", "{0} items", "{0}개", "{0}件", "{0} 个", "{0} 個", "{0} Einträge", "{0} elementos", "{0} éléments", "{0} itens"),

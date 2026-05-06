@@ -137,15 +137,20 @@
          each sub-pixel ends up at ~40% of the source alpha, so the
          corner reads ~60% fainter than the straight edges.
          The vertical gradient sidesteps that by giving the TOP edge a
-         strong 22% highlight (still smooth at the corners because each
+         highlight (still smooth at the corners because each
          sub-pixel along the curve picks up the gradient's actual sample
          value, not a divided-down version of a flat alpha) while
          tapering to subtle near-black at the bottom for a "card floating
-         on glass" shadow hint. Net result: 1 px BorderThickness reads
-         continuous around the entire rounded outline. -->
+         on glass" shadow hint.
+         S-3.37: top alpha 0x38 (22%) → 0x1C (11%). The original 22% was
+         tuned for BorderThickness=1; S-3.34 doubled the thickness to 2
+         for fractional-DPI AA, which doubled the visual coverage of the
+         top stop and read as a bright white line above the title bar.
+         Halving the top alpha rebalances brightness to the pre-S-3.34
+         look while keeping the corner-continuity benefit of a gradient. -->
     <LinearGradientBrush x:Key="LumiWindowHairlineBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#38FFFFFF" Offset="0.00" />   <!-- top highlight  ~22% white -->
-        <GradientStop Color="#14FFFFFF" Offset="0.45" />   <!-- mid             ~8%  white -->
+        <GradientStop Color="#1CFFFFFF" Offset="0.00" />   <!-- top highlight  ~11% white -->
+        <GradientStop Color="#0AFFFFFF" Offset="0.45" />   <!-- mid             ~4%  white -->
         <GradientStop Color="#08000000" Offset="1.00" />   <!-- bottom shadow   ~3%  black -->
     </LinearGradientBrush>
 

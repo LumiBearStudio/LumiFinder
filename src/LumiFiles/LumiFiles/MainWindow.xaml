@@ -597,8 +597,11 @@
                             Foreground="{ThemeResource LumiTextPrimaryBrush}"
                             ToolTipService.ToolTip="Preview pane" Click="OnPreviewToggleClick">
                         <!-- ri-eye-line (RemixIcons) — cleaner than the Segoe MDL2 'View'
-                             eye glyph (E890) that read awkwardly in the pill bar. -->
-                        <FontIcon FontFamily="{StaticResource RemixIcons}"
+                             eye glyph (E890) that read awkwardly in the pill bar.
+                             x:Name added so UpdatePreviewButtonState can tint it
+                             with SpanAccentBrush when preview is active. -->
+                        <FontIcon x:Name="LumiPreviewIcon"
+                                  FontFamily="{StaticResource RemixIcons}"
                                   Glyph="{StaticResource Icon_Preview}" FontSize="14"/>
                     </Button>
                     <Button Width="24" Height="24" Padding="0" BorderThickness="0"
@@ -608,8 +611,11 @@
                             ToolTipService.ToolTip="Split view" Click="OnSplitViewToggleClick">
                         <!-- ri-layout-column-fill (RemixIcons) — two clean side-by-side
                              columns. Replaces Segoe MDL2 'DockLeft' (E78D) which only
-                             showed a single docked panel and didn't read as 'split'. -->
-                        <FontIcon FontFamily="{StaticResource RemixIcons}"
+                             showed a single docked panel and didn't read as 'split'.
+                             x:Name added so UpdateSplitViewButtonState can tint it
+                             with SpanAccentBrush when split view is on. -->
+                        <FontIcon x:Name="LumiSplitIcon"
+                                  FontFamily="{StaticResource RemixIcons}"
                                   Glyph="{StaticResource Icon_SplitView}" FontSize="14"/>
                     </Button>
                 </StackPanel>
@@ -712,22 +718,29 @@
                               FontFamily="Segoe Fluent Icons"
                               Foreground="{ThemeResource LumiTextTertiaryBrush}"/>
                 </Button>
-                <!-- Close uses a custom hover style: red bg + white glyph -->
+                <!-- Close: hover red drawn by an explicit Border child with
+                     CornerRadius="0,16,0,0" so it follows the WindowFrame
+                     inner curve. Button keeps the default template; hover
+                     state is toggled in code-behind via PointerEntered/
+                     PointerExited (avoids inline-ControlTemplate XAML
+                     compiler edge-cases that produced startup InvalidCast
+                     in WinUI 3). -->
                 <Button x:Name="CaptionCloseButton"
                         Width="46" Height="32" Padding="0"
                         Background="Transparent" BorderThickness="0"
-                        CornerRadius="0"
                         ToolTipService.ToolTip="닫기"
-                        Click="OnCaptionCloseClick">
-                    <Button.Resources>
-                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#E81123"/>
-                        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#F1707A"/>
-                        <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White"/>
-                        <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White"/>
-                    </Button.Resources>
-                    <FontIcon Glyph="&#xE8BB;" FontSize="10"
-                              FontFamily="Segoe Fluent Icons"
-                              Foreground="{ThemeResource LumiTextTertiaryBrush}"/>
+                        Click="OnCaptionCloseClick"
+                        PointerEntered="OnCaptionClosePointerEntered"
+                        PointerExited="OnCaptionClosePointerExited">
+                    <Grid>
+                        <Border x:Name="CaptionCloseHoverBg"
+                                Background="Transparent"
+                                CornerRadius="0,16,0,0"/>
+                        <FontIcon x:Name="CaptionCloseGlyph"
+                                  Glyph="&#xE8BB;" FontSize="10"
+                                  FontFamily="Segoe Fluent Icons"
+                                  Foreground="{ThemeResource LumiTextTertiaryBrush}"/>
+                    </Grid>
                 </Button>
             </StackPanel>
 

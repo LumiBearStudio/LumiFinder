@@ -62,24 +62,28 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Close button (custom hover: red bg + white glyph) -->
+                    <!-- Close: hover red drawn by a Border child with
+                         CornerRadius="0,16,0,0" matching the WindowFrame
+                         inner curve. Hover state toggled in code-behind
+                         (avoids inline-ControlTemplate compiler issues). -->
                     <Button x:Name="CaptionCloseButton"
                             Grid.Column="1"
                             Width="46" Height="32" Padding="0"
                             Background="Transparent" BorderThickness="0"
-                            CornerRadius="0"
                             VerticalAlignment="Top"
                             ToolTipService.ToolTip="닫기"
-                            Click="OnCaptionCloseClick">
-                        <Button.Resources>
-                            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#E81123"/>
-                            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#F1707A"/>
-                            <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="White"/>
-                            <SolidColorBrush x:Key="ButtonForegroundPressed" Color="White"/>
-                        </Button.Resources>
-                        <FontIcon Glyph="&#xE8BB;" FontSize="10"
-                                  FontFamily="Segoe Fluent Icons"
-                                  Foreground="{ThemeResource LumiTextTertiaryBrush}"/>
+                            Click="OnCaptionCloseClick"
+                            PointerEntered="OnCaptionClosePointerEntered"
+                            PointerExited="OnCaptionClosePointerExited">
+                        <Grid>
+                            <Border x:Name="CaptionCloseHoverBg"
+                                    Background="Transparent"
+                                    CornerRadius="0,16,0,0"/>
+                            <FontIcon x:Name="CaptionCloseGlyph"
+                                      Glyph="&#xE8BB;" FontSize="10"
+                                      FontFamily="Segoe Fluent Icons"
+                                      Foreground="{ThemeResource LumiTextTertiaryBrush}"/>
+                        </Grid>
                     </Button>
                 </Grid>
             </Grid>

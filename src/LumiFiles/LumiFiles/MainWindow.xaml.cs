@@ -1357,6 +1357,9 @@ namespace LumiFiles
                     if (h < 300) h = 300;
 
                     // ── 모니터 영역 검증: 저장된 위치가 화면 밖이면 보정 ──
+                    // 해상도/모니터 구성이 변경되면 저장된 좌표가 현재 작업영역을 벗어나
+                    // 타이틀바가 위쪽으로 잘리거나 모니터 경계에 걸쳐 드래그가 불가능해짐.
+                    // → 창 전체가 작업영역 안에 들어오지 않으면 모니터 중앙으로 재배치.
                     var savedRect = new Helpers.NativeMethods.RECT
                     {
                         Left = x,
@@ -1366,6 +1369,7 @@ namespace LumiFiles
                     };
                     var hMonitor = Helpers.NativeMethods.MonitorFromRect(
                         ref savedRect, Helpers.NativeMethods.MONITOR_DEFAULTTONEAREST);
+                    bool centered = false;
                     if (hMonitor != IntPtr.Zero)
                     {
                         var monInfo = new Helpers.NativeMethods.MONITORINFO();
@@ -1377,26 +1381,63 @@ namespace LumiFiles
                             int workH = work.Bottom - work.Top;
 
                             // 창 크기가 모니터 작업영역보다 크면 축소
-                            if (w > workW) w = workW;
-                            if (h > workH) h = workH;
+                            bool sizeClamped = false;
+                            if (w > workW) { w = workW; sizeClamped = true; }
+                            if (h > workH) { h = workH; sizeClamped = true; }
 
-                            // 교차 영역 계산 — 창이 모니터에 얼마나 걸쳐있는지
-                            int overlapLeft = Math.Max(x, work.Left);
-                            int overlapTop = Math.Max(y, work.Top);
-                            int overlapRight = Math.Min(x + w, work.Right);
-                            int overlapBottom = Math.Min(y + h, work.Bottom);
-                            int overlapArea = Math.Max(0, overlapRight - overlapLeft)
-                                            * Math.Max(0, overlapBottom - overlapTop);
+                            // 타이틀바(상단 ~40 DIP)가 작업영역 안에 완전히 들어와야 드래그 가능.
+                            // 아래 조건 중 하나라도 어긋나면 사용자가 창을 옮길 수 없으므로 재배치.
+                            uint winDpi = Helpers.NativeMethods.GetDpiForWindow(_hwnd);
+                            if (winDpi == 0) winDpi = 96;
+                            int titleBarPx = (int)Math.Ceiling(40.0 * winDpi / 96.0);
 
-                            // 교차 영역이 100px 미만이면 → 모니터 중앙 배치
-                            if (overlapArea < 100 * 100)
+                            bool offScreen =
+                                x < work.Left ||                 // 왼쪽 가장자리가 작업영역 밖
+                                y < work.Top ||                  // 타이틀바가 위쪽으로 잘림
+                                x + w > work.Right ||            // 오른쪽 가장자리가 작업영역 밖
+                                y + titleBarPx > work.Bottom;    // 타이틀바가 아래쪽으로 잘림
+
+                            if (offScreen || sizeClamped)
                             {
                                 x = work.Left + (workW - w) / 2;
                                 y = work.Top + (workH - h) / 2;
-                                Helpers.DebugLogger.Log($"[Window] Off-screen detected, centering on monitor work area: {work.Left},{work.Top} {workW}x{workH}");
+                                centered = true;
+                                Helpers.DebugLogger.Log(
+                                    $"[Window] Saved placement out of bounds (offScreen={offScreen}, sizeClamped={sizeClamped}); " +
+                                    $"centering on monitor work area {work.Left},{work.Top} {workW}x{workH}");
                             }
                         }
                     }
+                    else
+                    {
+                        // 작업영역을 찾지 못함 (저장된 좌표가 어떤 모니터에도 속하지 않음)
+                        // → primary monitor로 폴백 후 중앙 배치.
+                        var primaryRect = new Helpers.NativeMethods.RECT
+                        {
+                            Left = 0, Top = 0, Right = 1, Bottom = 1
+                        };
+                        var hPrimary = Helpers.NativeMethods.MonitorFromRect(
+                            ref primaryRect, Helpers.NativeMethods.MONITOR_DEFAULTTONEAREST);
+                        if (hPrimary != IntPtr.Zero)
+                        {
+                            var monInfo = new Helpers.NativeMethods.MONITORINFO();
+                            monInfo.cbSize = System.Runtime.InteropServices.Marshal.SizeOf<Helpers.NativeMethods.MONITORINFO>();
+                            if (Helpers.NativeMethods.GetMonitorInfo(hPrimary, ref monInfo))
+                            {
+                                var work = monInfo.rcWork;
+                                int workW = work.Right - work.Left;
+                                int workH = work.Bottom - work.Top;
+                                if (w > workW) w = workW;
+                                if (h > workH) h = workH;
+                                x = work.Left + (workW - w) / 2;
+                                y = work.Top + (workH - h) / 2;
+                                centered = true;
+                                Helpers.DebugLogger.Log(
+                                    $"[Window] No monitor matched saved rect; centering on primary work area {work.Left},{work.Top} {workW}x{workH}");
+                            }
+                        }
+                    }
+                    _ = centered; // (디버깅 시 추적용)
 
                     // Win32 SetWindowPos 사용 (물리 픽셀 직접 지정)
                     // AppWindow.MoveAndResize는 DPI 이중적용 버그 있음
@@ -7214,6 +7255,37 @@ namespace LumiFiles
         private void OnCaptionCloseClick(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        // Hover state for the custom-shaped close button. The Border child
+        // (CaptionCloseHoverBg) carries CornerRadius="0,16,0,0" so the red
+        // fill follows the WindowFrame's inner rounded corner instead of
+        // painting over the hairline.
+        private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush _captionCloseHoverBrush
+            = new(Windows.UI.Color.FromArgb(0xFF, 0xE8, 0x11, 0x23));
+        private static readonly Microsoft.UI.Xaml.Media.SolidColorBrush _captionCloseHoverGlyphBrush
+            = new(Microsoft.UI.Colors.White);
+
+        private void OnCaptionClosePointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            try
+            {
+                if (CaptionCloseHoverBg != null) CaptionCloseHoverBg.Background = _captionCloseHoverBrush;
+                if (CaptionCloseGlyph != null)  CaptionCloseGlyph.Foreground  = _captionCloseHoverGlyphBrush;
+            }
+            catch { }
+        }
+
+        private void OnCaptionClosePointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            try
+            {
+                if (CaptionCloseHoverBg != null)
+                    CaptionCloseHoverBg.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                if (CaptionCloseGlyph != null)
+                    CaptionCloseGlyph.Foreground = GetThemeBrush("LumiTextTertiaryBrush");
+            }
+            catch { }
         }
 
         /// <summary>
