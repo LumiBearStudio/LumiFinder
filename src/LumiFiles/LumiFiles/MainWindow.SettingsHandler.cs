@@ -147,6 +147,11 @@ namespace LumiFiles
                 UpdatePreviewButtonState();
                 UpdateSplitViewButtonState();
 
+                // S-3.40: pane indicator 브러시(LumiPaneColumnNameBrush, ListView 선택 등)는
+                // RefreshActivePaneIndicators 가 per-pane scope 에서 brush.Color = ... 로
+                // mutate 하므로 액센트 변경 후 재호출 필요.
+                try { RefreshActivePaneIndicators(); } catch { }
+
                 // S-3.39: view-mode pill (Miller / Details / Icons) was using
                 // the static ThemeBrush helper which keys off Application
                 // RequestedTheme — wrong when user override differs from OS
@@ -523,6 +528,96 @@ namespace LumiFiles
             dict["HyperlinkButtonForeground"] = accentText;
             dict["HyperlinkButtonForegroundPointerOver"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentLight3);
             dict["HyperlinkButtonForegroundPressed"] = accentBrush;
+
+            // ── S-3.40: Lumi 브랜딩 브러시 (사이드바 로고/아이템, 툴바 폴더 아이콘, 탭 dot,
+            //    Pane indicators, Pill/Tab active, Selection, Primary button) ──
+            // Stage S-3 mockup 포팅 시 Lumi* 브러시 패밀리가 별도 정의됐는데, 기존 Span*
+            // 시리즈만 override 되어 커스텀 액센트가 일부 컴포넌트에만 적용되던 갭 메움.
+            // 알파/그라디언트 stop 비율은 LumiTheme.xaml 의 정적 정의값을 재현.
+            byte A(byte alpha) => alpha; // readability
+            Microsoft.UI.Xaml.Media.SolidColorBrush SolidBrush(Windows.UI.Color c)
+                => new Microsoft.UI.Xaml.Media.SolidColorBrush(c);
+            Windows.UI.Color WithAlpha(Windows.UI.Color c, byte a)
+                => Windows.UI.Color.FromArgb(a, c.R, c.G, c.B);
+
+            // 1. Solid amber tokens
+            dict["LumiAmberColor"] = accent;
+            dict["LumiAmberSoftColor"] = accentLight2;
+            dict["LumiAmberDeepColor"] = accentDark1;
+            dict["LumiAmberBrush"] = SolidBrush(accent);
+            dict["LumiAmberSoftBrush"] = SolidBrush(accentLight2);
+            dict["LumiAmberDeepBrush"] = SolidBrush(accentDark1);
+
+            // 2. Logo gradient (135deg, accent → accentDark1)
+            var lumiCatAmber = new Microsoft.UI.Xaml.Media.LinearGradientBrush
+            {
+                StartPoint = new Windows.Foundation.Point(0, 0),
+                EndPoint = new Windows.Foundation.Point(1, 1),
+            };
+            lumiCatAmber.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 0, Color = accent });
+            lumiCatAmber.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 1, Color = accentDark1 });
+            dict["LumiCatAmberBrush"] = lumiCatAmber;
+
+            // 3. Pane indicators (active pane fallback — RefreshActivePaneIndicators 가 per-pane scope
+            //    에서 같은 키를 mutate 하므로 글로벌은 fallback 역할)
+            dict["LumiPaneColumnNameBrush"] = SolidBrush(accent);
+            dict["LumiPanePathIconBrush"] = SolidBrush(accent);
+
+            // 4. Sidebar selected item: amber 28% → 15% (90deg horizontal)
+            var lumiSidebarActive = new Microsoft.UI.Xaml.Media.LinearGradientBrush
+            {
+                StartPoint = new Windows.Foundation.Point(0, 0.5),
+                EndPoint = new Windows.Foundation.Point(1, 0.5),
+            };
+            lumiSidebarActive.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 0, Color = WithAlpha(accent, A(0x47)) });
+            lumiSidebarActive.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 1, Color = WithAlpha(accent, A(0x26)) });
+            dict["LumiSidebarActiveBrush"] = lumiSidebarActive;
+            dict["LumiSidebarActiveTextBrush"] = SolidBrush(accentLight3);
+
+            // 5. Tab active: amber 16% → 6% (180deg vertical)
+            var lumiTabActive = new Microsoft.UI.Xaml.Media.LinearGradientBrush
+            {
+                StartPoint = new Windows.Foundation.Point(0.5, 0),
+                EndPoint = new Windows.Foundation.Point(0.5, 1),
+            };
+            lumiTabActive.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 0, Color = WithAlpha(accent, A(0x29)) });
+            lumiTabActive.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 1, Color = WithAlpha(accent, A(0x0F)) });
+            dict["LumiTabActiveBrush"] = lumiTabActive;
+            dict["LumiTabActiveBorderBrush"] = SolidBrush(WithAlpha(accent, A(0x1F)));
+
+            // 6. Pill active (View/Preview/Split toggle pill): theme-aware amber
+            //    Dark = 22→12% (0x38→0x1F), Light = 50→40% (0x80→0x66) — 라이트 배경에서 가시성.
+            var lumiPillActive = new Microsoft.UI.Xaml.Media.LinearGradientBrush
+            {
+                StartPoint = new Windows.Foundation.Point(0.5, 0),
+                EndPoint = new Windows.Foundation.Point(0.5, 1),
+            };
+            byte pillTopAlpha   = dictKey == "Light" ? (byte)0x80 : (byte)0x38;
+            byte pillBotAlpha   = dictKey == "Light" ? (byte)0x66 : (byte)0x1F;
+            lumiPillActive.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 0, Color = WithAlpha(accent, pillTopAlpha) });
+            lumiPillActive.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 1, Color = WithAlpha(accent, pillBotAlpha) });
+            dict["LumiPillActiveBrush"] = lumiPillActive;
+
+            // 7. File row selection: amber 22% → 12% (90deg horizontal)
+            var lumiSelection = new Microsoft.UI.Xaml.Media.LinearGradientBrush
+            {
+                StartPoint = new Windows.Foundation.Point(0, 0.5),
+                EndPoint = new Windows.Foundation.Point(1, 0.5),
+            };
+            lumiSelection.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 0, Color = WithAlpha(accent, A(0x38)) });
+            lumiSelection.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 1, Color = WithAlpha(accent, A(0x1F)) });
+            dict["LumiSelectionBrush"] = lumiSelection;
+            dict["LumiSelectionBorderBrush"] = SolidBrush(WithAlpha(accent, A(0x38)));
+
+            // 8. Primary button (preview action): amber 30% → 15% (180deg)
+            var lumiPrimaryButton = new Microsoft.UI.Xaml.Media.LinearGradientBrush
+            {
+                StartPoint = new Windows.Foundation.Point(0.5, 0),
+                EndPoint = new Windows.Foundation.Point(0.5, 1),
+            };
+            lumiPrimaryButton.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 0, Color = WithAlpha(accent, A(0x4D)) });
+            lumiPrimaryButton.GradientStops.Add(new Microsoft.UI.Xaml.Media.GradientStop { Offset = 1, Color = WithAlpha(accent, A(0x26)) });
+            dict["LumiPrimaryButtonBrush"] = lumiPrimaryButton;
 
             // ★ 새 dict를 기존 자리에 교체 → WinUI 3이 변경 감지해 {ThemeResource} 전체 재평가
             root.Resources.ThemeDictionaries[dictKey] = dict;

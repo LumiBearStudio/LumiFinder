@@ -180,8 +180,13 @@ namespace LumiFiles.Views
                     DispatcherQueue.TryEnqueue(() =>
                     {
                         if (_isClosed) return;
+                        // S-3.40: Theme 외에도 UseCustomAccent / CustomAccentColor 변경 시
+                        // 자기 창에 액센트 override 재적용. 그 외 (IconFontScale, Density,
+                        // FontFamily) 는 FontScaleService / 추가 핸들러 도입 시점에 확장.
                         if (key == "Theme")
                             ApplyThemeToSelf(value as string ?? "system");
+                        else if (key == "UseCustomAccent" || key == "CustomAccentColor")
+                            ReapplyAccentToSelf();
                     });
                 };
                 _settingsService.SettingChanged += _settingChangedHandler;
@@ -208,6 +213,78 @@ namespace LumiFiles.Views
                 }
                 catch { }
             };
+        }
+
+        /// <summary>
+        /// S-3.40: 사용자 커스텀 액센트(UseCustomAccent + CustomAccentColor)를 본 창의
+        /// 컨텐츠 트리에 즉시 반영. SettingsModeView.RequestAccentApply 에서 호출.
+        /// MainWindow.ApplyAccentOverride 와 동일한 dictKey 결정 로직 + 강제
+        /// {ThemeResource} 재평가용 RequestedTheme 토글을 수행.
+        /// </summary>
+        public void ReapplyAccentToSelf()
+        {
+            try
+            {
+                if (_settingsService == null) return;
+                if (this.Content is not FrameworkElement root) return;
+
+                var theme = _settingsService.Theme ?? "system";
+
+                // 액센트 override 가 꺼졌다면 액센트 적용 없이 테마만 다시 적용해
+                // 기본 amber 토큰으로 복귀.
+                if (!_settingsService.UseCustomAccent)
+                {
+                    ApplyThemeToSelf(theme);
+                    return;
+                }
+
+                if (!TryParseAccentHex(_settingsService.CustomAccentColor, out var accent))
+                {
+                    Helpers.DebugLogger.Log($"[SettingsWindow] ReapplyAccentToSelf: hex parse failed '{_settingsService.CustomAccentColor}'");
+                    ApplyThemeToSelf(theme);
+                    return;
+                }
+
+                MainWindow.ApplyAccentOverride(root, accent, theme);
+
+                // RequestedTheme 토글로 {ThemeResource} 재평가 트리거.
+                var target = theme switch
+                {
+                    "light" => ElementTheme.Light,
+                    "dark"  => ElementTheme.Dark,
+                    _       => ElementTheme.Default,
+                };
+                var opposite = target == ElementTheme.Light ? ElementTheme.Dark : ElementTheme.Light;
+                root.RequestedTheme = opposite;
+                root.RequestedTheme = target;
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[SettingsWindow] ReapplyAccentToSelf failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// '#RRGGBB' 또는 '#AARRGGBB' 형식의 hex 를 Windows.UI.Color 로 파싱.
+        /// MainWindow.SettingsHandler 의 동일 로직을 inline 으로 복제 (internal 접근 회피).
+        /// </summary>
+        private static bool TryParseAccentHex(string? hex, out Windows.UI.Color color)
+        {
+            color = default;
+            if (string.IsNullOrWhiteSpace(hex)) return false;
+            var s = hex.TrimStart('#');
+            if (s.Length == 6) s = "FF" + s;
+            if (s.Length != 8) return false;
+            try
+            {
+                byte a = Convert.ToByte(s.Substring(0, 2), 16);
+                byte r = Convert.ToByte(s.Substring(2, 2), 16);
+                byte g = Convert.ToByte(s.Substring(4, 2), 16);
+                byte b = Convert.ToByte(s.Substring(6, 2), 16);
+                color = Windows.UI.Color.FromArgb(a, r, g, b);
+                return true;
+            }
+            catch { return false; }
         }
 
         /// <summary>

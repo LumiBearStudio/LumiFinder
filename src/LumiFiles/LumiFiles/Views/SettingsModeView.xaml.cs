@@ -2023,16 +2023,24 @@ public sealed partial class SettingsModeView : UserControl
         }
         var windows = app.GetRegisteredWindows();
         Helpers.DebugLogger.Log($"[SettingsView] RequestAccentApply: {windows.Count} windows registered");
-        int count = 0;
+        int main = 0, settings = 0;
         foreach (var win in windows)
         {
+            // S-3.40: SettingsWindow 자기 자신도 액센트 변경 시 갱신해야 같은 창의 amber
+            // 미리보기 swatch / nav 인디케이터가 즉시 새 색을 반영함. 기존엔 MainWindow만
+            // 순회해서 설정창 자신이 invariant 한 amber 로 보였다.
             if (win is MainWindow mw)
             {
                 mw.ReapplyCurrentTheme();
-                count++;
+                main++;
+            }
+            else if (win is Views.SettingsWindow sw)
+            {
+                sw.ReapplyAccentToSelf();
+                settings++;
             }
         }
-        Helpers.DebugLogger.Log($"[SettingsView] RequestAccentApply: {count} MainWindow(s) refreshed");
+        Helpers.DebugLogger.Log($"[SettingsView] RequestAccentApply: {main} MainWindow / {settings} SettingsWindow refreshed");
     }
 
 }

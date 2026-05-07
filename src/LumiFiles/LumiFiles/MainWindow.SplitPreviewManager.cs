@@ -123,10 +123,37 @@ namespace LumiFiles
         //
         // ACTIVE pane palette: amber (LumiAmberColor + LumiAmberDeepColor).
         // INACTIVE pane palette: warm gray + slightly translucent white.
-        private static readonly Windows.UI.Color s_amber       = Microsoft.UI.ColorHelper.FromArgb(0xFF, 0xFF, 0xB8, 0x6B);
-        private static readonly Windows.UI.Color s_amberDeep   = Microsoft.UI.ColorHelper.FromArgb(0xFF, 0xD4, 0x80, 0x28);
+        // S-3.40: amber 색은 더 이상 하드코드 상수가 아니라 현재 ThemeDictionary 의
+        //         LumiAmberColor 를 읽는다 — 사용자가 커스텀 액센트로 색을 바꾸면
+        //         RefreshActivePaneIndicators 호출 시 새 색이 반영됨.
         private static readonly Windows.UI.Color s_inactiveWhite = Microsoft.UI.ColorHelper.FromArgb(0xFF, 0xFF, 0xFF, 0xFF);
         private static readonly Windows.UI.Color s_inactiveGray  = Microsoft.UI.ColorHelper.FromArgb(0xFF, 0x80, 0x80, 0x80);
+        private static readonly Windows.UI.Color s_amberFallback = Microsoft.UI.ColorHelper.FromArgb(0xFF, 0xFF, 0xB8, 0x6B);
+
+        private static Windows.UI.Color GetCurrentLumiAmberColor()
+        {
+            try
+            {
+                // 1. App-level ThemeDictionaries (ApplyAccentOverride 가 mirror 해 둠)
+                var appResources = Application.Current.Resources;
+                string themeKey = App.Current.RequestedTheme == Microsoft.UI.Xaml.ApplicationTheme.Light ? "Light" : "Dark";
+                if (appResources.ThemeDictionaries.TryGetValue(themeKey, out var dictObj)
+                    && dictObj is ResourceDictionary dict
+                    && dict.TryGetValue("LumiAmberColor", out var colorObj)
+                    && colorObj is Windows.UI.Color color)
+                {
+                    return color;
+                }
+                // 2. Top-level (LumiTheme.xaml 의 정적 정의)
+                if (appResources.TryGetValue("LumiAmberColor", out var topColorObj)
+                    && topColorObj is Windows.UI.Color topColor)
+                {
+                    return topColor;
+                }
+            }
+            catch { /* fallback */ }
+            return s_amberFallback;
+        }
 
         /// <summary>
         /// Push the current ActivePane state into per-pane scoped brushes.
@@ -153,24 +180,27 @@ namespace LumiFiles
 
         private static void ApplyPaneIndicatorBrushes(FrameworkElement pane, bool isActive)
         {
+            // S-3.40: 현재 LumiAmberColor 를 읽음 (커스텀 액센트 반영).
+            var amber = GetCurrentLumiAmberColor();
+
             // Active pane uses bright amber (LumiAmberColor) for both the col-
             // header folder name and the ListView selection — amber-deep was
             // tested first but read too dark on dark glass. Inactive pane uses
             // warm gray. Alpha bumped above WinUI's default selection family
             // because amber needs more presence than the default neutral fill.
             var nameColor = isActive
-                ? s_amber
+                ? amber
                 : Microsoft.UI.ColorHelper.FromArgb(0x80, s_inactiveWhite.R, s_inactiveWhite.G, s_inactiveWhite.B);
 
             // Bottom breadcrumb (LumiPanePathBar) folder icon color. Fully
             // opaque on both states; the difference is hue (amber vs gray)
             // rather than alpha, since this icon is small and subtle alpha
             // changes get lost.
-            var pathIconColor = isActive ? s_amber : s_inactiveGray;
+            var pathIconColor = isActive ? amber : s_inactiveGray;
 
             // Selection background base — bright amber on the active pane so
             // the selected row clearly says "this is where focus lives now."
-            var selBase = isActive ? s_amber : s_inactiveGray;
+            var selBase = isActive ? amber : s_inactiveGray;
 
             SetBrush(pane, "LumiPaneColumnNameBrush", nameColor);
             SetBrush(pane, "LumiPanePathIconBrush", pathIconColor);
