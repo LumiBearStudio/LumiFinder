@@ -1098,7 +1098,11 @@ namespace LumiFiles
         {
             try
             {
-                var accentBrush = GetThemeBrush("SpanAccentBrush");
+                // Active uses LumiAmberBrush (theme-agnostic signature color)
+                // instead of SpanAccentBrush — Span's accent is amber in Dark
+                // but #0078D4 (Win11 blue) in Light, which contradicts the
+                // LumiFiles identity. Amber stays consistent across themes.
+                var accentBrush = GetThemeBrush("LumiAmberBrush");
                 var defaultBrush = GetThemeBrush("SpanTextSecondaryBrush");
                 var pillDefaultBrush = GetThemeBrush("LumiTextPrimaryBrush");
 
@@ -1111,11 +1115,24 @@ namespace LumiFiles
 
                 // Address-bar toolbar icon (visible only in single-pane mode)
                 if (PreviewToggleIcon != null)
-                    PreviewToggleIcon.Foreground = isActive ? accentBrush : defaultBrush;
+                {
+                    if (isActive) PreviewToggleIcon.Foreground = accentBrush;
+                    else PreviewToggleIcon.ClearValue(Microsoft.UI.Xaml.Controls.Control.ForegroundProperty);
+                }
 
-                // Pill-bar icon (LumiToolbar; visible in both single and split modes)
+                // Pill-bar 버튼 (LumiToolbar). S-3.39: view 모드 버튼과 동일 패턴 —
+                // active 시 amber pill 배경, 아이콘은 항상 primary text 색.
+                var pillActiveBrush = GetThemeBrush("LumiPillActiveBrush");
+                var transparentBrush = (Microsoft.UI.Xaml.Media.Brush)
+                    new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                if (LumiPreviewButton != null)
+                {
+                    LumiPreviewButton.Background = isActive ? pillActiveBrush : transparentBrush;
+                }
                 if (LumiPreviewIcon != null)
-                    LumiPreviewIcon.Foreground = isActive ? accentBrush : pillDefaultBrush;
+                {
+                    LumiPreviewIcon.Foreground = pillDefaultBrush;
+                }
             }
             catch (Exception ex)
             {
@@ -1156,12 +1173,22 @@ namespace LumiFiles
         /// </summary>
         private void UpdateLumiViewModeButtons(Models.ViewMode mode)
         {
-            var active = ThemeBrush("LumiPillActiveBrush");
+            // GetThemeBrush (instance) honors window.ActualTheme so it returns
+            // the correct Light/Dark variant when user-selected theme differs
+            // from Application.RequestedTheme. The static ThemeBrush helper
+            // below uses Application.Current.Resources which would return the
+            // wrong-theme brush in that mismatch (light user pick over dark
+            // system → buttons rendered with dark-theme primary text = white
+            // on the light pill bar, invisible).
+            var active = GetThemeBrush("LumiPillActiveBrush");
             // Inactive buttons are transparent so the outer container's PillBrush fill
             // shows through; only the active mode renders its own amber stadium pill.
-            var inactive = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
-            var amber = ThemeBrush("LumiAmberSoftBrush");
-            var primary = ThemeBrush("LumiTextPrimaryBrush");
+            var inactive = (Microsoft.UI.Xaml.Media.Brush)new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            // S-3.39: active foreground도 LumiTextPrimaryBrush (라이트=거의검정, 다크=거의흰색)로
+            // 유지. 이전엔 amber bg 위에 amber 아이콘(LumiAmberSoftBrush)이라 라이트 테마에서
+            // 아이콘이 배경에 묻혀 안 보임. amber pill 배경만으로 active 상태 충분히 식별 가능.
+            var amber = GetThemeBrush("LumiTextPrimaryBrush");
+            var primary = GetThemeBrush("LumiTextPrimaryBrush");
 
             bool isMiller = mode == Models.ViewMode.MillerColumns;
             bool isDetails = mode == Models.ViewMode.Details;
@@ -1188,8 +1215,20 @@ namespace LumiFiles
             Microsoft.UI.Xaml.Media.Brush? amberFg, Microsoft.UI.Xaml.Media.Brush? primaryFg)
         {
             if (btn == null) return;
-            btn.Background = isActive ? activeBg : inactiveBg;
-            btn.Foreground = isActive ? amberFg : primaryFg;
+            // S-3.39 (revised): ClearValue를 쓰면 WinUI Button 기본 ButtonBackground
+            // ThemeResource(라이트=옅은 회색 솔리드)로 폴백돼 view 버튼만 다른 회색 fill을
+            // 가지게 됨. 따라서 inactive 시에도 명시적으로 inactiveBg(Transparent) +
+            // primaryFg를 직접 할당해 다른 툴바 버튼들과 동일한 외관 유지.
+            if (isActive)
+            {
+                btn.Background = activeBg;
+                btn.Foreground = amberFg;
+            }
+            else
+            {
+                btn.Background = inactiveBg;
+                btn.Foreground = primaryFg;
+            }
 
             const string bgPointerOverKey = "ButtonBackgroundPointerOver";
             const string bgPressedKey     = "ButtonBackgroundPressed";
@@ -1232,18 +1271,32 @@ namespace LumiFiles
         {
             try
             {
-                var accentBrush = GetThemeBrush("SpanAccentBrush");
+                // LumiAmberBrush (theme-agnostic) — see UpdatePreviewButtonState comment.
+                var accentBrush = GetThemeBrush("LumiAmberBrush");
                 var defaultBrush = GetThemeBrush("SpanTextSecondaryBrush");
                 var pillDefaultBrush = GetThemeBrush("LumiTextPrimaryBrush");
                 bool isActive = ViewModel.IsSplitViewEnabled;
 
                 // Address-bar toolbar icon (visible only when not in special modes)
                 if (SplitViewIcon != null)
-                    SplitViewIcon.Foreground = isActive ? accentBrush : defaultBrush;
+                {
+                    if (isActive) SplitViewIcon.Foreground = accentBrush;
+                    else SplitViewIcon.ClearValue(Microsoft.UI.Xaml.Controls.Control.ForegroundProperty);
+                }
 
-                // Pill-bar icon (LumiToolbar; always visible)
+                // Pill-bar 버튼 (LumiToolbar). S-3.39: view 모드 버튼과 동일 패턴 —
+                // active 시 amber pill 배경, 아이콘은 항상 primary text 색.
+                var pillActiveBrush = GetThemeBrush("LumiPillActiveBrush");
+                var transparentBrush = (Microsoft.UI.Xaml.Media.Brush)
+                    new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+                if (LumiSplitButton != null)
+                {
+                    LumiSplitButton.Background = isActive ? pillActiveBrush : transparentBrush;
+                }
                 if (LumiSplitIcon != null)
-                    LumiSplitIcon.Foreground = isActive ? accentBrush : pillDefaultBrush;
+                {
+                    LumiSplitIcon.Foreground = pillDefaultBrush;
+                }
             }
             catch (Exception ex)
             {

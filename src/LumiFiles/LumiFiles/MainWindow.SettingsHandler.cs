@@ -147,6 +147,15 @@ namespace LumiFiles
                 UpdatePreviewButtonState();
                 UpdateSplitViewButtonState();
 
+                // S-3.39: view-mode pill (Miller / Details / Icons) was using
+                // the static ThemeBrush helper which keys off Application
+                // RequestedTheme — wrong when user override differs from OS
+                // theme. Now uses GetThemeBrush; force refresh after theme
+                // toggle so the inactive icons (LumiTextPrimaryBrush) pick
+                // up the correct light/dark variant instead of staying on
+                // the previous theme's brush instance.
+                try { UpdateLumiViewModeButtons(ViewModel.CurrentViewMode); } catch { }
+
                 // Stage S-3.32: SettingsView removed from MainWindow. The
                 // separate SettingsWindow's nav-item accent will refresh via
                 // its own theme subscription path.
@@ -179,8 +188,12 @@ namespace LumiFiles
             {
                 bool isLight = theme == "light" ||
                                (theme == "system" && App.Current.RequestedTheme == ApplicationTheme.Light);
+                // S-3.39: Light caption #F3F3F3 → #FFFFFF.
+                // 윈도우 frame 이 솔리드 #FFFFFF 인데 DWM 이 그리는 caption(상단
+                // NonClient 영역) 이 #F3F3F3 라 frame 과 섞이면서 상단 툴바가
+                // 회색 띠처럼 보이는 원인. frame 색에 맞춰 흰색 통일.
                 bgColor = isLight
-                    ? Windows.UI.Color.FromArgb(255, 243, 243, 243)   // #F3F3F3
+                    ? Windows.UI.Color.FromArgb(255, 255, 255, 255)   // #FFFFFF (matches frame)
                     : Windows.UI.Color.FromArgb(255, 32, 32, 32);     // #202020
             }
 

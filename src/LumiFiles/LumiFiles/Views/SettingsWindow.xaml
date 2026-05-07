@@ -70,6 +70,8 @@
                             Grid.Column="1"
                             Width="46" Height="32" Padding="0"
                             Background="Transparent" BorderThickness="0"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
                             VerticalAlignment="Top"
                             ToolTipService.ToolTip="닫기"
                             Click="OnCaptionCloseClick"
@@ -82,7 +84,7 @@
                             <FontIcon x:Name="CaptionCloseGlyph"
                                       Glyph="&#xE8BB;" FontSize="10"
                                       FontFamily="Segoe Fluent Icons"
-                                      Foreground="{ThemeResource LumiTextTertiaryBrush}"/>
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
                         </Grid>
                     </Button>
                 </Grid>

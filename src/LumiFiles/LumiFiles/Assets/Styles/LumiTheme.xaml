@@ -8,7 +8,315 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ============================================================
-         1. LUMI ACCENT
+         THEME DICTIONARIES (S-3.38 POC)
+         WinUI auto-picks "Light" when ActualTheme=Light, "Default"
+         otherwise (Dark or System-following-OS). Brushes inside
+         reference theme-agnostic colors via {StaticResource}; consumers
+         must use {ThemeResource Lumi…Brush} for runtime swap.
+         POC subset: surfaces (Bg0~3) + text (Primary/Secondary/Tertiary).
+         Remaining brushes (sidebar/pill/divider/edge/wallpaper/etc.)
+         still single-defined below — to be split in S-3.39+.
+         ============================================================ -->
+    <ResourceDictionary.ThemeDictionaries>
+        <!-- ══════════════════════════════════════════════════════════
+             Default = Dark (mockup baseline). All values match the
+             original single-defined LumiTheme tokens prior to S-3.38.
+             ══════════════════════════════════════════════════════════ -->
+        <ResourceDictionary x:Key="Default">
+            <!-- Surfaces (Bg0 = outermost dark, Bg3 = innermost card) -->
+            <Color x:Key="LumiBg0Color">#FF0A0A0C</Color>
+            <Color x:Key="LumiBg1Color">#FF16161A</Color>
+            <Color x:Key="LumiBg2Color">#FF1E1E22</Color>
+            <Color x:Key="LumiBg3Color">#FF26262B</Color>
+            <SolidColorBrush x:Key="LumiBg0Brush" Color="{StaticResource LumiBg0Color}" />
+            <SolidColorBrush x:Key="LumiBg1Brush" Color="{StaticResource LumiBg1Color}" />
+            <SolidColorBrush x:Key="LumiBg2Brush" Color="{StaticResource LumiBg2Color}" />
+            <SolidColorBrush x:Key="LumiBg3Brush" Color="{StaticResource LumiBg3Color}" />
+
+            <!-- Text -->
+            <Color x:Key="LumiTextPrimaryColor">#FFEEEEF2</Color>
+            <Color x:Key="LumiTextSecondaryColor">#FF92929A</Color>
+            <Color x:Key="LumiTextTertiaryColor">#FF60606A</Color>
+            <SolidColorBrush x:Key="LumiTextPrimaryBrush" Color="{StaticResource LumiTextPrimaryColor}" />
+            <SolidColorBrush x:Key="LumiTextSecondaryBrush" Color="{StaticResource LumiTextSecondaryColor}" />
+            <SolidColorBrush x:Key="LumiTextTertiaryBrush" Color="{StaticResource LumiTextTertiaryColor}" />
+
+            <!-- Window frame: 65% → 78% dark glass -->
+            <LinearGradientBrush x:Key="LumiWindowFrameBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0" Color="#A6121218" />
+                <GradientStop Offset="1" Color="#C70C0C10" />
+            </LinearGradientBrush>
+
+            <!-- Sidebar (Layer 2 floating glass): 55% → 65% dark glass -->
+            <LinearGradientBrush x:Key="LumiSidebarBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0" Color="#8C1E1C28" />
+                <GradientStop Offset="1" Color="#A6161420" />
+            </LinearGradientBrush>
+
+            <!-- Content overlay -->
+            <SolidColorBrush x:Key="LumiContentOverlayBrush" Color="#1F000000" />
+
+            <!-- Pill bar: white overlays for dark backdrop -->
+            <SolidColorBrush x:Key="LumiPillBrush" Color="#1FFFFFFF" />
+            <SolidColorBrush x:Key="LumiPillHoverBrush" Color="#33FFFFFF" />
+            <SolidColorBrush x:Key="LumiPillFrameBrush" Color="#4DFFFFFF" />
+
+            <!-- View pill active (Dark): amber 22% → 12% — over dark glass reads clearly. -->
+            <LinearGradientBrush x:Key="LumiPillActiveBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+                <GradientStop Offset="0" Color="#38FFB86B" />
+                <GradientStop Offset="1" Color="#1FFFB86B" />
+            </LinearGradientBrush>
+
+            <!-- Path bar / hover / divider -->
+            <SolidColorBrush x:Key="LumiPathBarBrush" Color="#33000000" />
+            <SolidColorBrush x:Key="LumiHoverBrush" Color="#0AFFFFFF" />
+            <SolidColorBrush x:Key="LumiDividerBrush" Color="#0FFFFFFF" />
+            <SolidColorBrush x:Key="LumiDividerSoftBrush" Color="#09FFFFFF" />
+
+            <!-- Sidebar inner edges: white highlights -->
+            <SolidColorBrush x:Key="LumiEdgeTopBrush" Color="#2EFFFFFF" />
+            <SolidColorBrush x:Key="LumiEdgeBottomBrush" Color="#0AFFFFFF" />
+            <SolidColorBrush x:Key="LumiEdgeSideBrush" Color="#0FFFFFFF" />
+
+            <!-- Sidebar streaks (top stronger highlight, bottom subtle) -->
+            <LinearGradientBrush x:Key="LumiSidebarTopStreakBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+                <GradientStop Offset="0.00" Color="#00FFFFFF" />
+                <GradientStop Offset="0.30" Color="#38FFFFFF" />
+                <GradientStop Offset="0.70" Color="#38FFFFFF" />
+                <GradientStop Offset="1.00" Color="#00FFFFFF" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="LumiSidebarBottomStreakBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+                <GradientStop Offset="0.00" Color="#00FFFFFF" />
+                <GradientStop Offset="0.30" Color="#0FFFFFFF" />
+                <GradientStop Offset="0.70" Color="#0FFFFFFF" />
+                <GradientStop Offset="1.00" Color="#00FFFFFF" />
+            </LinearGradientBrush>
+
+            <!-- Window outer hairline (S-3.39):
+                 Previously a top-lit gradient (#1CFFFFFF top), but even at
+                 11% the 2px stroke read as a visible white band above the
+                 title bar. Switch to a uniform 4% white solid — defines
+                 the card edge subtly without producing a "line". -->
+            <LinearGradientBrush x:Key="LumiWindowHairlineBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#0AFFFFFF" Offset="0.00" />
+                <GradientStop Color="#0AFFFFFF" Offset="1.00" />
+            </LinearGradientBrush>
+
+            <!-- Pane content area: Dark uses Transparent so the pane shows
+                 the WindowFrame's translucent dark glass through (preserves
+                 the unified dark surface look). Light gets an explicit
+                 fill in its own theme dict below. -->
+            <SolidColorBrush x:Key="LumiPaneContentBrush" Color="Transparent" />
+
+            <!-- Wallpaper base — mostly transparent, vivid radials over DesktopAcrylic -->
+            <LinearGradientBrush x:Key="LumiWallpaperBaseBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Offset="0" Color="#001A0E30" />
+                <GradientStop Offset="1" Color="#000C0818" />
+            </LinearGradientBrush>
+            <RadialGradientBrush x:Key="LumiWallpaperRadial1Brush"
+                                 Center="0.15,0.20" RadiusX="0.55" RadiusY="0.55"
+                                 GradientOrigin="0.15,0.20" MappingMode="RelativeToBoundingBox">
+                <GradientStop Offset="0" Color="#A6643CDC" />
+                <GradientStop Offset="1" Color="#00643CDC" />
+            </RadialGradientBrush>
+            <RadialGradientBrush x:Key="LumiWallpaperRadial2Brush"
+                                 Center="0.70,0.15" RadiusX="0.55" RadiusY="0.55"
+                                 GradientOrigin="0.70,0.15" MappingMode="RelativeToBoundingBox">
+                <GradientStop Offset="0" Color="#80C83C8C" />
+                <GradientStop Offset="1" Color="#00C83C8C" />
+            </RadialGradientBrush>
+            <RadialGradientBrush x:Key="LumiWallpaperRadial3Brush"
+                                 Center="0.45,0.85" RadiusX="0.60" RadiusY="0.60"
+                                 GradientOrigin="0.45,0.85" MappingMode="RelativeToBoundingBox">
+                <GradientStop Offset="0" Color="#993C28A0" />
+                <GradientStop Offset="1" Color="#003C28A0" />
+            </RadialGradientBrush>
+            <RadialGradientBrush x:Key="LumiWallpaperRadial4Brush"
+                                 Center="0.85,0.65" RadiusX="0.55" RadiusY="0.55"
+                                 GradientOrigin="0.85,0.65" MappingMode="RelativeToBoundingBox">
+                <GradientStop Offset="0" Color="#662878C8" />
+                <GradientStop Offset="1" Color="#002878C8" />
+            </RadialGradientBrush>
+            <RadialGradientBrush x:Key="LumiWallpaperRadial5Brush"
+                                 Center="0.30,0.60" RadiusX="0.60" RadiusY="0.60"
+                                 GradientOrigin="0.30,0.60" MappingMode="RelativeToBoundingBox">
+                <GradientStop Offset="0" Color="#595032B4" />
+                <GradientStop Offset="1" Color="#005032B4" />
+            </RadialGradientBrush>
+        </ResourceDictionary>
+
+        <!-- ══════════════════════════════════════════════════════════
+             Light (S-3.38) — warm-gray macOS Finder palette.
+             Polarity flip rules:
+              - Dark surfaces  → warm-light surfaces
+              - White overlays → black overlays at same alpha
+              - Top hairline highlight   → top hairline shadow (color flip)
+              - Vivid wallpaper radials  → very pale pastel radials
+             Same KEYS as Default; consumers must use {ThemeResource}.
+             ══════════════════════════════════════════════════════════ -->
+        <ResourceDictionary x:Key="Light">
+            <!-- Surfaces (Bg0 = tinted outer wash, Bg3 = pure white card) -->
+            <Color x:Key="LumiBg0Color">#FFECECEF</Color>
+            <Color x:Key="LumiBg1Color">#FFF2F2F5</Color>
+            <Color x:Key="LumiBg2Color">#FFFAFAFC</Color>
+            <Color x:Key="LumiBg3Color">#FFFFFFFF</Color>
+            <SolidColorBrush x:Key="LumiBg0Brush" Color="{StaticResource LumiBg0Color}" />
+            <SolidColorBrush x:Key="LumiBg1Brush" Color="{StaticResource LumiBg1Color}" />
+            <SolidColorBrush x:Key="LumiBg2Brush" Color="{StaticResource LumiBg2Color}" />
+            <SolidColorBrush x:Key="LumiBg3Brush" Color="{StaticResource LumiBg3Color}" />
+
+            <!-- Text. Tertiary darkened from #A3A3A8 (too pale on white) to
+                 #8E8E93 to maintain readable hierarchy in status bar / hint
+                 text on light surfaces. -->
+            <Color x:Key="LumiTextPrimaryColor">#FF1A1A1F</Color>
+            <Color x:Key="LumiTextSecondaryColor">#FF6E6E73</Color>
+            <Color x:Key="LumiTextTertiaryColor">#FF8E8E93</Color>
+            <SolidColorBrush x:Key="LumiTextPrimaryBrush" Color="{StaticResource LumiTextPrimaryColor}" />
+            <SolidColorBrush x:Key="LumiTextSecondaryBrush" Color="{StaticResource LumiTextSecondaryColor}" />
+            <SolidColorBrush x:Key="LumiTextTertiaryBrush" Color="{StaticResource LumiTextTertiaryColor}" />
+
+            <!-- S-3.39 Light unification:
+                 In Dark, WindowFrame's gradient (65-78% alpha dark glass)
+                 reads as a uniform dark surface because the gradient steps
+                 are imperceptible at low brightness. In Light the same
+                 gradient (90-95% alpha light glass) is much more visible —
+                 the top/bottom shade variance shows clearly across the
+                 full window, and because Miller column area is transparent
+                 (shows WindowFrame through), the content area inherits this
+                 gradient and looks tonally inconsistent with the toolbar /
+                 sidebar zones.
+                 Fix: SOLID white window frame in Light. The "single surface"
+                 metaphor (everything sits on one warm-white plane) replaces
+                 the dark theme's "translucent glass on desktop" metaphor. -->
+            <LinearGradientBrush x:Key="LumiWindowFrameBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0" Color="#FFFFFFFF" />
+                <GradientStop Offset="1" Color="#FFFFFFFF" />
+            </LinearGradientBrush>
+
+            <!-- Sidebar (Light): solid warm gray, slightly tinted from the
+                 content area so the navigation zone stays visually distinct
+                 without translucent-glass tricks. -->
+            <LinearGradientBrush x:Key="LumiSidebarBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Offset="0" Color="#FFF4F4F7" />
+                <GradientStop Offset="1" Color="#FFF4F4F7" />
+            </LinearGradientBrush>
+
+            <!-- Content overlay -->
+            <SolidColorBrush x:Key="LumiContentOverlayBrush" Color="#0F000000" />
+
+            <!-- S-3.39 Light chrome unification (final):
+                 Reverted from solid gray fills (POC-B was too patchwork)
+                 to FULLY transparent. The user feedback after POC-B was
+                 "회색 남아있음" — the gray pill containers and gray status
+                 bar made the chrome feel divided rather than unified.
+                 Going transparent: the entire window chrome (toolbar +
+                 status bar) reads as one continuous white plane carrying
+                 icons / text directly, matching macOS Finder Light. Hover
+                 keeps a subtle 8% dark tint as the only interaction
+                 affordance. -->
+            <!-- S-3.39 (revised): 그룹핑 라인 살리기. 다크 테마는 white 12% 알파로 그룹
+                 컨테이너가 또렷이 보였는데, 라이트는 transparent로 만들어 그룹 식별이
+                 사라졌다. black 6% 알파로 약하게 fill — 흰 배경 위에서 그룹 경계가
+                 인지되되 너무 진한 회색으로 보이지 않도록 균형 잡음. -->
+            <SolidColorBrush x:Key="LumiPillBrush" Color="#0F000000" />
+            <SolidColorBrush x:Key="LumiPillHoverBrush" Color="#1F000000" />
+            <SolidColorBrush x:Key="LumiPillFrameBrush" Color="#14000000" />
+
+            <!-- View pill active (Light): 라이트 테마에선 흰 배경 위 amber 22-12% 알파가
+                 너무 흐려서 active/inactive 구분이 안 됐다. 알파를 80→66 (50%→40%)으로
+                 강화해 흰 배경 위에서 amber 채도가 또렷하게 읽히게 함. -->
+            <LinearGradientBrush x:Key="LumiPillActiveBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+                <GradientStop Offset="0" Color="#80FFB86B" />
+                <GradientStop Offset="1" Color="#66FFB86B" />
+            </LinearGradientBrush>
+
+            <!-- Status bar bg: transparent so the bottom strip is part of
+                 the same white surface as the panes / toolbar, with the
+                 breadcrumb / counts floating on the unified plane. -->
+            <SolidColorBrush x:Key="LumiPathBarBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="LumiHoverBrush" Color="#0A000000" />
+            <SolidColorBrush x:Key="LumiDividerBrush" Color="#14000000" />
+            <SolidColorBrush x:Key="LumiDividerSoftBrush" Color="#08000000" />
+
+            <!-- Sidebar inner edges: minimal — light glass shouldn't show
+                 hard internal lines like the dark glass version does. -->
+            <SolidColorBrush x:Key="LumiEdgeTopBrush" Color="#14000000" />
+            <SolidColorBrush x:Key="LumiEdgeBottomBrush" Color="#08000000" />
+            <SolidColorBrush x:Key="LumiEdgeSideBrush" Color="#0A000000" />
+
+            <!-- Sidebar streaks (faint dark sheen — kept subtle so they
+                 don't read as horizontal bands on a light surface) -->
+            <LinearGradientBrush x:Key="LumiSidebarTopStreakBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+                <GradientStop Offset="0.00" Color="#00000000" />
+                <GradientStop Offset="0.30" Color="#14000000" />
+                <GradientStop Offset="0.70" Color="#14000000" />
+                <GradientStop Offset="1.00" Color="#00000000" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="LumiSidebarBottomStreakBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+                <GradientStop Offset="0.00" Color="#00000000" />
+                <GradientStop Offset="0.30" Color="#08000000" />
+                <GradientStop Offset="0.70" Color="#08000000" />
+                <GradientStop Offset="1.00" Color="#00000000" />
+            </LinearGradientBrush>
+
+            <!-- Window outer hairline (Light): solid subtle dark stroke.
+                 Reduced from 10% to 6% black — the 2px stroke at 10% read
+                 as too prominent of a card-edge frame; 6% gives presence
+                 at corners without dominating the silhouette. -->
+            <LinearGradientBrush x:Key="LumiWindowHairlineBrush" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#10000000" Offset="0.00" />
+                <GradientStop Color="#10000000" Offset="1.00" />
+            </LinearGradientBrush>
+
+            <!-- Pane content area (Light): explicit pure white so the Miller
+                 columns / Details / Icon view areas read as a unified white
+                 surface that matches the main window. Previously the panes
+                 were Transparent and inherited the WindowFrame gradient,
+                 which (after the gradient → solid fix) is fine in theory but
+                 the user wants an explicit fill for clarity / future-proofing
+                 if WindowFrame ever changes. -->
+            <SolidColorBrush x:Key="LumiPaneContentBrush" Color="#FFFFFFFF" />
+
+            <!-- Wallpaper base — pale warm wash, radials reduced to faint pastel hints -->
+            <LinearGradientBrush x:Key="LumiWallpaperBaseBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Offset="0" Color="#FFEFEFF3" />
+                <GradientStop Offset="1" Color="#FFE5E5EA" />
+            </LinearGradientBrush>
+            <RadialGradientBrush x:Key="LumiWallpaperRadial1Brush"
+                                 Center="0.15,0.20" RadiusX="0.55" RadiusY="0.55"
+                                 GradientOrigin="0.15,0.20" MappingMode="RelativeToBoundingBox">
+                <GradientStop Offset="0" Color="#33C8B4F0" />
+                <GradientStop Offset="1" Color="#00C8B4F0" />
+            </RadialGradientBrush>
+            <RadialGradientBrush x:Key="LumiWallpaperRadial2Brush"
+                                 Center="0.70,0.15" RadiusX="0.55" RadiusY="0.55"
+                                 GradientOrigin="0.70,0.15" MappingMode="RelativeToBoundingBox">
+                <GradientStop Offset="0" Color="#26F0B4D8" />
+                <GradientStop Offset="1" Color="#00F0B4D8" />
+            </RadialGradientBrush>
+            <RadialGradientBrush x:Key="LumiWallpaperRadial3Brush"
+                                 Center="0.45,0.85" RadiusX="0.60" RadiusY="0.60"
+                                 GradientOrigin="0.45,0.85" MappingMode="RelativeToBoundingBox">
+                <GradientStop Offset="0" Color="#26B4A8E0" />
+                <GradientStop Offset="1" Color="#00B4A8E0" />
+            </RadialGradientBrush>
+            <RadialGradientBrush x:Key="LumiWallpaperRadial4Brush"
+                                 Center="0.85,0.65" RadiusX="0.55" RadiusY="0.55"
+                                 GradientOrigin="0.85,0.65" MappingMode="RelativeToBoundingBox">
+                <GradientStop Offset="0" Color="#26A8C8F0" />
+                <GradientStop Offset="1" Color="#00A8C8F0" />
+            </RadialGradientBrush>
+            <RadialGradientBrush x:Key="LumiWallpaperRadial5Brush"
+                                 Center="0.30,0.60" RadiusX="0.60" RadiusY="0.60"
+                                 GradientOrigin="0.30,0.60" MappingMode="RelativeToBoundingBox">
+                <GradientStop Offset="0" Color="#1FBFA8E8" />
+                <GradientStop Offset="1" Color="#00BFA8E8" />
+            </RadialGradientBrush>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+    <!-- ============================================================
+         1. LUMI ACCENT (theme-agnostic — amber is signature color)
          ============================================================ -->
     <Color x:Key="LumiAmberColor">#FFFFB86B</Color>
     <Color x:Key="LumiAmberSoftColor">#FFFFD27A</Color>
@@ -28,131 +336,11 @@
     <SolidColorBrush x:Key="LumiPaneColumnNameBrush" Color="{StaticResource LumiAmberColor}" />
 
     <!-- ============================================================
-         2. DARK SURFACES
+         4-5. GLASS LAYERS / EDGE / DIVIDER
+         All moved to ThemeDictionaries above (S-3.38). Consumers must
+         use {ThemeResource}; legacy {StaticResource} references will
+         no longer find these keys at top-level scope.
          ============================================================ -->
-    <Color x:Key="LumiBg0Color">#FF0A0A0C</Color>
-    <Color x:Key="LumiBg1Color">#FF16161A</Color>
-    <Color x:Key="LumiBg2Color">#FF1E1E22</Color>
-    <Color x:Key="LumiBg3Color">#FF26262B</Color>
-    <SolidColorBrush x:Key="LumiBg0Brush" Color="{StaticResource LumiBg0Color}" />
-    <SolidColorBrush x:Key="LumiBg1Brush" Color="{StaticResource LumiBg1Color}" />
-    <SolidColorBrush x:Key="LumiBg2Brush" Color="{StaticResource LumiBg2Color}" />
-    <SolidColorBrush x:Key="LumiBg3Brush" Color="{StaticResource LumiBg3Color}" />
-
-    <!-- ============================================================
-         3. TEXT
-         ============================================================ -->
-    <Color x:Key="LumiTextPrimaryColor">#FFEEEEF2</Color>
-    <Color x:Key="LumiTextSecondaryColor">#FF92929A</Color>
-    <Color x:Key="LumiTextTertiaryColor">#FF60606A</Color>
-    <SolidColorBrush x:Key="LumiTextPrimaryBrush" Color="{StaticResource LumiTextPrimaryColor}" />
-    <SolidColorBrush x:Key="LumiTextSecondaryBrush" Color="{StaticResource LumiTextSecondaryColor}" />
-    <SolidColorBrush x:Key="LumiTextTertiaryBrush" Color="{StaticResource LumiTextTertiaryColor}" />
-
-    <!-- ============================================================
-         4. GLASS LAYERS
-         (mockup HTML rgba alpha → #AARRGGBB)
-         ============================================================ -->
-    <!-- Window frame: rgba(18,18,24,0.65) → rgba(12,12,16,0.78)
-         Stage S-3.12: with the outer wallpaper gap collapsed (S-3.11)
-         and corner radius zeroed (S-3.12 above), the WindowFrame is
-         now the entire visible window surface, so its alpha governs
-         how much DesktopAcrylic vibrancy reads through. S-3.10 was
-         0.78/0.88 (too opaque, user said 'transparency disappeared');
-         S-3.9 was 0.60/0.72 (too translucent, content text got lost).
-         0.65/0.78 splits the difference: glass is visible again,
-         dark/colored desktops still leave file names readable. -->
-    <LinearGradientBrush x:Key="LumiWindowFrameBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#A6121218" />
-        <GradientStop Offset="1" Color="#C70C0C10" />
-    </LinearGradientBrush>
-
-    <!-- Sidebar (Layer 2, floating glass): rgba(30,28,40,0.55) → rgba(22,20,32,0.65)
-         Lowered from 0.72/0.78 in Stage S-3.8 so the sidebar reads as
-         a translucent floating panel over the desktop, matching the
-         macOS Finder sidebar vibrancy. Still keeps enough fill to
-         distinguish from main content. -->
-    <LinearGradientBrush x:Key="LumiSidebarBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="#8C1E1C28" />
-        <GradientStop Offset="1" Color="#A6161420" />
-    </LinearGradientBrush>
-
-    <!-- Content overlay: rgba(0,0,0,0.12) -->
-    <SolidColorBrush x:Key="LumiContentOverlayBrush" Color="#1F000000" />
-
-    <!-- Outer container fill — Finder-style fill-only grouping (no outline border).
-         Boosted from 0.08 to 0.12 so the stadium reads clearly on the dark wallpaper
-         even without the 1px hairline outline (which has been removed per macOS Finder
-         visual reference). -->
-    <SolidColorBrush x:Key="LumiPillBrush" Color="#1FFFFFFF" />
-    <SolidColorBrush x:Key="LumiPillHoverBrush" Color="#33FFFFFF" />
-
-    <!-- Group frame outline: hairline 1px border wrapping each segmented bar with 3px
-         padding. Per user reference image the group emphasis comes from a thin OUTLINE
-         around the bar — not a filled bg. Alpha had to be boosted to 30% on our near-
-         black wallpaper (#0F0E14); anything lower than ~25% disappears entirely. -->
-    <SolidColorBrush x:Key="LumiPillFrameBrush" Color="#4DFFFFFF" />
-
-    <!-- Path bar bg: rgba(0,0,0,0.20) -->
-    <SolidColorBrush x:Key="LumiPathBarBrush" Color="#33000000" />
-
-    <!-- Hover bg (sidebar item / file row): rgba(255,255,255,0.04) -->
-    <SolidColorBrush x:Key="LumiHoverBrush" Color="#0AFFFFFF" />
-
-    <!-- ============================================================
-         5. EDGE / DIVIDER
-         ============================================================ -->
-    <SolidColorBrush x:Key="LumiDividerBrush" Color="#0FFFFFFF" />
-    <SolidColorBrush x:Key="LumiDividerSoftBrush" Color="#09FFFFFF" />
-
-    <!-- Sidebar inner edges: top highlight 0.18, bottom 0.04, side 0.06 -->
-    <SolidColorBrush x:Key="LumiEdgeTopBrush" Color="#2EFFFFFF" />
-    <SolidColorBrush x:Key="LumiEdgeBottomBrush" Color="#0AFFFFFF" />
-    <SolidColorBrush x:Key="LumiEdgeSideBrush" Color="#0FFFFFFF" />
-
-    <!-- Sidebar glass streak (Finder-style): horizontal gradient that fades to
-         transparent on both ends, creating a subtle "polished glass" highlight.
-         Mirrors the .sidebar::before / ::after gradient streaks in the v3 mockup
-         (12px inset each side). Uses solid stops at 30%/70% with rgba alpha
-         encoded in the leading byte. -->
-    <LinearGradientBrush x:Key="LumiSidebarTopStreakBrush" StartPoint="0,0.5" EndPoint="1,0.5">
-        <GradientStop Offset="0.00" Color="#00FFFFFF" />
-        <GradientStop Offset="0.30" Color="#38FFFFFF" />
-        <GradientStop Offset="0.70" Color="#38FFFFFF" />
-        <GradientStop Offset="1.00" Color="#00FFFFFF" />
-    </LinearGradientBrush>
-    <LinearGradientBrush x:Key="LumiSidebarBottomStreakBrush" StartPoint="0,0.5" EndPoint="1,0.5">
-        <GradientStop Offset="0.00" Color="#00FFFFFF" />
-        <GradientStop Offset="0.30" Color="#0FFFFFFF" />
-        <GradientStop Offset="0.70" Color="#0FFFFFFF" />
-        <GradientStop Offset="1.00" Color="#00FFFFFF" />
-    </LinearGradientBrush>
-
-    <!-- Window outer hairline.
-         Stage S-3.32: replaced flat SolidColorBrush with a top-lit
-         LinearGradientBrush (pattern ported from DragShelf
-         ShelfWindow.xaml). Solid 1 px BorderBrush at low alpha (0.08-0.25)
-         loses brightness at the rounded corners because Direct2D AA
-         distributes the stroke across 2-3 sub-pixels along the curve —
-         each sub-pixel ends up at ~40% of the source alpha, so the
-         corner reads ~60% fainter than the straight edges.
-         The vertical gradient sidesteps that by giving the TOP edge a
-         highlight (still smooth at the corners because each
-         sub-pixel along the curve picks up the gradient's actual sample
-         value, not a divided-down version of a flat alpha) while
-         tapering to subtle near-black at the bottom for a "card floating
-         on glass" shadow hint.
-         S-3.37: top alpha 0x38 (22%) → 0x1C (11%). The original 22% was
-         tuned for BorderThickness=1; S-3.34 doubled the thickness to 2
-         for fractional-DPI AA, which doubled the visual coverage of the
-         top stop and read as a bright white line above the title bar.
-         Halving the top alpha rebalances brightness to the pre-S-3.34
-         look while keeping the corner-continuity benefit of a gradient. -->
-    <LinearGradientBrush x:Key="LumiWindowHairlineBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#1CFFFFFF" Offset="0.00" />   <!-- top highlight  ~11% white -->
-        <GradientStop Color="#0AFFFFFF" Offset="0.45" />   <!-- mid             ~4%  white -->
-        <GradientStop Color="#08000000" Offset="1.00" />   <!-- bottom shadow   ~3%  black -->
-    </LinearGradientBrush>
 
     <!-- ============================================================
          6. SELECTION / ACTIVE GRADIENTS
@@ -178,11 +366,8 @@
     </LinearGradientBrush>
     <SolidColorBrush x:Key="LumiTabActiveBorderBrush" Color="#1FFFB86B" />
 
-    <!-- View pill active (toolbar): amber 22% → 12% (180deg) -->
-    <LinearGradientBrush x:Key="LumiPillActiveBrush" StartPoint="0.5,0" EndPoint="0.5,1">
-        <GradientStop Offset="0" Color="#38FFB86B" />
-        <GradientStop Offset="1" Color="#1FFFB86B" />
-    </LinearGradientBrush>
+    <!-- LumiPillActiveBrush moved into ThemeDictionaries (S-3.39): Dark = 22-12% alpha,
+         Light = 50-40% alpha. 라이트 테마 흰 배경에서도 active 상태가 또렷이 보이게 함. -->
 
     <!-- Preview action button primary: amber 30% → 15% (180deg) -->
     <LinearGradientBrush x:Key="LumiPrimaryButtonBrush" StartPoint="0.5,0" EndPoint="0.5,1">
@@ -243,66 +428,10 @@
     <SolidColorBrush x:Key="LumiFolderPinkBrush" Color="#FFF08FBF" />
 
     <!-- ============================================================
-         9. WALLPAPER (window inner background, behind sidebar+content)
-         mockup: 5 radial gradients + base linear (160deg, #1A0E30 → #0C0818)
-         WinUI 3 supports RadialGradientBrush — composed in Code-behind
-         or by stacking multiple Rectangles with brushes at the lowest z.
-         Base linear here; radials applied as separate brushes below.
+         9. WALLPAPER — moved to ThemeDictionaries (S-3.38).
+         Dark = vivid purple/blue radials over transparent base.
+         Light = pale pastel hints over warm-gray base.
          ============================================================ -->
-    <!-- Wallpaper base — Stage S-3.13:
-         Fully transparent. The outer 6px gap (LumiWindowPadding) now
-         shows the raw DesktopAcrylic backdrop directly, giving the
-         floating-card look the user asked for ("4 corners with the same
-         rounded treatment as the sidebar"). The dark Tahoe wash that
-         used to live here as a tint is gone — when/if the vivid radial
-         layers are re-enabled this brush can be brought back as the
-         base color underneath them. -->
-    <LinearGradientBrush x:Key="LumiWallpaperBaseBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Offset="0" Color="#001A0E30" />
-        <GradientStop Offset="1" Color="#000C0818" />
-    </LinearGradientBrush>
-
-    <!-- Radial gradient brushes — five layers stacked over base.
-         Origin/center expressed as relative 0..1 within paint area. -->
-    <RadialGradientBrush x:Key="LumiWallpaperRadial1Brush"
-                         Center="0.15,0.20" RadiusX="0.55" RadiusY="0.55"
-                         GradientOrigin="0.15,0.20"
-                         MappingMode="RelativeToBoundingBox">
-        <GradientStop Offset="0"   Color="#A6643CDC" />
-        <GradientStop Offset="1"   Color="#00643CDC" />
-    </RadialGradientBrush>
-
-    <RadialGradientBrush x:Key="LumiWallpaperRadial2Brush"
-                         Center="0.70,0.15" RadiusX="0.55" RadiusY="0.55"
-                         GradientOrigin="0.70,0.15"
-                         MappingMode="RelativeToBoundingBox">
-        <GradientStop Offset="0"   Color="#80C83C8C" />
-        <GradientStop Offset="1"   Color="#00C83C8C" />
-    </RadialGradientBrush>
-
-    <RadialGradientBrush x:Key="LumiWallpaperRadial3Brush"
-                         Center="0.45,0.85" RadiusX="0.60" RadiusY="0.60"
-                         GradientOrigin="0.45,0.85"
-                         MappingMode="RelativeToBoundingBox">
-        <GradientStop Offset="0"   Color="#993C28A0" />
-        <GradientStop Offset="1"   Color="#003C28A0" />
-    </RadialGradientBrush>
-
-    <RadialGradientBrush x:Key="LumiWallpaperRadial4Brush"
-                         Center="0.85,0.65" RadiusX="0.55" RadiusY="0.55"
-                         GradientOrigin="0.85,0.65"
-                         MappingMode="RelativeToBoundingBox">
-        <GradientStop Offset="0"   Color="#662878C8" />
-        <GradientStop Offset="1"   Color="#002878C8" />
-    </RadialGradientBrush>
-
-    <RadialGradientBrush x:Key="LumiWallpaperRadial5Brush"
-                         Center="0.30,0.60" RadiusX="0.60" RadiusY="0.60"
-                         GradientOrigin="0.30,0.60"
-                         MappingMode="RelativeToBoundingBox">
-        <GradientStop Offset="0"   Color="#595032B4" />
-        <GradientStop Offset="1"   Color="#005032B4" />
-    </RadialGradientBrush>
 
     <!-- ============================================================
          10. CAPTION / CLOSE
@@ -453,7 +582,7 @@
     <!-- LumiSecondaryButtonStyle: ContentDialog 비-액센트 버튼용. 코드에서 명시 할당.
          포커스 받으면 amber, 아니면 다크 글래스. 라운드 6px. -->
     <Style x:Key="LumiSecondaryButtonStyle" TargetType="Button">
-        <Setter Property="Foreground" Value="{StaticResource LumiTextPrimaryBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource LumiTextPrimaryBrush}" />
         <Setter Property="Background" Value="{StaticResource LumiDefaultButtonBackgroundBrush}" />
         <Setter Property="BackgroundSizing" Value="OuterBorderEdge" />
         <Setter Property="BorderBrush" Value="{StaticResource LumiDefaultButtonBorderBrush}" />

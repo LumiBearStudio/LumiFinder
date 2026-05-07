@@ -359,11 +359,14 @@ namespace LumiFiles.Views
                     CaptionCloseHoverBg.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
                 if (CaptionCloseGlyph != null)
                 {
-                    if (Application.Current.Resources.ThemeDictionaries.TryGetValue(
-                            this.Content is FrameworkElement fe && fe.ActualTheme == ElementTheme.Light ? "Light" : "Dark",
-                            out var dictObj)
+                    // Look up LumiTextSecondaryBrush from the active theme
+                    // dictionary (Light vs Default) so the close glyph stays
+                    // legible on both backdrops.
+                    var themeKey = this.Content is FrameworkElement fe && fe.ActualTheme == ElementTheme.Light
+                        ? "Light" : "Default";
+                    if (Application.Current.Resources.ThemeDictionaries.TryGetValue(themeKey, out var dictObj)
                         && dictObj is ResourceDictionary dict
-                        && dict.TryGetValue("LumiTextTertiaryBrush", out var brushObj)
+                        && dict.TryGetValue("LumiTextSecondaryBrush", out var brushObj)
                         && brushObj is Microsoft.UI.Xaml.Media.SolidColorBrush brush)
                     {
                         CaptionCloseGlyph.Foreground = brush;

@@ -87,11 +87,18 @@
              Background = LumiSidebarBrush for now; a separate tint
              can be split out in S-3.17 if the user wants the panes
              to read more distinct. -->
+        <!-- S-3.38: 컨텐츠 영역(타이틀바/툴바/파일 리스트) 배경을 메인(파일 리스트)과
+             동일한 솔리드 톤으로 통일. 이전에는 LumiSidebarBrush(반투명 다크 글래스)를
+             깔아 DesktopAcrylic이 비쳐 라이트 데스크톱에서 피치/크림 톤이 보였고,
+             파일 리스트 아이템(불투명 라이트)과 갈려 보이는 시각 seam이 발생.
+             SpanBgLayer1Brush는 라이트 테마 #F9F9F9 / 다크 테마 #1E1C28 (테마 인지)
+             로, 파일 리스트 ListView 영역의 기본 면 색과 동일해 타이틀바부터 리스트
+             까지 한 면으로 읽힌다. Margin도 사이드바(5)와 갭 통일. -->
         <Border x:Name="LumiContentCard"
                 Grid.Column="1" Grid.Row="0" Grid.RowSpan="4"
-                Margin="0,10,10,10"
+                Margin="0,5,5,5"
                 CornerRadius="{StaticResource LumiSidebarCornerRadius}"
-                Background="{ThemeResource LumiSidebarBrush}"
+                Background="{ThemeResource LumiContentCardBrush}"
                 BorderThickness="0"
                 UseLayoutRounding="True"
                 IsHitTestVisible="False"/>
@@ -500,10 +507,14 @@
                     BorderThickness="0"
                     VerticalAlignment="Center" Margin="0,0,8,0">
                 <StackPanel Orientation="Horizontal">
+                    <!-- S-3.39: 3개 view 버튼 모두 inactive 기본값(Transparent + LumiTextPrimaryBrush)
+                         으로 통일. 어떤 버튼이 active인지는 UpdateLumiViewModeButtons에서
+                         ViewModel.CurrentViewMode 기준으로 결정. 이전엔 Miller만 active 하드코딩
+                         이라 ClearValue 패턴 적용 시 항상 Miller가 active로 보였음. -->
                     <Button x:Name="LumiViewMillerButton" Width="24" Height="24" Padding="0" BorderThickness="0"
                             CornerRadius="{StaticResource LumiPillButtonLeftCornerRadius}"
-                            Background="{ThemeResource LumiPillActiveBrush}"
-                            Foreground="{ThemeResource LumiAmberSoftBrush}"
+                            Background="Transparent"
+                            Foreground="{ThemeResource LumiTextPrimaryBrush}"
                             ToolTipService.ToolTip="Miller Columns" Click="OnViewModeMillerColumns">
                         <FontIcon x:Name="LumiViewMillerIcon" Glyph="&#xF57C;" FontSize="13"/>
                     </Button>
@@ -591,29 +602,25 @@
                     BorderThickness="0"
                     VerticalAlignment="Center" Margin="0,0,8,0">
                 <StackPanel Orientation="Horizontal">
-                    <Button Width="24" Height="24" Padding="0" BorderThickness="0"
+                    <!-- S-3.39: x:Name 추가해 코드비하인드에서 BUTTON 배경(amber pill)을
+                         설정할 수 있게 함. view 모드 버튼과 동일 패턴 — active 시 amber
+                         pill, inactive 시 transparent. 아이콘 색상은 항상 LumiTextPrimaryBrush. -->
+                    <Button x:Name="LumiPreviewButton"
+                            Width="24" Height="24" Padding="0" BorderThickness="0"
                             CornerRadius="{StaticResource LumiPillButtonLeftCornerRadius}"
                             Background="Transparent"
                             Foreground="{ThemeResource LumiTextPrimaryBrush}"
                             ToolTipService.ToolTip="Preview pane" Click="OnPreviewToggleClick">
-                        <!-- ri-eye-line (RemixIcons) — cleaner than the Segoe MDL2 'View'
-                             eye glyph (E890) that read awkwardly in the pill bar.
-                             x:Name added so UpdatePreviewButtonState can tint it
-                             with SpanAccentBrush when preview is active. -->
                         <FontIcon x:Name="LumiPreviewIcon"
                                   FontFamily="{StaticResource RemixIcons}"
                                   Glyph="{StaticResource Icon_Preview}" FontSize="14"/>
                     </Button>
-                    <Button Width="24" Height="24" Padding="0" BorderThickness="0"
+                    <Button x:Name="LumiSplitButton"
+                            Width="24" Height="24" Padding="0" BorderThickness="0"
                             CornerRadius="{StaticResource LumiPillButtonRightCornerRadius}"
                             Background="Transparent"
                             Foreground="{ThemeResource LumiTextPrimaryBrush}"
                             ToolTipService.ToolTip="Split view" Click="OnSplitViewToggleClick">
-                        <!-- ri-layout-column-fill (RemixIcons) — two clean side-by-side
-                             columns. Replaces Segoe MDL2 'DockLeft' (E78D) which only
-                             showed a single docked panel and didn't read as 'split'.
-                             x:Name added so UpdateSplitViewButtonState can tint it
-                             with SpanAccentBrush when split view is on. -->
                         <FontIcon x:Name="LumiSplitIcon"
                                   FontFamily="{StaticResource RemixIcons}"
                                   Glyph="{StaticResource Icon_SplitView}" FontSize="14"/>
@@ -728,6 +735,8 @@
                 <Button x:Name="CaptionCloseButton"
                         Width="46" Height="32" Padding="0"
                         Background="Transparent" BorderThickness="0"
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch"
                         ToolTipService.ToolTip="닫기"
                         Click="OnCaptionCloseClick"
                         PointerEntered="OnCaptionClosePointerEntered"
@@ -739,7 +748,7 @@
                         <FontIcon x:Name="CaptionCloseGlyph"
                                   Glyph="&#xE8BB;" FontSize="10"
                                   FontFamily="Segoe Fluent Icons"
-                                  Foreground="{ThemeResource LumiTextTertiaryBrush}"/>
+                                  Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
                     </Grid>
                 </Button>
             </StackPanel>
@@ -1436,7 +1445,7 @@
 
                 <!-- ===== LEFT PANE ===== -->
                 <Grid x:Name="LeftPaneContainer" AutomationProperties.AutomationId="LeftPane" Grid.Column="0" GotFocus="OnLeftPaneGotFocus"
-                      Background="Transparent"
+                      Background="{ThemeResource LumiPaneContentBrush}"
                       AllowDrop="True" DragOver="OnPaneDragOver" Drop="OnPaneDrop" DragLeave="OnPaneDragLeave">
                     <!-- Stage S-3.2: per-pane scoped brushes for active-pane signaling.
                          Code-behind (RefreshActivePaneIndicators) mutates these brushes'
@@ -1862,7 +1871,7 @@
 
                 <!-- ===== RIGHT PANE ===== -->
                 <Grid x:Name="RightPaneContainer" AutomationProperties.AutomationId="RightPane" Grid.Column="2" GotFocus="OnRightPaneGotFocus"
-                      Background="Transparent" Margin="1,0,0,0"
+                      Background="{ThemeResource LumiPaneContentBrush}" Margin="1,0,0,0"
                       AllowDrop="True" DragOver="OnPaneDragOver" Drop="OnPaneDrop" DragLeave="OnPaneDragLeave"
                       Visibility="{x:Bind IsSplitVisible(ViewModel.IsSplitViewEnabled), Mode=OneWay}">
                     <!-- Stage S-3.2: same per-pane scoped brushes as LeftPaneContainer.

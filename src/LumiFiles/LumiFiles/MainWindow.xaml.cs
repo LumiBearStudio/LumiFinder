@@ -261,11 +261,15 @@ namespace LumiFiles
         private System.IO.FileSystemWatcher? _networkShortcutsWatcher;
 
         /// <summary>
-        /// 현재 테마에 맞는 브러시를 조회한다.
-        /// 윈도우 레벨 ThemeDictionaries (커스텀 테마) → 앱 레벨 (시스템 accent) 순으로 fallback.
-        /// XAML {ThemeResource}와 동일한 리소스 해석 순서를 코드-비하인드에서도 보장한다.
+        /// 현재 테마에 맞는 브러시를 조회한다 (Brush 베이스 — Solid/Linear/Radial 모두 지원).
+        /// 윈도우 ThemeDictionaries → 앱 ThemeDictionaries → 앱 MergedDictionaries[*].ThemeDictionaries
+        /// → 앱 Resources(merged 포함) 순으로 fallback. XAML {ThemeResource}와 동일한 리소스 해석
+        /// 순서를 코드-비하인드에서도 보장한다.
+        /// S-3.39: 반환 타입을 SolidColorBrush → Brush로 확장. LumiTheme.xaml의 nested
+        /// ThemeDictionaries에 정의된 LinearGradientBrush(LumiPillActiveBrush 등)도
+        /// MergedDictionaries 재귀 walk를 통해 찾아낸다.
         /// </summary>
-        internal SolidColorBrush GetThemeBrush(string key)
+        internal Microsoft.UI.Xaml.Media.Brush GetThemeBrush(string key)
         {
             try
             {
@@ -274,30 +278,43 @@ namespace LumiFiles
                     var currentThemeKey = root.ActualTheme == ElementTheme.Light ? "Light" : "Dark";
 
                     // 1. 윈도우 레벨 ThemeDictionaries (커스텀 테마 오버라이드 우선)
-                    if (root.Resources.ThemeDictionaries.TryGetValue(currentThemeKey, out var dict)
-                        && dict is ResourceDictionary rd
-                        && rd.TryGetValue(key, out var val)
-                        && val is SolidColorBrush brush)
-                    {
+                    if (TryFindInThemeDictionaries(root.Resources, currentThemeKey, key, out var brush))
                         return brush;
-                    }
 
-                    // 2. 앱 레벨 ThemeDictionaries (root.ActualTheme 기준으로 올바른 테마 사전 조회)
-                    // Application.Current.Resources[key]는 Application.RequestedTheme 기준이라
-                    // 시스템 Dark + 사용자 Light 선택 시 잘못된 브러시를 반환하므로,
-                    // 명시적으로 currentThemeKey로 조회
-                    if (Application.Current.Resources.ThemeDictionaries.TryGetValue(currentThemeKey, out var appDict)
-                        && appDict is ResourceDictionary appRd
-                        && appRd.TryGetValue(key, out var appVal)
-                        && appVal is SolidColorBrush appBrush)
-                    {
+                    // 2. 앱 레벨 ThemeDictionaries
+                    if (TryFindInThemeDictionaries(Application.Current.Resources, currentThemeKey, key, out var appBrush))
                         return appBrush;
+
+                    // 3. 앱 MergedDictionaries 안의 nested ThemeDictionaries (LumiTheme.xaml 등)
+                    foreach (var merged in Application.Current.Resources.MergedDictionaries)
+                    {
+                        if (TryFindInThemeDictionaries(merged, currentThemeKey, key, out var mergedBrush))
+                            return mergedBrush;
                     }
                 }
             }
             catch { /* fallback to app level */ }
 
-            return (SolidColorBrush)Application.Current.Resources[key];
+            return (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources[key];
+        }
+
+        /// <summary>
+        /// ResourceDictionary의 ThemeDictionaries[themeKey]에서 key를 Brush로 찾는다.
+        /// SolidColorBrush, LinearGradientBrush, RadialGradientBrush 모두 매칭.
+        /// </summary>
+        private static bool TryFindInThemeDictionaries(
+            ResourceDictionary container, string themeKey, string key, out Microsoft.UI.Xaml.Media.Brush result)
+        {
+            result = null!;
+            if (container.ThemeDictionaries.TryGetValue(themeKey, out var dict)
+                && dict is ResourceDictionary rd
+                && rd.TryGetValue(key, out var val)
+                && val is Microsoft.UI.Xaml.Media.Brush brush)
+            {
+                result = brush;
+                return true;
+            }
+            return false;
         }
 
         // H1: FocusActiveView 중복 호출 제거 — UpdateViewModeVisibility 내에서 true로 설정
@@ -7283,7 +7300,7 @@ namespace LumiFiles
                 if (CaptionCloseHoverBg != null)
                     CaptionCloseHoverBg.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
                 if (CaptionCloseGlyph != null)
-                    CaptionCloseGlyph.Foreground = GetThemeBrush("LumiTextTertiaryBrush");
+                    CaptionCloseGlyph.Foreground = GetThemeBrush("LumiTextSecondaryBrush");
             }
             catch { }
         }

@@ -147,6 +147,11 @@
                         <GradientStop Offset="1" Color="#F5161420" />
                     </LinearGradientBrush>
                     <SolidColorBrush x:Key="ContentDialogBackground" Color="#F01E1C28" />
+
+                    <!-- S-3.38: 컨텐츠 카드(타이틀바/툴바/파일 리스트 통합 면) 전용 솔리드 브러시.
+                         다크: 사이드바 다크 톤(#1E1C28, SpanBgLayer1Color과 동일)으로 텍스트
+                         가시성 확보. 라이트는 아래 Light 사전에서 #FFFFFF 순백. -->
+                    <SolidColorBrush x:Key="LumiContentCardBrush" Color="#1E1C28" />
                 </ResourceDictionary>
 
                 <!-- ==================== LIGHT THEME ==================== -->
@@ -256,6 +261,9 @@
                         <GradientStop Offset="1" Color="#F5161420" />
                     </LinearGradientBrush>
                     <SolidColorBrush x:Key="ContentDialogBackground" Color="#F01E1C28" />
+
+                    <!-- S-3.38: 컨텐츠 카드 라이트 테마 — 사용자 요청대로 순백(#FFFFFF). -->
+                    <SolidColorBrush x:Key="LumiContentCardBrush" Color="#FFFFFF" />
                 </ResourceDictionary>
 
             </ResourceDictionary.ThemeDictionaries>
