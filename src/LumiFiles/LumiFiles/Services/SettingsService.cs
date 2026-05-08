@@ -365,7 +365,9 @@ public class SettingsService : ISettingsService
 
     public bool ShelfEnabled
     {
-        get => Get("ShelfEnabled", true);
+        // S-3.40: 기본값 true → false. Del 키 오작동 여지(글로벌 휴지통 이동 vs Shelf 항목 제거)
+        // 가 있어 사용자가 명시적으로 켤 때만 활성화하도록 보수적으로 변경.
+        get => Get("ShelfEnabled", false);
         set => Set("ShelfEnabled", value);
     }
 

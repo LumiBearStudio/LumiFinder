@@ -126,6 +126,23 @@ public sealed partial class OnboardingWindow : Window
 
         Title = "LumiFinder";
         CenterOnScreen();
+
+        // S-3.40: 첫 페이지 띄우는 즉시 OnboardingCompleted = true.
+        // 사용자가 X 로 닫든 끝까지 가든 다음 실행 부턴 안 뜸. 명시적 완료(=DFM 액션)
+        // 가 아니어도 한 번 봤으면 충분하다는 정책.
+        try
+        {
+            if (!_settings.OnboardingCompleted)
+            {
+                _settings.OnboardingCompleted = true;
+                Helpers.DebugLogger.Log("[Onboarding] Marked OnboardingCompleted=true on first show");
+            }
+        }
+        catch (Exception ex)
+        {
+            Helpers.DebugLogger.Log($"[Onboarding] Flag set failed: {ex.Message}");
+        }
+
         _ = InitWebViewAsync();
     }
 

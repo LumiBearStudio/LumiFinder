@@ -686,6 +686,9 @@ namespace LumiFiles
                 switch (e.Key)
                 {
                     case Windows.System.VirtualKey.Delete:
+                        // S-3.40: Shelf 에 포커스가 있으면 글로벌 영구삭제 skip — Shelf 자체
+                        // KeyDown 이 항목을 컬렉션에서만 제거. 실제 파일 영구삭제 방지.
+                        if (IsFocusInShelf()) { e.Handled = true; break; }
                         HandlePermanentDelete();
                         e.Handled = true;
                         break;
@@ -743,6 +746,9 @@ namespace LumiFiles
                         break;
 
                     case Windows.System.VirtualKey.Delete:
+                        // S-3.40: Shelf 에 포커스가 있으면 글로벌 휴지통 이동 skip — Shelf
+                        // 자체 KeyDown 이 항목을 컬렉션에서만 제거. 원본 파일 보존.
+                        if (IsFocusInShelf()) { e.Handled = true; break; }
                         HandleDelete(); // Send to Recycle Bin
                         e.Handled = true;
                         break;

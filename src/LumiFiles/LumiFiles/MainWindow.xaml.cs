@@ -546,8 +546,17 @@ namespace LumiFiles
                 uint style = unchecked((uint)Helpers.NativeMethods.GetWindowLong(
                     hwnd, Helpers.NativeMethods.GWL_STYLE));
                 style &= ~Helpers.NativeMethods.WS_OVERLAPPEDWINDOW;
+                // S-3.40: Snap Layouts (Win11 최대화 hover 팝업) 가 동작하려면 윈도우에
+                // WS_MAXIMIZEBOX (+ 짝으로 WS_MINIMIZEBOX, WS_SYSMENU) 스타일이 살아있어야 함.
+                // WS_OVERLAPPEDWINDOW 마스크에 포함된 비트들이라 strip 후 다시 OR 로 부활시킴.
+                // InputNonClientPointerSource.SetRegionRects(NonClientRegionKind.Maximize, ...)
+                // 만으론 부족 — 윈도우 자체가 maximizable 임을 OS 가 알아야 hover 팝업이 뜸.
                 style |= Helpers.NativeMethods.WS_POPUP
-                       | Helpers.NativeMethods.WS_CLIPCHILDREN;
+                       | Helpers.NativeMethods.WS_CLIPCHILDREN
+                       | Helpers.NativeMethods.WS_MAXIMIZEBOX
+                       | Helpers.NativeMethods.WS_MINIMIZEBOX
+                       | Helpers.NativeMethods.WS_SYSMENU
+                       | Helpers.NativeMethods.WS_THICKFRAME;  // S-3.40: Snap Layouts 활성화 — OS가 resizable 인식
                 Helpers.NativeMethods.SetWindowLong(
                     hwnd,
                     Helpers.NativeMethods.GWL_STYLE,
@@ -574,6 +583,16 @@ namespace LumiFiles
                 // Show the self-drawn caption buttons now that system chrome
                 // is gone (otherwise the user would have no way to close).
                 CaptionButtonsHost.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+
+                // S-3.40: CaptionMaximizeButton 의 layout 이 settle 된 시점에
+                // Snap Layouts 영역을 등록해야 함. SizeChanged 와 Loaded 둘 다 hook.
+                if (CaptionMaximizeButton != null)
+                {
+                    CaptionMaximizeButton.SizeChanged += (_, __) =>
+                        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, UpdateTitleBarRegions);
+                    CaptionMaximizeButton.Loaded += (_, __) =>
+                        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, UpdateTitleBarRegions);
+                }
 
                 // Stage S-3.24: clip the OS window hit-area itself to a
                 // rounded rect via SetWindowRgn. Without this, DONOTROUND

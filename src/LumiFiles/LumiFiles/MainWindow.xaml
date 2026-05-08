@@ -2375,8 +2375,11 @@
                                                     Canvas.ZIndex="100"
                                                     Margin="0,0,16,8"/>
 
-        <!-- ===== FILE SHELF — Yoink-style floating overlay (right edge) ===== -->
-        <Border x:Name="ShelfPanel" Grid.Row="2"
+        <!-- ===== FILE SHELF — Yoink-style floating overlay (right edge) =====
+             S-3.40: Column=1 (컨텐츠 컬럼), Row=2 (Main Area 만) 로 배치.
+             Row=1(Toolbar)/Row=3(StatusBar)는 가리지 않아 툴바 버튼/상태바 모두 사용 가능.
+             RowSpan 없이 Main Area 안에서만 우측 정렬. -->
+        <Border x:Name="ShelfPanel" Grid.Column="1" Grid.Row="2"
                 HorizontalAlignment="Right" VerticalAlignment="Stretch"
                 Width="270" Canvas.ZIndex="150"
                 Background="{ThemeResource SpanBgLayer1Brush}"

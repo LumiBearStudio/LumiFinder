@@ -895,5 +895,31 @@ namespace LumiFiles
             };
             _shelfCollapseTimer.Start();
         }
+
+        // ── Focus check helpers ─────────────────────────────────
+
+        /// <summary>
+        /// 현재 포커스가 ShelfListView 내부에 있는지 확인.
+        /// 글로벌 KeyDown 핸들러 (Delete/Shift+Delete) 가 Shelf 포커스 시
+        /// 실제 파일 삭제로 폴링 안 되게 하는 가드용.
+        /// </summary>
+        internal bool IsFocusInShelf()
+        {
+            try
+            {
+                if (this.Content is FrameworkElement root)
+                {
+                    var focused = Microsoft.UI.Xaml.Input.FocusManager.GetFocusedElement(root.XamlRoot)
+                                  as DependencyObject;
+                    while (focused != null)
+                    {
+                        if (focused == ShelfListView || focused == ShelfPanel) return true;
+                        focused = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(focused);
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
     }
 }

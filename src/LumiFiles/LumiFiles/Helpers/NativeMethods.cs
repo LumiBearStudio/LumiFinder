@@ -88,6 +88,9 @@ namespace LumiFiles.Helpers
         internal const uint WS_POPUP            = 0x80000000u;
         internal const uint WS_CLIPCHILDREN     = 0x02000000u;
         internal const uint WS_THICKFRAME       = 0x00040000u; // resizable
+        internal const uint WS_SYSMENU          = 0x00080000u; // system menu (caption requires)
+        internal const uint WS_MINIMIZEBOX      = 0x00020000u; // minimize button capability
+        internal const uint WS_MAXIMIZEBOX      = 0x00010000u; // maximize button + Snap Layouts
 
         [DllImport("user32.dll")]
         internal static extern bool SetForegroundWindow(IntPtr hWnd);
