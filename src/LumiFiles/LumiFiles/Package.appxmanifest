@@ -17,7 +17,7 @@
   <mp:PhoneIdentity PhoneProductId="9ebb11a8-9766-42b1-b043-c7b036e797cd" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Lumi Files</DisplayName>
+    <DisplayName>LumiFinder</DisplayName>
     <PublisherDisplayName>LumiBear Studio</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -44,8 +44,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="Lumi Files"
-        Description="Lumi Files - High-Performance Miller Columns File Explorer"
+        DisplayName="LumiFinder"
+        Description="LumiFinder - High-Performance Miller Columns File Explorer"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">

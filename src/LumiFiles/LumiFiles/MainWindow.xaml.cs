@@ -704,7 +704,7 @@ namespace LumiFiles
             _settings.AppLaunchCount++;
 
             // Window title (shown in taskbar thumbnail & Alt+Tab)
-            this.Title = "Lumi Files";
+            this.Title = "LumiFinder";
 
             // Window icon (shown in taskbar & title bar)
             try

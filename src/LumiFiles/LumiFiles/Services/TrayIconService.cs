@@ -90,7 +90,7 @@ namespace LumiFiles.Services
                 _icon = new TaskbarIcon
                 {
                     IconSource = new BitmapImage { UriSource = iconUri },
-                    ToolTipText = "Lumi Files",
+                    ToolTipText = "LumiFinder",
                     NoLeftClickDelay = true,
                 };
 

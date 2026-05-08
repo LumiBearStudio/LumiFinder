@@ -173,6 +173,10 @@ namespace LumiFiles.Views
             {
                 _settingsService = App.Current.Services.GetRequiredService<SettingsService>();
                 ApplyThemeToSelf(_settingsService.Theme);
+                // S-3.40: 시작 시점에 액센트 override 도 자기 창에 주입.
+                // UseCustomAccent OFF 여도 TryApplyCustomAccentOverride 와 동일 패턴으로
+                // 기본 Lumi Gold 적용 → ToggleSwitch / RadioButton 토큰이 명시적으로 amber.
+                ReapplyAccentToSelf();
 
                 _settingChangedHandler = (key, value) =>
                 {
@@ -230,19 +234,19 @@ namespace LumiFiles.Views
 
                 var theme = _settingsService.Theme ?? "system";
 
-                // 액센트 override 가 꺼졌다면 액센트 적용 없이 테마만 다시 적용해
-                // 기본 amber 토큰으로 복귀.
-                if (!_settingsService.UseCustomAccent)
+                // S-3.40: UseCustomAccent OFF 일 때도 ApplyAccentOverride 를 기본
+                // Lumi Gold (#FFB86B) 로 호출. 그래야 root + App-level ThemeDict 의
+                // ToggleSwitch / RadioButton 토큰이 명시적으로 amber 로 세팅되어
+                // WinUI 기본값(흰색 등) 대신 우리 의도의 amber 가 떠 보임.
+                Windows.UI.Color accent;
+                if (_settingsService.UseCustomAccent
+                    && TryParseAccentHex(_settingsService.CustomAccentColor, out var customAccent))
                 {
-                    ApplyThemeToSelf(theme);
-                    return;
+                    accent = customAccent;
                 }
-
-                if (!TryParseAccentHex(_settingsService.CustomAccentColor, out var accent))
+                else
                 {
-                    Helpers.DebugLogger.Log($"[SettingsWindow] ReapplyAccentToSelf: hex parse failed '{_settingsService.CustomAccentColor}'");
-                    ApplyThemeToSelf(theme);
-                    return;
+                    accent = Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xB8, 0x6B); // Lumi Gold
                 }
 
                 MainWindow.ApplyAccentOverride(root, accent, theme);

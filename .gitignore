@@ -48,3 +48,6 @@ Logs/
 image.png
 pri_dump.xml
 github-docs
+
+# Icon processing work folder (intermediate PNG/scripts)
+_icon_work/

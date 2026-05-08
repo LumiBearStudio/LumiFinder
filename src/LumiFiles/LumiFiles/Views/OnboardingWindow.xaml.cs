@@ -124,7 +124,7 @@ public sealed partial class OnboardingWindow : Window
         var margins = new MARGINS { Left = 0, Right = 0, Top = 0, Bottom = 0 };
         DwmExtendFrameIntoClientArea(_hwnd, ref margins);
 
-        Title = "Lumi Files";
+        Title = "LumiFinder";
         CenterOnScreen();
         _ = InitWebViewAsync();
     }

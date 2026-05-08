@@ -354,11 +354,23 @@ namespace LumiFiles
                     return;
                 }
                 Helpers.DebugLogger.Log($"[TryApplyCustomAccentOverride] UseCustomAccent={settings.UseCustomAccent} Color='{settings.CustomAccentColor}' theme={theme}");
-                if (!settings.UseCustomAccent) return;
-                if (!TryParseAccentHex(settings.CustomAccentColor, out var accent))
+
+                // S-3.40: UseCustomAccent OFF 일 때도 ApplyAccentOverride 를 기본
+                // Lumi Gold 로 호출해서 root + App-level ThemeDict 의 Lumi 토큰을 원본
+                // amber 로 복원. 그래야 이전에 켜뒀던 다른 색이 stale 상태로 남지 않음.
+                Windows.UI.Color accent;
+                if (settings.UseCustomAccent)
                 {
-                    Helpers.DebugLogger.Log($"[TryApplyCustomAccentOverride] Hex parse failed: '{settings.CustomAccentColor}'");
-                    return;
+                    if (!TryParseAccentHex(settings.CustomAccentColor, out accent))
+                    {
+                        Helpers.DebugLogger.Log($"[TryApplyCustomAccentOverride] Hex parse failed: '{settings.CustomAccentColor}', falling back to Lumi Gold");
+                        accent = Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xB8, 0x6B);
+                    }
+                }
+                else
+                {
+                    // 기본 Lumi Gold (#FFB86B). 명시적으로 적용해 stale 토큰 정리.
+                    accent = Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xB8, 0x6B);
                 }
                 ApplyAccentOverride(root, accent, theme);
             }
@@ -473,19 +485,25 @@ namespace LumiFiles
             dict["SystemFillColorAttentionBrush"] = accentBrush;
             dict["SystemFillColorAttentionBackgroundBrush"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(bgSelected);
 
-            // ── ToggleSwitch (ON 상태) ──
+            // ── ToggleSwitch (ON 상태) — S-3.40: rail = accent 약알파, knob = accent 풀톤
+            //    "약한 amber rail + 또렷한 amber knob" 패턴. UserControl-scope 오버라이드를
+            //    제거하고 여기서 직접 amber 색상으로 토큰 갱신. 알파별 새 SolidColorBrush 생성.
             var accentHoverBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentHover);
             var accentDimBrush2 = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentDim);
-            var whiteBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White);
-            dict["ToggleSwitchFillOn"] = accentBrush;
-            dict["ToggleSwitchFillOnPointerOver"] = accentHoverBrush;
-            dict["ToggleSwitchFillOnPressed"] = accentDimBrush2;
-            dict["ToggleSwitchStrokeOn"] = accentBrush;
-            dict["ToggleSwitchStrokeOnPointerOver"] = accentHoverBrush;
-            dict["ToggleSwitchStrokeOnPressed"] = accentDimBrush2;
-            dict["ToggleSwitchKnobFillOn"] = whiteBrush;
-            dict["ToggleSwitchKnobFillOnPointerOver"] = whiteBrush;
-            dict["ToggleSwitchKnobFillOnPressed"] = whiteBrush;
+            var accentRail   = Windows.UI.Color.FromArgb(0x33, accent.R, accent.G, accent.B); // 20%
+            var accentRailH  = Windows.UI.Color.FromArgb(0x4D, accent.R, accent.G, accent.B); // 30%
+            var accentRailP  = Windows.UI.Color.FromArgb(0x66, accent.R, accent.G, accent.B); // 40%
+            var accentStroke = Windows.UI.Color.FromArgb(0x80, accent.R, accent.G, accent.B); // 50%
+            var accentStrokeH= Windows.UI.Color.FromArgb(0xA0, accent.R, accent.G, accent.B); // 63%
+            dict["ToggleSwitchFillOn"]            = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentRail);
+            dict["ToggleSwitchFillOnPointerOver"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentRailH);
+            dict["ToggleSwitchFillOnPressed"]     = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentRailP);
+            dict["ToggleSwitchStrokeOn"]            = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentStroke);
+            dict["ToggleSwitchStrokeOnPointerOver"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentStrokeH);
+            dict["ToggleSwitchStrokeOnPressed"]     = accentBrush;
+            dict["ToggleSwitchKnobFillOn"]            = accentBrush;
+            dict["ToggleSwitchKnobFillOnPointerOver"] = accentHoverBrush;
+            dict["ToggleSwitchKnobFillOnPressed"]     = accentDimBrush2;
 
             // ── RadioButton (선택 원형) ──
             dict["RadioButtonOuterEllipseCheckedStroke"] = accentBrush;
@@ -494,6 +512,9 @@ namespace LumiFiles
             dict["RadioButtonOuterEllipseCheckedFill"] = accentBrush;
             dict["RadioButtonOuterEllipseCheckedFillPointerOver"] = accentHoverBrush;
             dict["RadioButtonOuterEllipseCheckedFillPressed"] = accentDimBrush2;
+            dict["RadioButtonCheckGlyphFill"] = accentBrush;
+            dict["RadioButtonCheckGlyphFillPointerOver"] = accentHoverBrush;
+            dict["RadioButtonCheckGlyphFillPressed"] = accentDimBrush2;
 
             // ── CheckBox ──
             dict["CheckBoxCheckBackgroundFillChecked"] = accentBrush;
@@ -1231,7 +1252,7 @@ namespace LumiFiles
                 if (newTabIcon != null) newTabIcon.FontSize = 12.0 + level;
             }
 
-            // "Lumi Files" 타이틀 TextBlock (baseline=12)
+            // "LumiFinder" 타이틀 TextBlock (baseline=12)
             if (AppTitleText != null)
                 AppTitleText.FontSize = Math.Max(7, 12.0 + level);
 
@@ -1614,6 +1635,16 @@ namespace LumiFiles
         {
             Services.SettingsWindowHost.ShowOrFocus(this);
             e.Handled = true;
+        }
+
+        /// <summary>
+        /// S-3.40: LumiSidebar 하단 Workspaces 아이콘 버튼 클릭 — Workspace 목록 flyout 표시.
+        /// 기존 WorkspaceButton 은 legacy SidebarBorder(Collapsed) 안에 있어서 사라졌었음.
+        /// 옵션 B: Settings 메인 행 + 우측에 Workspaces 아이콘 버튼 단일행 구성.
+        /// </summary>
+        private void OnLumiSidebarWorkspaceClick(object sender, RoutedEventArgs e)
+        {
+            _ = ShowWorkspacePaletteAsync(sender as FrameworkElement);
         }
 
         private void OnLogClick(object sender, RoutedEventArgs e)

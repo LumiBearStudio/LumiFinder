@@ -9,45 +9,15 @@
 
     <UserControl.Resources>
         <ResourceDictionary>
-            <!-- S-3.40: 라디오 버튼 가운데 점, 토글 knob/rail 등을 직접 amber 로 오버라이드.
-                 App.xaml ThemeDictionaries 의 동일 키 오버라이드는 XamlControlsResources 의
-                 nested 스타일 lookup 경로에서 일관되게 안 잡혀서, UserControl 스코프의
-                 ThemeDictionaries 로 우선순위 끌어올림. UserControl.Resources 가 이 페이지의
-                 모든 RadioButton / ToggleSwitch 에 대해 가장 가까운 부모 ResourceDictionary 가
-                 되므로 ThemeResource lookup 이 여기서 매칭. -->
+            <!-- S-3.40 (revised): UserControl 스코프의 토글/라디오 토큰 오버라이드 제거.
+                 새 instantiate된 SolidColorBrush 들이 ApplyAccentOverride 의 Lumi 색상
+                 갱신을 동적으로 못 받아서 액센트 변경이 토글에 반영 안 됐음. 대신
+                 App.xaml ThemeDictionaries + ApplyAccentOverride 의 토큰 dict 교체
+                 단일 경로로 일원화. RadioButton 카드 내부의 CheckGlyph 는 템플릿에서
+                 직접 {ThemeResource LumiAmberBrush} 바인딩으로 처리 (이건 잘 동작). -->
             <ResourceDictionary.ThemeDictionaries>
-                <ResourceDictionary x:Key="Default">
-                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="#FFFFB86B" />
-                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPointerOver" Color="#FFFFD27A" />
-                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPressed" Color="#FFD48028" />
-                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillDisabled" Color="#7FFFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#33FFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#4DFFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#66FFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#80FFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver" Color="#A0FFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed" Color="#FFFFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#FFFFD27A" />
-                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="#FFD48028" />
-                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnDisabled" Color="#7FFFB86B" />
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="#FFFFB86B" />
-                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPointerOver" Color="#FFFFD27A" />
-                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPressed" Color="#FFD48028" />
-                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillDisabled" Color="#7FFFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#33FFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#4DFFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#66FFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#80FFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver" Color="#A0FFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed" Color="#FFFFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFB86B" />
-                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#FFFFD27A" />
-                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="#FFD48028" />
-                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnDisabled" Color="#7FFFB86B" />
-                </ResourceDictionary>
+                <ResourceDictionary x:Key="Default" />
+                <ResourceDictionary x:Key="Light" />
             </ResourceDictionary.ThemeDictionaries>
 
             <!-- Settings Card Style -->
@@ -286,12 +256,9 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Width="14" Height="14" CornerRadius="4"
-                            Background="{ThemeResource LumiCatAmberBrush}" VerticalAlignment="Center">
-                        <Border.Shadow>
-                            <ThemeShadow/>
-                        </Border.Shadow>
-                    </Border>
+                    <!-- S-3.40: amber 그라디언트 placeholder → 실제 LumiFinder 로고 이미지 -->
+                    <Image Grid.Column="0" Width="20" Height="20" VerticalAlignment="Center"
+                           Source="ms-appx:///Assets/app_logo_64.png"/>
                     <TextBlock x:Name="SettingsTitle" Grid.Column="1" Text="Settings"
                                VerticalAlignment="Center"
                                FontFamily="{StaticResource LumiFontFamily}"
@@ -930,43 +897,80 @@
                                     </Grid>
 
                                     <StackPanel x:Name="CustomAccentPanel" Margin="48,0,0,0" Spacing="12" Visibility="Collapsed">
-                                        <ColorPicker x:Name="CustomAccentPicker"
-                                                     ColorChanged="OnCustomAccentColorChanged"
-                                                     IsAlphaEnabled="False"
-                                                     IsHexInputVisible="False"
-                                                     IsColorChannelTextInputVisible="False"
-                                                     ColorSpectrumShape="Box"
-                                                     HorizontalAlignment="Left" />
+                                        <!-- S-3.40: ColorPicker 대신 10개 프리셋 swatch.
+                                             자유 색상 선택의 UX 부하 + 리셋 시 토큰 정리 이슈를 회피.
+                                             기본 Lumi Gold 포함. 각 swatch 클릭 시 그 색으로 액센트 적용. -->
+                                        <ItemsControl x:Name="AccentPresetsControl">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal" Spacing="10" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <!-- Tag = "#RRGGBB" hex 문자열, ToolTip = 한글 라벨 -->
+                                            <Button Tag="#FFB86B" Click="OnAccentPresetClick" ToolTipService.ToolTip="Lumi Gold (기본)"
+                                                    Width="32" Height="32" Padding="0" MinWidth="0" CornerRadius="16"
+                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
+                                                    Background="#FFFFB86B" />
+                                            <Button Tag="#FF9A6B" Click="OnAccentPresetClick" ToolTipService.ToolTip="Coral"
+                                                    Width="32" Height="32" Padding="0" MinWidth="0" CornerRadius="16"
+                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
+                                                    Background="#FFFF9A6B" />
+                                            <Button Tag="#E55353" Click="OnAccentPresetClick" ToolTipService.ToolTip="Red"
+                                                    Width="32" Height="32" Padding="0" MinWidth="0" CornerRadius="16"
+                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
+                                                    Background="#FFE55353" />
+                                            <Button Tag="#F0CE5A" Click="OnAccentPresetClick" ToolTipService.ToolTip="Yellow"
+                                                    Width="32" Height="32" Padding="0" MinWidth="0" CornerRadius="16"
+                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
+                                                    Background="#FFF0CE5A" />
+                                            <Button Tag="#7EC785" Click="OnAccentPresetClick" ToolTipService.ToolTip="Green"
+                                                    Width="32" Height="32" Padding="0" MinWidth="0" CornerRadius="16"
+                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
+                                                    Background="#FF7EC785" />
+                                            <Button Tag="#4ECDC4" Click="OnAccentPresetClick" ToolTipService.ToolTip="Teal"
+                                                    Width="32" Height="32" Padding="0" MinWidth="0" CornerRadius="16"
+                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
+                                                    Background="#FF4ECDC4" />
+                                            <Button Tag="#6AA8E8" Click="OnAccentPresetClick" ToolTipService.ToolTip="Blue"
+                                                    Width="32" Height="32" Padding="0" MinWidth="0" CornerRadius="16"
+                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
+                                                    Background="#FF6AA8E8" />
+                                            <Button Tag="#6377DD" Click="OnAccentPresetClick" ToolTipService.ToolTip="Indigo"
+                                                    Width="32" Height="32" Padding="0" MinWidth="0" CornerRadius="16"
+                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
+                                                    Background="#FF6377DD" />
+                                            <Button Tag="#B08FE8" Click="OnAccentPresetClick" ToolTipService.ToolTip="Purple"
+                                                    Width="32" Height="32" Padding="0" MinWidth="0" CornerRadius="16"
+                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
+                                                    Background="#FFB08FE8" />
+                                            <Button Tag="#F08FBF" Click="OnAccentPresetClick" ToolTipService.ToolTip="Pink"
+                                                    Width="32" Height="32" Padding="0" MinWidth="0" CornerRadius="16"
+                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
+                                                    Background="#FFF08FBF" />
+                                        </ItemsControl>
 
+                                        <!-- 현재 선택된 색상 미리보기 + 초기화 -->
                                         <Grid ColumnSpacing="10">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="Auto" />
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <Border Grid.Column="0" Width="28" Height="28" CornerRadius="4"
-                                                    BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
-                                                    Background="{ThemeResource SpanAccentBrush}"
-                                                    ToolTipService.ToolTip="현재 테마 액센트" />
-                                            <FontIcon Grid.Column="1" Glyph="&#xE72A;" FontSize="14" VerticalAlignment="Center"
-                                                      Foreground="{ThemeResource SpanTextSecondaryBrush}" />
-                                            <Border x:Name="CustomAccentPreview" Grid.Column="2" Width="28" Height="28" CornerRadius="4"
+                                            <TextBlock Grid.Column="0" Text="현재:" VerticalAlignment="Center"
+                                                       Foreground="{ThemeResource SpanTextSecondaryBrush}" />
+                                            <Border x:Name="CustomAccentPreview" Grid.Column="1" Width="28" Height="28" CornerRadius="14"
                                                     BorderBrush="{ThemeResource SpanBorderSubtleBrush}" BorderThickness="1"
                                                     Background="Transparent"
-                                                    ToolTipService.ToolTip="커스텀 액센트" />
+                                                    ToolTipService.ToolTip="현재 액센트" />
                                             <Button x:Name="ResetAccentButton" Grid.Column="3"
-                                                    Click="OnResetCustomAccent"
-                                                    Margin="8,0,0,0">
+                                                    Click="OnResetCustomAccent">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                     <FontIcon Glyph="&#xE7A7;" FontSize="12" />
-                                                    <TextBlock x:Name="ResetAccentText" Text="초기화" />
+                                                    <TextBlock x:Name="ResetAccentText" Text="기본 (Lumi Gold)" />
                                                 </StackPanel>
                                             </Button>
                                         </Grid>
-
                                     </StackPanel>
                                 </StackPanel>
                             </Border>
@@ -2070,9 +2074,11 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                                        <FontIcon Glyph="&#xE80F;" FontSize="40" Foreground="{ThemeResource SpanAccentBrush}" />
+                                        <!-- S-3.40: 홈 글리프 → 실제 LumiFinder 로고 이미지 -->
+                                        <Image Width="56" Height="56" VerticalAlignment="Center"
+                                               Source="ms-appx:///Assets/app_logo_256.png"/>
                                         <StackPanel Spacing="2">
-                                            <TextBlock Text="Lumi Files" FontSize="22" FontWeight="Bold" Foreground="{ThemeResource SpanTextPrimaryBrush}" />
+                                            <TextBlock Text="LumiFinder" FontSize="22" FontWeight="Bold" Foreground="{ThemeResource SpanTextPrimaryBrush}" />
                                             <TextBlock x:Name="VersionLabel" FontSize="12" Foreground="{ThemeResource SpanTextSecondaryBrush}" />
                                         </StackPanel>
                                     </StackPanel>

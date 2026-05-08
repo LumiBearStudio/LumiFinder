@@ -22,7 +22,7 @@ namespace LumiFiles.ViewModels
     public partial class MainViewModel : ObservableObject
     {
         [ObservableProperty]
-        private string _appTitle = "Lumi Files";
+        private string _appTitle = "LumiFinder";
 
         public ObservableCollection<TabItem> Tabs { get; } = new();
         public ObservableCollection<DriveItem> Drives { get; } = new();

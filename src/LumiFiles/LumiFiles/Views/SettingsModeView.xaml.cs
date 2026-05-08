@@ -176,11 +176,10 @@ public sealed partial class SettingsModeView : UserControl
             ThemeLight.IsChecked  = theme == "light";
             ThemeDark.IsChecked   = theme == "dark";
 
-            // Custom accent override
+            // Custom accent override (S-3.40: ColorPicker → 10개 프리셋 swatch)
             UseCustomAccentToggle.IsOn = _settings.UseCustomAccent;
             if (MainWindow.TryParseAccentHex(_settings.CustomAccentColor, out var savedAccent))
             {
-                CustomAccentPicker.Color = savedAccent;
                 CustomAccentPreview.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(savedAccent);
             }
             CustomAccentPanel.Visibility = UseCustomAccentToggle.IsOn
@@ -1985,33 +1984,44 @@ public sealed partial class SettingsModeView : UserControl
         AccentOverrideBadge.Visibility = on
             ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
-        // 처음 켤 때 CustomAccentColor 비어있으면 현재 ColorPicker 색상을 저장
+        // 처음 켤 때 CustomAccentColor 비어있으면 기본 Lumi Gold 로
         if (on && string.IsNullOrEmpty(_settings.CustomAccentColor))
-        {
-            var c = CustomAccentPicker.Color;
-            _settings.CustomAccentColor = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-        }
+            _settings.CustomAccentColor = "#FFB86B";
         _settings.UseCustomAccent = on;
         RequestAccentApply();
     }
 
-    private void OnCustomAccentColorChanged(Microsoft.UI.Xaml.Controls.ColorPicker sender,
-        Microsoft.UI.Xaml.Controls.ColorChangedEventArgs args)
+    /// <summary>
+    /// S-3.40: 프리셋 색상 swatch 클릭. Tag 에 "#RRGGBB" hex 가 들어있음.
+    /// </summary>
+    private void OnAccentPresetClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        Helpers.DebugLogger.Log($"[SettingsView] OnCustomAccentColorChanged entered, _isLoading={_isLoading}");
         if (_isLoading) return;
-        var c = args.NewColor;
+        if (sender is not Microsoft.UI.Xaml.Controls.Button btn) return;
+        var hex = btn.Tag as string;
+        if (string.IsNullOrWhiteSpace(hex)) return;
+        if (!MainWindow.TryParseAccentHex(hex, out var c)) return;
+
         CustomAccentPreview.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(c);
         _settings.CustomAccentColor = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-
-        // 디바운스 제거 — DispatcherTimer가 안 터지는 케이스 회피. 직접 호출.
+        _settings.UseCustomAccent = true;
+        if (!UseCustomAccentToggle.IsOn) UseCustomAccentToggle.IsOn = true;
         RequestAccentApply();
     }
 
+    /// <summary>
+    /// S-3.40: 초기화 = 기본 Lumi Gold (#FFB86B) 으로 복귀. UseCustomAccent 는 켠 채로 두어
+    /// preview/badge 도 살리고, ApplyAccentOverride 가 LumiAmberColor 를 다시 기본값으로 덮어
+    /// 쓴다 (이전 ColorPicker 시절엔 OFF 만 토글해서 root-level 토큰이 남아있던 문제 해결).
+    /// </summary>
     private void OnResetCustomAccent(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        _settings.UseCustomAccent = false;
-        UseCustomAccentToggle.IsOn = false;
+        _settings.CustomAccentColor = "#FFB86B";
+        if (MainWindow.TryParseAccentHex("#FFB86B", out var defaultColor))
+            CustomAccentPreview.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(defaultColor);
+        // UseCustomAccent 는 그대로 ON — 명시적으로 OFF 하려면 위의 토글 사용
+        if (_settings.UseCustomAccent)
+            RequestAccentApply();
     }
 
     private void RequestAccentApply()

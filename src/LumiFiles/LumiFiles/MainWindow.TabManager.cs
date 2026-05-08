@@ -1947,7 +1947,7 @@ namespace LumiFiles
             ViewModel.ShowToast($"\"{name}\" saved", 2000);
         }
 
-        internal async Task ShowWorkspacePaletteAsync()
+        internal async Task ShowWorkspacePaletteAsync(FrameworkElement? anchor = null)
         {
             var workspaceService = App.Current.Services.GetService<Services.WorkspaceService>();
             if (workspaceService == null) return;
@@ -2052,7 +2052,13 @@ namespace LumiFiles
             saveItem.Click += async (s, e) => await ShowSaveWorkspaceDialogAsync();
             flyout.Items.Add(saveItem);
 
-            flyout.ShowAt(WorkspaceButton);
+            // S-3.40: anchor 우선순위 — 호출자 지정 > 새 LumiSidebar Workspace 행 >
+            // legacy WorkspaceButton (Visibility=Collapsed 상태일 수 있음).
+            var target = anchor
+                ?? (LumiSidebarWorkspaceRow as FrameworkElement)
+                ?? (WorkspaceButton as FrameworkElement);
+            if (target != null)
+                flyout.ShowAt(target);
         }
 
         private async Task RestoreWorkspaceAsync(WorkspaceDto workspace)

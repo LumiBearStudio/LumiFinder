@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════
-   Lumi Files Onboarding — 1200x780 dark
+   LumiFinder Onboarding — 1200x780 dark
    ══════════════════════════════════════════════ */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -109,7 +109,7 @@ h2 {
   animation: auroraDrift3 20s ease-in-out infinite;
 }
 
-/* Miller column cascade — narrow translucent pillars hinting Lumi Files's signature */
+/* Miller column cascade — narrow translucent pillars hinting LumiFinder's signature */
 .miller-cascade {
   position: absolute;
   inset: 0;
@@ -523,7 +523,7 @@ h2 {
   color: #FFF;
 }
 
-/* ── Mini Lumi Files window mockup inside each theme card ── */
+/* ── Mini LumiFinder window mockup inside each theme card ── */
 .theme-preview {
   position: relative;
   height: 110px;

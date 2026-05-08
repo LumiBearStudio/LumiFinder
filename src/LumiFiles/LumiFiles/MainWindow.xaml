@@ -119,19 +119,16 @@
                     <RowDefinition Height="Auto"/>                                    <!-- Settings -->
                 </Grid.RowDefinitions>
 
-                <!-- Top: amber gradient logo + "Lumi Files" name -->
+                <!-- Top: app icon image + "LumiFinder" name (S-3.40: amber 그라디언트 사각형
+                     placeholder → 실제 Miller Columns 로고 이미지) -->
                 <Grid Grid.Row="0" Padding="16,0" ColumnSpacing="7">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Border Grid.Column="0" Width="14" Height="14" CornerRadius="4"
-                            Background="{ThemeResource LumiCatAmberBrush}" VerticalAlignment="Center">
-                        <Border.Shadow>
-                            <ThemeShadow/>
-                        </Border.Shadow>
-                    </Border>
-                    <TextBlock Grid.Column="1" Text="Lumi Files"
+                    <Image Grid.Column="0" Width="20" Height="20" VerticalAlignment="Center"
+                           Source="ms-appx:///Assets/app_logo_64.png"/>
+                    <TextBlock Grid.Column="1" Text="LumiFinder"
                                VerticalAlignment="Center"
                                FontFamily="{StaticResource LumiFontFamily}"
                                FontSize="{Binding SidebarTitleFontSize, Source={StaticResource FontScale}}"
@@ -395,22 +392,52 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Bottom: Settings (Stage S-3.32: opens separate SettingsWindow) -->
+                <!-- Bottom: Settings (메인 행) + 우측에 Workspaces 아이콘 버튼 (S-3.40 옵션 B)
+                     legacy SidebarBorder 안에 있던 Workspace 진입점이 collapsed 되면서
+                     사라졌던 문제 복구. 한 줄 안에 Settings 라벨 + Workspaces 아이콘으로
+                     공간 절약. -->
                 <Border Grid.Row="2" Padding="8,6,8,8" BorderBrush="{ThemeResource LumiDividerSoftBrush}" BorderThickness="0,1,0,0">
-                    <Grid Padding="{Binding SidebarItemPadding, Source={StaticResource FontScale}}" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
-                          Background="Transparent"
-                          Tapped="OnLumiSidebarSettingsTapped">
+                    <Grid Padding="{Binding SidebarItemPadding, Source={StaticResource FontScale}}"
+                          CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
+                          Background="Transparent">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>   <!-- Settings 아이콘 -->
+                            <ColumnDefinition Width="*"/>    <!-- Settings 라벨 (행 전체 클릭 영역) -->
+                            <ColumnDefinition Width="Auto"/> <!-- Workspaces 아이콘 버튼 -->
                         </Grid.ColumnDefinitions>
-                        <FontIcon Grid.Column="0" Glyph="&#xE713;"
-                                  FontSize="{Binding SidebarItemIconFontSize, Source={StaticResource FontScale}}"
-                                  Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"/>
-                        <TextBlock Grid.Column="1" Text="Settings" VerticalAlignment="Center"
-                                   FontFamily="{StaticResource LumiFontFamily}"
-                                   FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
-                                   Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
+
+                        <!-- Settings 클릭 영역: 좌측 아이콘 + 라벨 (Column 0~1 묶어서 Tapped) -->
+                        <Border Grid.Column="0" Grid.ColumnSpan="2"
+                                Background="Transparent"
+                                Tapped="OnLumiSidebarSettingsTapped">
+                            <Grid ColumnSpacing="9">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Grid.Column="0" Glyph="&#xE713;"
+                                          FontSize="{Binding SidebarItemIconFontSize, Source={StaticResource FontScale}}"
+                                          Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"/>
+                                <TextBlock Grid.Column="1" Text="Settings" VerticalAlignment="Center"
+                                           FontFamily="{StaticResource LumiFontFamily}"
+                                           FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
+                                           Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Workspaces 아이콘 버튼: 24x24, 우측 끝 -->
+                        <Button x:Name="LumiSidebarWorkspaceRow"
+                                Grid.Column="2"
+                                Width="24" Height="24" Padding="0" MinWidth="0" MinHeight="0"
+                                Background="Transparent" BorderThickness="0"
+                                CornerRadius="{StaticResource LumiSidebarItemCornerRadius}"
+                                ToolTipService.ToolTip="Workspaces"
+                                Click="OnLumiSidebarWorkspaceClick"
+                                helpers:CursorHelper.IsHandCursor="True">
+                            <FontIcon Glyph="&#xE737;"
+                                      FontSize="{Binding SidebarItemIconFontSize, Source={StaticResource FontScale}}"
+                                      Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"/>
+                        </Button>
                     </Grid>
                 </Border>
 
@@ -761,7 +788,7 @@
 
             <!-- App icon + title removed: LumiSidebar already shows the logo + name (mockup) -->
             <StackPanel x:Name="AppTitleStack" Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center" Margin="0" Visibility="Collapsed">
-                <TextBlock x:Name="AppTitleText" Text="Lumi Files" Visibility="Collapsed"/>
+                <TextBlock x:Name="AppTitleText" Text="LumiFinder" Visibility="Collapsed"/>
             </StackPanel>
             
             <!-- Dynamic Tabs -->
