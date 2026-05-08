@@ -21,7 +21,14 @@ public sealed class CrashReportingService : IDisposable
 {
     // Sentry DSN: 환경변수 > 앱 설정 > 기본값 순으로 로드
     // Note: Sentry DSN은 이벤트 전송 전용 (읽기 불가)이므로 클라이언트 앱에 포함해도 안전
-    private const string DefaultDsn = "https://a7e1e9d16763c38024a495176e723b2a@o4510949994266624.ingest.de.sentry.io/4510950010191952";
+    //
+    // LumiFinder 전용 Sentry 프로젝트 미할당 상태 — 빈 DSN이면 IsNullOrEmpty 가드로 SDK init skip → 크래시 리포팅 자동 비활성.
+    // 활성화 절차:
+    //   1) sentry.io 에서 'LumiFinder' 프로젝트 생성 → DSN 발급
+    //   2) 아래 DefaultDsn 에 입력  ─ 또는 ─
+    //   3) 환경변수 LUMIFILES_SENTRY_DSN  ─ 또는 ─
+    //   4) ApplicationData LocalSettings 의 'SentryDsn' 키
+    private const string DefaultDsn = "";
     private static readonly string? SentryDsn =
         Environment.GetEnvironmentVariable("LUMIFILES_SENTRY_DSN")
         ?? GetDsnFromAppSettings()

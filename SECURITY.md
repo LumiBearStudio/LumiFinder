@@ -8,10 +8,10 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in SPAN Finder, please report it responsibly:
+If you discover a security vulnerability in LumiFinder, please report it responsibly:
 
 1. **Do NOT** open a public GitHub issue for security vulnerabilities
-2. Report via [GitHub Security Advisories](https://github.com/LumiBearStudio/SpanFinder/security/advisories/new)
+2. Report via [GitHub Security Advisories](https://github.com/LumiBearStudio/LumiFinder/security/advisories/new)
 3. Include a detailed description of the vulnerability and steps to reproduce
 
 We will acknowledge your report within **48 hours** and work to release a fix as soon as possible.

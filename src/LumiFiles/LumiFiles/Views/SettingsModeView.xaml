@@ -2109,21 +2109,21 @@
                                             <FontIcon Glyph="&#xE8A7;" FontSize="10" Foreground="{ThemeResource SpanTextSecondaryBrush}" />
                                         </StackPanel>
                                     </HyperlinkButton>
-                                    <HyperlinkButton Style="{StaticResource LinkButtonStyle}" Margin="48,0,0,0" NavigateUri="https://github.com/LumiBearStudio/LumiFiles">
+                                    <HyperlinkButton Style="{StaticResource LinkButtonStyle}" Margin="48,0,0,0" NavigateUri="https://github.com/LumiBearStudio/LumiFinder">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <FontIcon Glyph="&#xE774;" FontSize="14" />
                                             <TextBlock x:Name="GitHubText" Text="GitHub 저장소" />
                                             <FontIcon Glyph="&#xE8A7;" FontSize="10" Foreground="{ThemeResource SpanTextSecondaryBrush}" />
                                         </StackPanel>
                                     </HyperlinkButton>
-                                    <HyperlinkButton Style="{StaticResource LinkButtonStyle}" Margin="48,0,0,0" NavigateUri="https://github.com/LumiBearStudio/LumiFiles/issues">
+                                    <HyperlinkButton Style="{StaticResource LinkButtonStyle}" Margin="48,0,0,0" NavigateUri="https://github.com/LumiBearStudio/LumiFinder/issues">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <FontIcon Glyph="&#xEBE8;" FontSize="14" />
                                             <TextBlock x:Name="BugReportText" Text="버그 제보" />
                                             <FontIcon Glyph="&#xE8A7;" FontSize="10" Foreground="{ThemeResource SpanTextSecondaryBrush}" />
                                         </StackPanel>
                                     </HyperlinkButton>
-                                    <HyperlinkButton Style="{StaticResource LinkButtonStyle}" Margin="48,0,0,0" NavigateUri="https://github.com/LumiBearStudio/LumiFiles/blob/main/PRIVACY.md">
+                                    <HyperlinkButton Style="{StaticResource LinkButtonStyle}" Margin="48,0,0,0" NavigateUri="https://github.com/LumiBearStudio/LumiFinder/blob/main/PRIVACY.md">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <FontIcon Glyph="&#xEA18;" FontSize="14" />
                                             <TextBlock x:Name="PrivacyText" Text="개인정보 처리방침" />
@@ -2358,7 +2358,7 @@
 
                             <!-- Full license link -->
                             <HyperlinkButton Style="{StaticResource LinkButtonStyle}" Margin="0,12,0,0"
-                                             NavigateUri="https://github.com/LumiBearStudio/LumiFiles/blob/main/OpenSourceLicenses.md">
+                                             NavigateUri="https://github.com/LumiBearStudio/LumiFinder/blob/main/OpenSourceLicenses.md">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <FontIcon Glyph="&#xE8A7;" FontSize="14" />
                                     <TextBlock x:Name="FullLicenseLink" Text="View full license text on GitHub" />

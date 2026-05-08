@@ -27,12 +27,12 @@ As a special exception, the copyright holder grants permission to distribute the
 
 The following are **NOT** covered by the GPL v3 license above and remain the exclusive property of the copyright holder:
 
-- **"SPAN Finder"** name and all related branding (including "SPAN", "Span Finder")
+- **"LumiFinder"** name and all related branding (including "Lumi", "LumiFiles", "Lumi Finder")
 - **Official application icon and logo** (`Assets/app.ico` and any derived artwork)
 
 These trademarks and brand assets may **not** be used without prior written permission from the copyright holder, including but not limited to:
 
-- Publishing or distributing an application under the "SPAN Finder" name (or confusingly similar names) on the Microsoft Store, GitHub Releases, or any other distribution platform
+- Publishing or distributing an application under the "LumiFinder" name (or confusingly similar names) on the Microsoft Store, GitHub Releases, or any other distribution platform
 - Using the official logo/icon in forks, derivative works, or third-party distributions
 - Any use that implies official endorsement or affiliation
 
@@ -40,7 +40,7 @@ These trademarks and brand assets may **not** be used without prior written perm
 
 1. Choose a different application name
 2. Replace all logo/icon assets with your own
-3. Clearly indicate that your version is a modified fork and is not affiliated with the original SPAN Finder project
+3. Clearly indicate that your version is a modified fork and is not affiliated with the original LumiFinder project
 
 This restriction exists solely to prevent user confusion and protect the identity of the original project. It does not limit any rights granted by the GPL v3 for the source code itself.
 

@@ -66,10 +66,16 @@ internal static class Program
 
             // ── 2. Sentry 초기화 (메인과 동일 DSN, tag로 구분) ──
             // Note: 메인의 SentryDsn 상수와 동일 — 환경변수로도 override 가능
+            // LumiFinder 전용 Sentry 프로젝트 미할당 상태 — 빈 DSN이면 SDK가 no-op로 동작.
+            // 활성화: 환경변수 LUMIFILES_SENTRY_DSN 또는 아래 fallback 문자열에 LumiFinder DSN 입력.
             try
             {
-                var dsn = Environment.GetEnvironmentVariable("LUMIFILES_SENTRY_DSN")
-                    ?? "https://a7e1e9d16763c38024a495176e723b2a@o4510949994266624.ingest.de.sentry.io/4510950010191952";
+                var dsn = Environment.GetEnvironmentVariable("LUMIFILES_SENTRY_DSN") ?? "";
+                if (string.IsNullOrEmpty(dsn))
+                {
+                    WorkerLogger.Log("[Worker] Sentry DSN empty — crash reporting disabled");
+                    goto SkipSentry;
+                }
                 Sentry.SentrySdk.Init(o =>
                 {
                     o.Dsn = dsn;
@@ -89,6 +95,7 @@ internal static class Program
                 WorkerLogger.Log("[Worker] Sentry initialized");
             }
             catch (Exception ex) { WorkerLogger.Log($"[Worker] Sentry init failed: {ex.Message}"); }
+            SkipSentry:
 
             // ── 3. NamedPipe 서버 + 이벤트 루프 ──
             // I3 + S1: ACL 명시 — 현재 사용자(WindowsIdentity.User)만 read/write 허용.

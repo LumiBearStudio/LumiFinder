@@ -1,6 +1,6 @@
-# Contributing to SPAN Finder
+# Contributing to LumiFinder
 
-Thank you for your interest in contributing to SPAN Finder! This guide will help you get started.
+Thank you for your interest in contributing to LumiFinder! This guide will help you get started.
 
 ## Getting Started
 
@@ -17,14 +17,14 @@ Thank you for your interest in contributing to SPAN Finder! This guide will help
 
 ```bash
 # Clone the repository
-git clone https://github.com/LumiBearStudio/SpanFinder.git
-cd SpanFinder
+git clone https://github.com/LumiBearStudio/LumiFinder.git
+cd LumiFinder
 
 # Build (x64)
-dotnet build src/Span/Span/Span.csproj -p:Platform=x64
+dotnet build src/LumiFiles/LumiFiles/LumiFiles.csproj -p:Platform=x64
 
 # Run unit tests
-dotnet test src/Span/Span.Tests/Span.Tests.csproj -p:Platform=x64
+dotnet test src/LumiFiles/LumiFiles.Tests/LumiFiles.Tests.csproj -p:Platform=x64
 ```
 
 > **Note**: WinUI 3 apps cannot be launched via `dotnet run`. You must use **Visual Studio F5** (MSIX packaging required) to run the app.
@@ -37,14 +37,14 @@ The `Package.appxmanifest` contains a placeholder `Publisher` value. For local d
 
 ### Reporting Bugs
 
-- Use the [Bug Report](https://github.com/LumiBearStudio/SpanFinder/issues/new?template=bug_report.md) issue template
-- Include your Windows version and SPAN Finder version
+- Use the [Bug Report](https://github.com/LumiBearStudio/LumiFinder/issues/new?template=bug_report.md) issue template
+- Include your Windows version and LumiFinder version
 - Provide steps to reproduce the issue
 - Attach screenshots if applicable
 
 ### Suggesting Features
 
-- Use the [Feature Request](https://github.com/LumiBearStudio/SpanFinder/issues/new?template=feature_request.md) issue template
+- Use the [Feature Request](https://github.com/LumiBearStudio/LumiFinder/issues/new?template=feature_request.md) issue template
 - Describe the use case and expected behavior
 - Check existing issues to avoid duplicates
 
@@ -53,7 +53,7 @@ The `Package.appxmanifest` contains a placeholder `Publisher` value. For local d
 1. **Fork** the repository and create a branch from `main`
 2. Follow the coding conventions below
 3. Ensure `dotnet build` completes with **0 errors**
-4. Run unit tests: `dotnet test src/Span/Span.Tests/Span.Tests.csproj -p:Platform=x64`
+4. Run unit tests: `dotnet test src/LumiFiles/LumiFiles.Tests/LumiFiles.Tests.csproj -p:Platform=x64`
 5. Submit a PR with a clear description of the changes
 
 ## Coding Conventions
@@ -68,16 +68,16 @@ The `Package.appxmanifest` contains a placeholder `Publisher` value. For local d
 ## Project Structure
 
 ```
-src/Span/
-├── Span/                    # Main application
+src/LumiFiles/
+├── LumiFiles/               # Main application
 │   ├── Models/              # Data models (IFileSystemItem, TabItem, etc.)
 │   ├── ViewModels/          # MVVM ViewModels
 │   ├── Views/               # XAML Views and Controls
 │   ├── Services/            # 40+ service classes
 │   ├── Helpers/             # Converters, utilities
 │   └── Assets/              # Icons and images
-├── Span.Tests/              # Unit tests (MSTest + Moq)
-└── Span.UITests/            # UI automation tests (FlaUI)
+├── LumiFiles.Tests/         # Unit tests (MSTest + Moq)
+└── LumiFiles.Thumbs/        # Out-of-process thumbnail worker
 ```
 
 ## License
@@ -86,4 +86,4 @@ By contributing, you agree that your contributions will be licensed under the [G
 
 ## Trademark Notice
 
-The "SPAN Finder" name and official logo are trademarks of LumiBear Studio. If you fork this project, you **must** use a different name and replace all logo assets. See [LICENSE.md](LICENSE.md) for details.
+The "LumiFinder" name and official logo are trademarks of LumiBear Studio. If you fork this project, you **must** use a different name and replace all logo assets. See [LICENSE.md](LICENSE.md) for details.

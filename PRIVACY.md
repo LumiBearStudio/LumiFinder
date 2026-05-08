@@ -1,10 +1,10 @@
-# SPAN Finder — Privacy Policy
+# LumiFinder — Privacy Policy
 
-**Last Updated: March 6, 2026**
+**Last Updated: May 9, 2026**
 
 ## Overview
 
-SPAN Finder ("the App") is a file explorer application for Windows developed by LumiBear Studio. We are committed to protecting your privacy. This policy explains what data we collect and how we use it.
+LumiFinder ("the App") is a file explorer application for Windows developed by LumiBear Studio. We are committed to protecting your privacy. This policy explains what data we collect and how we use it.
 
 ## Data We Collect
 
@@ -59,13 +59,13 @@ Since we do not collect personal data, there is no personal data to access, modi
 
 ## Open Source
 
-SPAN Finder uses open-source libraries. See [LICENSES.md](https://github.com/LumiBearStudio/SpanFinder/blob/main/LICENSES.md) for details.
+LumiFinder uses open-source libraries. See [OpenSourceLicenses.md](https://github.com/LumiBearStudio/LumiFinder/blob/main/OpenSourceLicenses.md) for details.
 
 ## Contact
 
 If you have questions about this privacy policy:
 
-- **GitHub Issues**: [https://github.com/LumiBearStudio/SpanFinder/issues](https://github.com/LumiBearStudio/SpanFinder/issues)
+- **GitHub Issues**: [https://github.com/LumiBearStudio/LumiFinder/issues](https://github.com/LumiBearStudio/LumiFinder/issues)
 
 ## Changes to This Policy
 

@@ -1,6 +1,6 @@
-# SPAN Finder Open Source Licenses
+# LumiFinder Open Source Licenses
 
-This document lists the open source libraries and assets used in SPAN Finder.
+This document lists the open source libraries and assets used in LumiFinder.
 
 ---
 

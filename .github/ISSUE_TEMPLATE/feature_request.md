@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a new feature for SPAN Finder
+about: Suggest a new feature for LumiFinder
 title: "[Feature] "
 labels: enhancement
 assignees: ''

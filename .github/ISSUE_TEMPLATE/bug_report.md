@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug to help us improve SPAN Finder
+about: Report a bug to help us improve LumiFinder
 title: "[Bug] "
 labels: bug
 assignees: ''
@@ -30,7 +30,7 @@ If applicable, add screenshots to help explain the issue.
 
 ## Environment
 
-- **SPAN Finder version**: [e.g. 1.0.1]
+- **LumiFinder version**: [e.g. 1.0.1]
 - **Windows version**: [e.g. Windows 11 23H2]
 - **Architecture**: [x64 / ARM64]
 
