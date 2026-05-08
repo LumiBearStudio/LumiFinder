@@ -8,8 +8,50 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <!-- Settings Card Style -->
-        <Style x:Key="SettingsCardBorder" TargetType="Border">
+        <ResourceDictionary>
+            <!-- S-3.40: 라디오 버튼 가운데 점, 토글 knob/rail 등을 직접 amber 로 오버라이드.
+                 App.xaml ThemeDictionaries 의 동일 키 오버라이드는 XamlControlsResources 의
+                 nested 스타일 lookup 경로에서 일관되게 안 잡혀서, UserControl 스코프의
+                 ThemeDictionaries 로 우선순위 끌어올림. UserControl.Resources 가 이 페이지의
+                 모든 RadioButton / ToggleSwitch 에 대해 가장 가까운 부모 ResourceDictionary 가
+                 되므로 ThemeResource lookup 이 여기서 매칭. -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPointerOver" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPressed" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillDisabled" Color="#7FFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#33FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#4DFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#66FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#80FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver" Color="#A0FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnDisabled" Color="#7FFFB86B" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPointerOver" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPressed" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillDisabled" Color="#7FFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#33FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#4DFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#66FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#80FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver" Color="#A0FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnDisabled" Color="#7FFFB86B" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!-- Settings Card Style -->
+            <Style x:Key="SettingsCardBorder" TargetType="Border">
             <Setter Property="Background" Value="{ThemeResource SpanBgLayer1Brush}" />
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="16" />
@@ -117,8 +159,11 @@
                                 <Ellipse x:Name="CheckOuterEllipse" Width="20" Height="20" UseLayoutRounding="False"
                                          Stroke="{ThemeResource RadioButtonOuterEllipseCheckedStroke}"
                                          Fill="{ThemeResource RadioButtonOuterEllipseCheckedFill}" Opacity="0" />
+                                <!-- S-3.40: 직접 LumiAmberBrush 바인딩 — App.xaml ThemeDictionaries
+                                     의 RadioButtonCheckGlyphFill 오버라이드가 일관되게 안 잡혀서
+                                     템플릿 레벨에서 토큰 우회. -->
                                 <Ellipse x:Name="CheckGlyph" Width="8" Height="8" UseLayoutRounding="False"
-                                         Fill="{ThemeResource RadioButtonCheckGlyphFill}" Opacity="0" />
+                                         Fill="{ThemeResource LumiAmberBrush}" Opacity="0" />
                             </Grid>
                             <ContentPresenter x:Name="ContentPresenter" Grid.Column="1"
                                               Content="{TemplateBinding Content}"
@@ -189,6 +234,11 @@
                                             <DoubleAnimation Storyboard.TargetName="CheckGlyph" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
                                             <DoubleAnimation Storyboard.TargetName="OuterEllipse" Storyboard.TargetProperty="Opacity" To="0" Duration="0" />
                                             <DoubleAnimation Storyboard.TargetName="CheckOuterEllipse" Storyboard.TargetProperty="Opacity" To="1" Duration="0" />
+                                            <!-- S-3.40: Checked 상태에서 카드 외곽선을 amber 로 바꿔서 선택된 카드를
+                                                 한눈에 식별. 다크 모드에서 작은 라디오 dot 만으로는 안 보였음. -->
+                                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="BorderBrush">
+                                                <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource LumiAmberBrush}" />
+                                            </ObjectAnimationUsingKeyFrames>
                                         </Storyboard>
                                     </VisualState>
                                     <VisualState x:Name="Unchecked" />
@@ -200,6 +250,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid>

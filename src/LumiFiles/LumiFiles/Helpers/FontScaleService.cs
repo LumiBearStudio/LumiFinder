@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using Microsoft.UI.Xaml;
 
 namespace LumiFiles.Helpers
 {
@@ -87,7 +88,7 @@ namespace LumiFiles.Helpers
                 DebugLogger.Log(
                     $"[FontScale] view=service tab=- level={clamped} reason=setter");
 
-                // 8개 변경 통지 — MillerColumnWidth 까지 한 set 에서 일괄 raise
+                // 12개 변경 통지 — MillerColumnWidth + Sidebar 4개 derived 까지 일괄 raise
                 Raise(nameof(Level));
                 Raise(nameof(ItemFontSize));
                 Raise(nameof(ItemFontSizeXL));
@@ -96,8 +97,66 @@ namespace LumiFiles.Helpers
                 Raise(nameof(AddressBarFontSize));
                 Raise(nameof(AddressBarIconFontSize));
                 Raise(nameof(MillerColumnWidth));
+                Raise(nameof(SidebarTitleFontSize));
+                Raise(nameof(SidebarHeaderFontSize));
+                Raise(nameof(SidebarItemFontSize));
+                Raise(nameof(SidebarItemIconFontSize));
             }
         }
+
+        // --- Density (S-3.40) -------------------------------------------------
+        // 항목 vertical padding 만 변동 — horizontal 은 컴포넌트별 고정값 유지.
+        // OnAppearanceSettingChanged("Density") 에서 본 setter 갱신.
+        private int _density = 3;
+
+        /// <summary>
+        /// Layout density 0~5. baseline 3 (=현재 LumiSidebar 의 Padding="10,5" 와 일치).
+        /// </summary>
+        public int Density
+        {
+            get => _density;
+            set
+            {
+                int clamped = Math.Clamp(value, 0, 5);
+                if (_density == clamped) return;
+                _density = clamped;
+
+                DebugLogger.Log(
+                    $"[FontScale] view=service tab=- density={clamped} reason=setter");
+
+                Raise(nameof(Density));
+                Raise(nameof(SidebarItemPadding));
+                Raise(nameof(SidebarHeaderPadding));
+            }
+        }
+
+        /// <summary>
+        /// LumiSidebar 항목 Grid Padding. baseline (10,5) at density=3.
+        /// vertical = 2 + density, horizontal = 10 고정.
+        /// 0→(10,2) / 1→(10,3) / 2→(10,4) / 3→(10,5) / 4→(10,6) / 5→(10,7)
+        /// </summary>
+        public Thickness SidebarItemPadding => new Thickness(10, 2 + _density, 10, 2 + _density);
+
+        /// <summary>
+        /// LumiSidebar 섹션 헤더 Grid Padding. baseline (4,10,4,3).
+        /// 헤더는 항목 간격에 비해 약하게만 영향 — vertical top 만 density-1 로 살짝 변동.
+        /// </summary>
+        public Thickness SidebarHeaderPadding => new Thickness(4, Math.Max(6, 7 + _density), 4, 3);
+
+        // --- Sidebar font derived (S-3.40) ----------------------------------
+        // baseline 11 (title) / 10.5 (header) / 13 (item) / 14 (icon) + level
+
+        /// <summary>LumiSidebar 'Lumi Files' 로고 텍스트. baseline 11 → 11..16.</summary>
+        public double SidebarTitleFontSize => 11.0 + _level;
+
+        /// <summary>LumiSidebar 섹션 헤더 (Favorites/Local Drives 등). baseline 10.5 → 10.5..15.5.</summary>
+        public double SidebarHeaderFontSize => 10.5 + _level;
+
+        /// <summary>LumiSidebar 항목 텍스트. baseline 13 → 13..18 (= ItemFontSize).</summary>
+        public double SidebarItemFontSize => 13.0 + _level;
+
+        /// <summary>LumiSidebar 항목 FontIcon (folder/drive 아이콘). baseline 14 → 14..19.</summary>
+        public double SidebarItemIconFontSize => 14.0 + _level;
 
         // --- 표준 리스트 항목 (CAT-A/B/C) ---------------------------------
         // baseline 13/16/12 + level

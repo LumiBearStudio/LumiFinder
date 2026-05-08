@@ -134,7 +134,7 @@
                     <TextBlock Grid.Column="1" Text="Lumi Files"
                                VerticalAlignment="Center"
                                FontFamily="{StaticResource LumiFontFamily}"
-                               FontSize="{StaticResource LumiFontSizeSbName}"
+                               FontSize="{Binding SidebarTitleFontSize, Source={StaticResource FontScale}}"
                                FontWeight="Medium"
                                Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
                 </Grid>
@@ -145,7 +145,7 @@
 
                         <!-- ===== Favorites (Windows quick-access bookmarks via ViewModel.Favorites) ===== -->
                         <StackPanel>
-                            <Grid Padding="4,10,4,3" Background="Transparent"
+                            <Grid Padding="{Binding SidebarHeaderPadding, Source={StaticResource FontScale}}" Background="Transparent"
                                   Tapped="OnSidebarSectionToggle" Tag="Favorites">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -153,7 +153,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Favorites"
                                            FontFamily="{StaticResource LumiFontFamily}"
-                                           FontSize="{StaticResource LumiFontSizeSbHeader}"
+                                           FontSize="{Binding SidebarHeaderFontSize, Source={StaticResource FontScale}}"
                                            FontWeight="Medium"
                                            Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
                                 <FontIcon Grid.Column="1" Glyph="&#xE70D;" FontSize="10"
@@ -168,7 +168,7 @@
                                           Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsFavoritesExpanded), Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:FavoriteItem">
-                                        <Grid Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
+                                        <Grid Padding="{Binding SidebarItemPadding, Source={StaticResource FontScale}}" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
                                               Background="Transparent"
                                               ToolTipService.ToolTip="{x:Bind Path}"
                                               Tapped="OnLumiFavoriteItemTapped"
@@ -179,11 +179,11 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <FontIcon Grid.Column="0" FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Folder}"
-                                                      FontSize="14" VerticalAlignment="Center"
+                                                      FontSize="{Binding SidebarItemIconFontSize, Source={StaticResource FontScale}}" VerticalAlignment="Center"
                                                       Foreground="{ThemeResource LumiFolderDefaultBrush}" Opacity="0.85"/>
                                             <TextBlock Grid.Column="1" Text="{x:Bind Name}" VerticalAlignment="Center"
                                                        FontFamily="{StaticResource LumiFontFamily}"
-                                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                                       FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
                                                        Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis"/>
                                         </Grid>
@@ -194,7 +194,7 @@
 
                         <!-- ===== Local Drives (ViewModel.Drives, filtered by IsNetworkDrive=false via DataTemplate Visibility) ===== -->
                         <StackPanel>
-                            <Grid Padding="4,10,4,3" Background="Transparent"
+                            <Grid Padding="{Binding SidebarHeaderPadding, Source={StaticResource FontScale}}" Background="Transparent"
                                   Tapped="OnSidebarSectionToggle" Tag="Local">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -202,7 +202,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Local Drives"
                                            FontFamily="{StaticResource LumiFontFamily}"
-                                           FontSize="{StaticResource LumiFontSizeSbHeader}"
+                                           FontSize="{Binding SidebarHeaderFontSize, Source={StaticResource FontScale}}"
                                            FontWeight="Medium"
                                            Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
                                 <FontIcon Grid.Column="1" Glyph="&#xE70D;" FontSize="10"
@@ -217,7 +217,7 @@
                                           Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsLocalDrivesExpanded), Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:DriveItem">
-                                        <Grid Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
+                                        <Grid Padding="{Binding SidebarItemPadding, Source={StaticResource FontScale}}" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
                                               Background="Transparent"
                                               ToolTipService.ToolTip="{x:Bind TooltipText}"
                                               Tapped="OnLumiDriveItemTapped"
@@ -229,12 +229,13 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Grid.Column="0" Text="{x:Bind IconGlyph}"
-                                                       FontFamily="{StaticResource RemixIcons}" FontSize="14"
+                                                       FontFamily="{StaticResource RemixIcons}"
+                                                       FontSize="{Binding SidebarItemIconFontSize, Source={StaticResource FontScale}}"
                                                        Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"
                                                        VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                             <TextBlock Grid.Column="1" Text="{x:Bind Name}" VerticalAlignment="Center"
                                                        FontFamily="{StaticResource LumiFontFamily}"
-                                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                                       FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
                                                        Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis"/>
                                         </Grid>
@@ -245,7 +246,7 @@
 
                         <!-- ===== Cloud (only when ViewModel.HasCloudDrives) ===== -->
                         <StackPanel Visibility="{x:Bind ViewModel.HasCloudDrives, Mode=OneWay}">
-                            <Grid Padding="4,10,4,3" Background="Transparent"
+                            <Grid Padding="{Binding SidebarHeaderPadding, Source={StaticResource FontScale}}" Background="Transparent"
                                   Tapped="OnSidebarSectionToggle" Tag="Cloud">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -253,7 +254,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Cloud"
                                            FontFamily="{StaticResource LumiFontFamily}"
-                                           FontSize="{StaticResource LumiFontSizeSbHeader}"
+                                           FontSize="{Binding SidebarHeaderFontSize, Source={StaticResource FontScale}}"
                                            FontWeight="Medium"
                                            Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
                                 <FontIcon Grid.Column="1" Glyph="&#xE70D;" FontSize="10"
@@ -268,7 +269,7 @@
                                           Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsCloudDrivesExpanded), Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:DriveItem">
-                                        <Grid Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
+                                        <Grid Padding="{Binding SidebarItemPadding, Source={StaticResource FontScale}}" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
                                               Background="Transparent"
                                               ToolTipService.ToolTip="{x:Bind TooltipText}"
                                               Tapped="OnLumiDriveItemTapped"
@@ -287,7 +288,7 @@
                                             </Border>
                                             <TextBlock Grid.Column="1" Text="{x:Bind Name}" VerticalAlignment="Center"
                                                        FontFamily="{StaticResource LumiFontFamily}"
-                                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                                       FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
                                                        Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis"/>
                                         </Grid>
@@ -298,7 +299,7 @@
 
                         <!-- ===== Network (only when ViewModel.HasNetworkDrives) ===== -->
                         <StackPanel Visibility="{x:Bind ViewModel.HasNetworkDrives, Mode=OneWay}">
-                            <Grid Padding="4,10,4,3" Background="Transparent"
+                            <Grid Padding="{Binding SidebarHeaderPadding, Source={StaticResource FontScale}}" Background="Transparent"
                                   Tapped="OnSidebarSectionToggle" Tag="Network">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -306,7 +307,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Network"
                                            FontFamily="{StaticResource LumiFontFamily}"
-                                           FontSize="{StaticResource LumiFontSizeSbHeader}"
+                                           FontSize="{Binding SidebarHeaderFontSize, Source={StaticResource FontScale}}"
                                            FontWeight="Medium"
                                            Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
                                 <FontIcon Grid.Column="1" Glyph="&#xE70D;" FontSize="10"
@@ -321,7 +322,7 @@
                                           Visibility="{x:Bind helpers:ConverterHelpers.BoolToVisibility(ViewModel.IsNetworkDrivesExpanded), Mode=OneWay}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="models:DriveItem">
-                                        <Grid Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
+                                        <Grid Padding="{Binding SidebarItemPadding, Source={StaticResource FontScale}}" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
                                               Background="Transparent"
                                               ToolTipService.ToolTip="{x:Bind TooltipText}"
                                               Tapped="OnLumiDriveItemTapped"
@@ -340,7 +341,7 @@
                                             </Border>
                                             <TextBlock Grid.Column="1" Text="{x:Bind Name}" VerticalAlignment="Center"
                                                        FontFamily="{StaticResource LumiFontFamily}"
-                                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                                       FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
                                                        Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                                        TextTrimming="CharacterEllipsis"/>
                                         </Grid>
@@ -355,7 +356,7 @@
                              Icon glyph swaps between empty/full via ViewModel.RecycleBinIconGlyph.
                              Item count badge hides when bin is empty (NotBoolToVisibility on RecycleBinIsEmpty). -->
                         <Rectangle Height="1" Fill="{ThemeResource LumiDividerSoftBrush}" Margin="4,12,4,8"/>
-                        <Grid Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
+                        <Grid Padding="{Binding SidebarItemPadding, Source={StaticResource FontScale}}" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
                               Background="Transparent"
                               ToolTipService.ToolTip="Recycle Bin"
                               Tapped="OnRecycleBinTapped"
@@ -379,7 +380,7 @@
                             </Border>
                             <TextBlock Grid.Column="1" Text="Recycle Bin" VerticalAlignment="Center"
                                        FontFamily="{StaticResource LumiFontFamily}"
-                                       FontSize="{StaticResource LumiFontSizeBase}"
+                                       FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
                                        Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                        TextTrimming="CharacterEllipsis"/>
                             <Border Grid.Column="2"
@@ -396,18 +397,19 @@
 
                 <!-- Bottom: Settings (Stage S-3.32: opens separate SettingsWindow) -->
                 <Border Grid.Row="2" Padding="8,6,8,8" BorderBrush="{ThemeResource LumiDividerSoftBrush}" BorderThickness="0,1,0,0">
-                    <Grid Padding="10,5" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
+                    <Grid Padding="{Binding SidebarItemPadding, Source={StaticResource FontScale}}" CornerRadius="{StaticResource LumiSidebarItemCornerRadius}" ColumnSpacing="9"
                           Background="Transparent"
                           Tapped="OnLumiSidebarSettingsTapped">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="20"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <FontIcon Grid.Column="0" Glyph="&#xE713;" FontSize="15"
+                        <FontIcon Grid.Column="0" Glyph="&#xE713;"
+                                  FontSize="{Binding SidebarItemIconFontSize, Source={StaticResource FontScale}}"
                                   Foreground="{ThemeResource LumiTextSecondaryBrush}" Opacity="0.85"/>
                         <TextBlock Grid.Column="1" Text="Settings" VerticalAlignment="Center"
                                    FontFamily="{StaticResource LumiFontFamily}"
-                                   FontSize="{StaticResource LumiFontSizeBase}"
+                                   FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
                                    Foreground="{ThemeResource LumiTextSecondaryBrush}"/>
                     </Grid>
                 </Border>
@@ -495,7 +497,7 @@
                 <TextBlock x:Name="LumiAddressLabel"
                            Text="{x:Bind ViewModel.ActiveExplorer.CurrentFolderName, Mode=OneWay}"
                            FontFamily="{StaticResource LumiFontFamily}"
-                           FontSize="{StaticResource LumiFontSizeBase}"
+                           FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
                            FontWeight="Medium"
                            Foreground="{ThemeResource LumiTextPrimaryBrush}"/>
             </StackPanel>
@@ -670,7 +672,7 @@
                                  PlaceholderText="Search (Ctrl+F)"
                                  Background="Transparent" BorderThickness="0"
                                  FontFamily="{StaticResource LumiFontFamily}"
-                                 FontSize="{StaticResource LumiFontSizeBase}"
+                                 FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
                                  Foreground="{ThemeResource LumiTextPrimaryBrush}"
                                  VerticalAlignment="Center" MinHeight="0"
                                  KeyDown="OnLumiSearchInputKeyDown"
@@ -2640,7 +2642,7 @@
                           Foreground="{ThemeResource LumiAmberBrush}"/>
                 <TextBlock x:Name="ToastText" Text=""
                            FontFamily="{StaticResource LumiFontFamily}"
-                           FontSize="{StaticResource LumiFontSizeBase}"
+                           FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
                            Foreground="{ThemeResource LumiTextPrimaryBrush}"
                            VerticalAlignment="Center" MaxWidth="500"
                            TextWrapping="WrapWholeWords"/>

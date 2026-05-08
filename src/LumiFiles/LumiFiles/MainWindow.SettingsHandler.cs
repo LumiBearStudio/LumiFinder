@@ -920,7 +920,20 @@ namespace LumiFiles
                     break;
 
                 case "Density":
-                    Helpers.DispatcherHelper.SafeEnqueue(DispatcherQueue, () => ApplyDensity(value as string ?? "comfortable"));
+                    Helpers.DispatcherHelper.SafeEnqueue(DispatcherQueue, () =>
+                    {
+                        var densityStr = value as string ?? "comfortable";
+                        ApplyDensity(densityStr);
+                        // S-3.40: LumiSidebar 등 reactive 바인딩이 본 서비스를 구독.
+                        int densityLevel = densityStr switch
+                        {
+                            "compact" => 0,
+                            "comfortable" => 2,
+                            "spacious" => 4,
+                            _ => int.TryParse(densityStr, out var n) ? Math.Clamp(n, 0, 5) : 2
+                        };
+                        Helpers.FontScaleService.Instance.Density = densityLevel;
+                    });
                     break;
 
                 case "IconFontScale":
@@ -1083,6 +1096,12 @@ namespace LumiFiles
 
             _densityPadding = new Thickness(12, level, 12, level);
             _densityMinHeight = 20.0 + level;
+
+            // S-3.40: LumiSidebar 등 reactive 바인딩이 본 서비스를 구독.
+            // OnAppearanceSettingChanged 의 Density 케이스도 동일 push 를 하지만,
+            // startup 복원 시 ApplyDensity 가 직접 호출되는 경로(MainWindow.xaml.cs:870)
+            // 도 커버하기 위해 여기서도 한 번 더 동기화.
+            try { Helpers.FontScaleService.Instance.Density = level; } catch { }
 
             var densityStr = level.ToString();
 

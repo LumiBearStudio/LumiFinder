@@ -140,6 +140,27 @@
                     <Color x:Key="SystemAccentColorDark1">#FFD48028</Color>
                     <Color x:Key="SystemAccentColorLight1">#FFFFD27A</Color>
 
+                    <!-- S-3.40 (revised): ToggleSwitch 토큰 — knob 도 amber(highlight) 로
+                         통일해서 라디오 도트와 시각적 일관성. rail 은 중립(글래스 톤)으로
+                         낮춰 amber knob 이 명확히 떠 보이도록 함. -->
+                    <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#33FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#4DFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#66FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#80FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver" Color="#A0FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnDisabled" Color="#7FFFB86B" />
+
+                    <!-- S-3.40: RadioButton check glyph 도 amber. 다크 모드 기본은 거의
+                         검정(#1A1A1F TextOnAccent)이라 안 보였음. -->
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPointerOver" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPressed" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillDisabled" Color="#7FFFB86B" />
+
                     <!-- 다이얼로그 전용 — LumiSidebarBrush보다 훨씬 불투명한 글래스 (반투명 약간만).
                          #1E1C28 / #161420 위에 알파 0xF0(94%) → 거의 솔리드. -->
                     <LinearGradientBrush x:Key="LumiDialogBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
@@ -255,6 +276,24 @@
                     <Color x:Key="SystemAccentColor">#FFFFB86B</Color>
                     <Color x:Key="SystemAccentColorDark1">#FFD48028</Color>
                     <Color x:Key="SystemAccentColorLight1">#FFFFD27A</Color>
+
+                    <!-- S-3.40 (revised): Dark 와 동일 패턴 — knob amber + rail 중립 amber. -->
+                    <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#33FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#4DFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#66FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#80FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver" Color="#A0FFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="ToggleSwitchKnobFillOnDisabled" Color="#7FFFB86B" />
+
+                    <!-- S-3.40: RadioButton check glyph amber. -->
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="#FFFFB86B" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPointerOver" Color="#FFFFD27A" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPressed" Color="#FFD48028" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillDisabled" Color="#7FFFB86B" />
 
                     <LinearGradientBrush x:Key="LumiDialogBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
                         <GradientStop Offset="0" Color="#F01E1C28" />
