@@ -8,8 +8,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/LumiBearStudio/LumiFiles/releases/latest"><img src="https://img.shields.io/github/v/release/LumiBearStudio/LumiFiles?style=for-the-badge&label=Latest" alt="Latest Release"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/LumiBearStudio/LumiFiles?style=for-the-badge" alt="License"></a>
+  <a href="https://github.com/LumiBearStudio/LumiFinder/releases/latest"><img src="https://img.shields.io/github/v/release/LumiBearStudio/LumiFinder?style=for-the-badge&label=Latest" alt="Latest Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/LumiBearStudio/LumiFinder?style=for-the-badge" alt="License"></a>
   <a href="https://github.com/sponsors/LumiBearStudio"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-ff69b4?style=for-the-badge&logo=github-sponsors" alt="Sponsor"></a>
 </p>
 
@@ -23,7 +23,7 @@
 ![Miller Columns navigation](README/miller-columns.gif)
 
 <p align="center">
-  <a href="https://github.com/LumiBearStudio/LumiFiles/stargazers"><img src="https://img.shields.io/github/stars/LumiBearStudio/LumiFiles?style=social" alt="GitHub Stars"></a>
+  <a href="https://github.com/LumiBearStudio/LumiFinder/stargazers"><img src="https://img.shields.io/github/stars/LumiBearStudio/LumiFinder?style=social" alt="GitHub Stars"></a>
 </p>
 <p align="center">
   If you find LumiFinder useful, consider giving it a ⭐ — it helps others discover this project!
@@ -212,8 +212,8 @@ Engineered for speed. Tested with 10,000+ items per folder.
 # Prerequisites: Visual Studio 2022 with .NET Desktop + WinUI 3 workloads
 
 # Clone
-git clone https://github.com/LumiBearStudio/LumiFiles.git
-cd LumiFiles
+git clone https://github.com/LumiBearStudio/LumiFinder.git
+cd LumiFinder
 
 # Build
 dotnet build src/LumiFiles/LumiFiles/LumiFiles.csproj -p:Platform=x64
@@ -228,7 +228,7 @@ dotnet test src/LumiFiles/LumiFiles.Tests/LumiFiles.Tests.csproj -p:Platform=x64
 
 ## Contributing
 
-Found a bug? Have a feature request? [Open an issue](https://github.com/LumiBearStudio/LumiFiles/issues) — all feedback welcome.
+Found a bug? Have a feature request? [Open an issue](https://github.com/LumiBearStudio/LumiFinder/issues) — all feedback welcome.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for build setup, coding conventions, and PR guidelines.
 
@@ -273,5 +273,5 @@ This project is licensed under the [GNU General Public License v3.0](LICENSE).
   <a href="https://github.com/sponsors/LumiBearStudio">Sponsor</a> ·
   <a href="PRIVACY.md">Privacy Policy</a> ·
   <a href="OpenSourceLicenses.md">Open Source Licenses</a> ·
-  <a href="https://github.com/LumiBearStudio/LumiFiles/issues">Bug Reports & Feature Requests</a>
+  <a href="https://github.com/LumiBearStudio/LumiFinder/issues">Bug Reports & Feature Requests</a>
 </p>
