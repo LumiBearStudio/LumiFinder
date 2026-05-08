@@ -65,12 +65,12 @@ internal static class Program
             WorkerLogger.Log($"[Worker] Started — pipe={pipeName} cache={_cacheDir} pid={Environment.ProcessId}");
 
             // ── 2. Sentry 초기화 (메인과 동일 DSN, tag로 구분) ──
-            // Note: 메인의 SentryDsn 상수와 동일 — 환경변수로도 override 가능
-            // LumiFinder 전용 Sentry 프로젝트 미할당 상태 — 빈 DSN이면 SDK가 no-op로 동작.
-            // 활성화: 환경변수 LUMIFILES_SENTRY_DSN 또는 아래 fallback 문자열에 LumiFinder DSN 입력.
+            // Note: 메인의 SentryDsn 상수와 동일 — 환경변수로도 override 가능.
+            // LumiFinder 전용 Sentry 프로젝트 (sentry.io / LumiBearStudio org).
             try
             {
-                var dsn = Environment.GetEnvironmentVariable("LUMIFILES_SENTRY_DSN") ?? "";
+                var dsn = Environment.GetEnvironmentVariable("LUMIFILES_SENTRY_DSN")
+                    ?? "https://e3f483d08d73e1f48cef4ea5f44ffe3f@o4510949994266624.ingest.de.sentry.io/4511356801450064";
                 if (string.IsNullOrEmpty(dsn))
                 {
                     WorkerLogger.Log("[Worker] Sentry DSN empty — crash reporting disabled");
