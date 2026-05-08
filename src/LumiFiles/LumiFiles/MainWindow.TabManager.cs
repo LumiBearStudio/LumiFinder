@@ -1305,30 +1305,6 @@ namespace LumiFiles
 
                 var nonClientInputSrc = InputNonClientPointerSource.GetForWindowId(this.AppWindow.Id);
                 nonClientInputSrc.SetRegionRects(NonClientRegionKind.Passthrough, rects.ToArray());
-
-                // S-3.40: Maximize 버튼 영역을 NonClientRegionKind.Maximize 로 등록 →
-                // Windows 11 Snap Layouts 팝업이 hover 시 표시됨. WS_OVERLAPPEDWINDOW 를
-                // strip 한 borderless 윈도우 (S-3.21) 라 시스템이 자동으로 못 찾음 — 수동
-                // 등록 필요. CaptionMaximizeButton 의 visual bounds 를 RectInt32 로 변환.
-                if (CaptionMaximizeButton != null && CaptionMaximizeButton.Visibility == Visibility.Visible)
-                {
-                    try
-                    {
-                        var maxTransform = CaptionMaximizeButton.TransformToVisual(null);
-                        var maxBounds = maxTransform.TransformBounds(new Windows.Foundation.Rect(
-                            0, 0, CaptionMaximizeButton.ActualWidth, CaptionMaximizeButton.ActualHeight));
-                        if (maxBounds.Width > 0 && maxBounds.Height > 0)
-                        {
-                            var maxRect = new Windows.Graphics.RectInt32(
-                                (int)Math.Round(maxBounds.X * scale),
-                                (int)Math.Round(maxBounds.Y * scale),
-                                (int)Math.Round(maxBounds.Width * scale),
-                                (int)Math.Round(maxBounds.Height * scale));
-                            nonClientInputSrc.SetRegionRects(NonClientRegionKind.Maximize, new[] { maxRect });
-                        }
-                    }
-                    catch { }
-                }
             }
             catch { /* Layout not ready yet */ }
         }

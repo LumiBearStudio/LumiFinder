@@ -49,7 +49,7 @@ public class LocalizationCommandKeysTests
     [TestMethod]
     public void CommandPaletteLanguage_AllNineLanguages_Exist()
     {
-        // Span은 9개 언어 지원 — Command Palette에서 모두 선택 가능해야 함
+        // LumiFinder 는 9개 언어 지원 — Command Palette에서 모두 선택 가능해야 함
         var langKeys = new[]
         {
             "Cmd_LangSystem", "Cmd_LangEn", "Cmd_LangKo", "Cmd_LangJa",

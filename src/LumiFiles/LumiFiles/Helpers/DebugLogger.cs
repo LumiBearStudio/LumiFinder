@@ -38,7 +38,8 @@ namespace LumiFiles.Helpers
             {
                 // UnPackaged fallback (개발 실행 등)
                 var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                dir = Path.Combine(baseDir, "LumiFiles", "Logs");
+                // S-3.40: 'LumiFiles' → 'LumiFinder' 리브랜딩. unpackaged dev 모드 fallback.
+                dir = Path.Combine(baseDir, "LumiFinder", "Logs");
             }
             try { Directory.CreateDirectory(dir); } catch { }
             return dir;

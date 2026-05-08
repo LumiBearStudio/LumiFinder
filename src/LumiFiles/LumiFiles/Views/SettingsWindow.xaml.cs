@@ -79,7 +79,22 @@ namespace LumiFiles.Views
             _hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
 
             // Title in the OS window manager / taskbar.
-            this.Title = "Lumi Files Settings";
+            // S-3.40: i18n + LumiFinder 리브랜딩. _loc 사용 가능 시 9개 언어 따라가고,
+            // 미준비/디자이너 환경 fallback 으로 영문 기본값. 언어 변경 시 재갱신.
+            try
+            {
+                var loc = LumiFiles.App.Current?.Services?.GetService(typeof(LumiFiles.Services.LocalizationService))
+                          as LumiFiles.Services.LocalizationService;
+                this.Title = loc?.Get("SettingsWindow_Title") ?? "LumiFinder Settings";
+                if (loc != null)
+                {
+                    loc.LanguageChanged += () =>
+                    {
+                        try { this.Title = loc.Get("SettingsWindow_Title"); } catch { }
+                    };
+                }
+            }
+            catch { this.Title = "LumiFinder Settings"; }
 
             // ── 1. Acrylic backdrop (DesktopAcrylic > Mica > none, mirrors MainWindow) ──
             try

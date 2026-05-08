@@ -17,10 +17,9 @@ public class ActionLogService : IActionLogService
 
     public ActionLogService()
     {
-        var appDataDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Lumi Files");
-        Directory.CreateDirectory(appDataDir);
+        // S-3.40: AppDataPaths 헬퍼 사용 — 'Lumi Files' → 'LumiFinder' 1회 자동
+        // 마이그레이션. 기존 액션 로그 (action_log.json) 가 옛 폴더에 있으면 자동 이주.
+        var appDataDir = LumiFiles.Helpers.AppDataPaths.GetAppDataFolder();
         _logFilePath = Path.Combine(appDataDir, "action_log.json");
     }
 

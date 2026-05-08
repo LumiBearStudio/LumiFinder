@@ -24,9 +24,10 @@ internal static class WerHelper
     /// <summary>
     /// 미니덤프 저장 폴더 (외부에서도 참조 — CrashReportingService에서 dump 검색).
     /// </summary>
+    // S-3.40: 'LumiFiles' → 'LumiFinder' 리브랜딩.
     public static string DumpFolder => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "LumiFiles", "CrashDumps");
+        "LumiFinder", "CrashDumps");
 
     /// <summary>
     /// WER LocalDumps 레지스트리 등록.

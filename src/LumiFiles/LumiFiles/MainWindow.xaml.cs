@@ -53,6 +53,12 @@ namespace LumiFiles
         // 안 처리하면: 새 DPI scale로 region이 재계산되지 않아 stale 상태가 됨 → 자글거림 심해짐.
         private const int WM_DPICHANGED = 0x02E0;
 
+        // --- WM_NCCALCSIZE: WS_THICKFRAME 의 시각적 비클라이언트 보더 제거 (S-3.40)
+        // wParam=TRUE 시 lParam = NCCALCSIZE_PARAMS*. rgrc[0] 를 그대로 두면 client area =
+        // window area → NC area 가 0 이라 보더 안 그려짐. WS_THICKFRAME 으로 Snap Layouts
+        // 활성화하면서 시각적 보더는 안 보이게 하는 표준 패턴.
+        private const int WM_NCCALCSIZE = 0x0083;
+
         [DllImport("user32.dll")]
         private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
@@ -552,11 +558,14 @@ namespace LumiFiles
                 // InputNonClientPointerSource.SetRegionRects(NonClientRegionKind.Maximize, ...)
                 // 만으론 부족 — 윈도우 자체가 maximizable 임을 OS 가 알아야 hover 팝업이 뜸.
                 style |= Helpers.NativeMethods.WS_POPUP
-                       | Helpers.NativeMethods.WS_CLIPCHILDREN
-                       | Helpers.NativeMethods.WS_MAXIMIZEBOX
-                       | Helpers.NativeMethods.WS_MINIMIZEBOX
-                       | Helpers.NativeMethods.WS_SYSMENU
-                       | Helpers.NativeMethods.WS_THICKFRAME;  // S-3.40: Snap Layouts 활성화 — OS가 resizable 인식
+                       | Helpers.NativeMethods.WS_CLIPCHILDREN;
+                // S-3.40 ROLLBACK: WS_MAXIMIZEBOX/MINIMIZEBOX/SYSMENU/THICKFRAME 추가
+                // 시도 → Snap Layouts hover 팝업은 살짝 동작했으나 WS_THICKFRAME 이
+                // SetWindowRgn / DWM 보더 / acrylic 잔여 픽셀과 충돌해 우/하단 아티팩트
+                // 남는 문제 해결 안 됨. WM_NCCALCSIZE 차단, DWMWA_BORDER_COLOR=NONE,
+                // GetWindowRect 기반 region 모두 시도했지만 cleanup 불완전.
+                // 사용자 결정으로 Snap Layouts hover 기능 포기, 원래 borderless 안정 상태
+                // (WS_POPUP + WS_CLIPCHILDREN 만) 로 복원.
                 Helpers.NativeMethods.SetWindowLong(
                     hwnd,
                     Helpers.NativeMethods.GWL_STYLE,
@@ -583,16 +592,6 @@ namespace LumiFiles
                 // Show the self-drawn caption buttons now that system chrome
                 // is gone (otherwise the user would have no way to close).
                 CaptionButtonsHost.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
-
-                // S-3.40: CaptionMaximizeButton 의 layout 이 settle 된 시점에
-                // Snap Layouts 영역을 등록해야 함. SizeChanged 와 Loaded 둘 다 hook.
-                if (CaptionMaximizeButton != null)
-                {
-                    CaptionMaximizeButton.SizeChanged += (_, __) =>
-                        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, UpdateTitleBarRegions);
-                    CaptionMaximizeButton.Loaded += (_, __) =>
-                        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, UpdateTitleBarRegions);
-                }
 
                 // Stage S-3.24: clip the OS window hit-area itself to a
                 // rounded rect via SetWindowRgn. Without this, DONOTROUND
@@ -895,6 +894,9 @@ namespace LumiFiles
             _loc.Language = _settings.Language;
             LocalizeViewModeTooltips();
             _loc.LanguageChanged += LocalizeViewModeTooltips;
+            // S-3.40: MainWindow 툴바/타이틀바 등 hard-coded 문자열 일괄 i18n
+            LoadMainWindowLocalization();
+            _loc.LanguageChanged += LoadMainWindowLocalization;
 
             // Restore split view state and preview state from persisted settings
             if (this.Content is FrameworkElement rootElement)
@@ -3725,7 +3727,7 @@ namespace LumiFiles
             catch (Exception ex)
             {
                 Helpers.DebugLogger.Log($"[NetworkShortcutFtp] Error: {ex.Message}");
-                ViewModel.ShowToast($"FTP URL 파싱 실패: {ex.Message}");
+                ViewModel.ShowToast(string.Format(_loc?.Get("Toast_FtpParseFailed") ?? "FTP URL parse failed: {0}", ex.Message));
             }
         }
 

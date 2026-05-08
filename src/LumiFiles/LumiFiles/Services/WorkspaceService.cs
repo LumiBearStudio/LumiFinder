@@ -35,10 +35,9 @@ namespace LumiFiles.Services
 
         public WorkspaceService()
         {
-            var folder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Lumi Files");
-            Directory.CreateDirectory(folder);
+            // S-3.40: AppDataPaths 헬퍼 사용 — 'Lumi Files' → 'LumiFinder' 1회 자동
+            // 마이그레이션 후 새 경로 반환. 기존 사용자 워크스페이스 데이터 보존.
+            var folder = Helpers.AppDataPaths.GetAppDataFolder();
             _filePath = Path.Combine(folder, WorkspacesFileName);
             _tempPath = Path.Combine(folder, WorkspacesTempFileName);
         }

@@ -20,6 +20,21 @@ namespace LumiFiles.Controls
         public AddressBarControl()
         {
             this.InitializeComponent();
+            // S-3.40: PlaceholderText i18n 적용 (XAML 하드코드 "경로 입력...")
+            try
+            {
+                var loc = LumiFiles.App.Current?.Services?.GetService(typeof(LumiFiles.Services.LocalizationService))
+                          as LumiFiles.Services.LocalizationService;
+                if (loc != null)
+                {
+                    AutoSuggest.PlaceholderText = loc.Get("AddressBar_Placeholder");
+                    loc.LanguageChanged += () =>
+                    {
+                        try { AutoSuggest.PlaceholderText = loc.Get("AddressBar_Placeholder"); } catch { }
+                    };
+                }
+            }
+            catch { /* DI 미준비 또는 디자이너 — XAML 기본값 fallback */ }
         }
 
         // 폰트 스케일은 FontScaleService + XAML {Binding} 으로 자동 반영됨 (Phase B-7).

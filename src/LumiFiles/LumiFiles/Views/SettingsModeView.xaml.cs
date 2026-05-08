@@ -758,10 +758,24 @@ public sealed partial class SettingsModeView : UserControl
             // DevMenuLabel/Desc removed — merged into ShellExtensions (v1.2.13.0)
             CrashReportLabel.Text = _loc.Get("Settings_CrashReport");
             CrashReportDesc.Text = _loc.Get("Settings_CrashReportDesc");
+            // S-3.40: 누락됐던 OpenLogs / IsolatedThumbs / 버튼 i18n 연결
+            OpenLogsLabel.Text = _loc.Get("Settings_OpenLogs");
+            OpenLogsDesc.Text = _loc.Get("Settings_OpenLogsDesc");
+            CopyLogsPathBtn.Content = _loc.Get("Settings_CopyLogsPath");
+            OpenLogsBtn.Content = _loc.Get("Settings_OpenLogsButton");
+            IsolatedThumbsLabel.Text = _loc.Get("Settings_IsolatedThumbs");
+            IsolatedThumbsDesc.Text = _loc.Get("Settings_IsolatedThumbsDesc");
+            // S-3.40: 온보딩 다시 보기 — 옛 "Span" 명칭이 desc 에 남아있던 문제도 해결
+            OnboardingReplayLabel.Text = _loc.Get("Settings_OnboardingReplay");
+            OnboardingReplayDesc.Text = _loc.Get("Settings_OnboardingReplayDesc");
+            OnboardingReplayButtonText.Text = _loc.Get("Settings_OnboardingReplayButton");
+            // S-3.40: PreviewFolderInfo 누락분
+            PreviewFolderInfoLabel.Text = _loc.Get("Settings_PreviewFolderInfo");
+            PreviewFolderInfoDesc.Text = _loc.Get("Settings_PreviewFolderInfoDesc");
             DefaultFMLabel.Text = _loc.Get("Settings_DefaultFileManager") ?? "기본 파일 관리자";
-            DefaultFMDesc.Text = _loc.Get("Settings_DefaultFMDesc") ?? "폴더/드라이브를 열 때 Lumi Files 사용";
+            DefaultFMDesc.Text = _loc.Get("Settings_DefaultFMDesc") ?? "폴더/드라이브를 열 때 LumiFinder 사용";
             DefaultFMInfo1.Text = _loc.Get("Settings_DefaultFMInfo1") ?? "• 등록 시 UAC(관리자 권한) 승인이 필요합니다. 승인해야 정상 동작합니다.";
-            DefaultFMInfo2.Text = _loc.Get("Settings_DefaultFMInfo2") ?? "• 해제 시에도 UAC 승인이 필요합니다. Lumi Files를 제거하기 전에 반드시 이 설정을 먼저 해제하세요.";
+            DefaultFMInfo2.Text = _loc.Get("Settings_DefaultFMInfo2") ?? "• 해제 시에도 UAC 승인이 필요합니다. LumiFinder를 제거하기 전에 반드시 이 설정을 먼저 해제하세요.";
             DefaultFMInfo3.Text = _loc.Get("Settings_DefaultFMInfo3") ?? "ℹ 앱 삭제 시 자동으로 Windows 탐색기로 복원됩니다. 문제가 생기면 삭제 전 '해제' 버튼을 눌러주세요.";
             DefaultFMExportLabel.Text = _loc.Get("Settings_DefaultFMExport") ?? ".reg 파일 수동 적용";
             DefaultFMExportDesc.Text = _loc.Get("Settings_DefaultFMExportDesc") ?? "자동 등록이 실패한 경우 .reg 파일을 내보내서 직접 실행하세요";
@@ -776,7 +790,7 @@ public sealed partial class SettingsModeView : UserControl
 
             // Support Development
             SupportTitle.Text = _loc.Get("Settings_SupportTitle") ?? "Support Development";
-            SupportDesc.Text = _loc.Get("Settings_SupportDesc") ?? "Lumi Files is a free open-source project. Your support means a lot!";
+            SupportDesc.Text = _loc.Get("Settings_SupportDesc") ?? "LumiFinder is a free open-source project. Your support means a lot!";
             SupportGitHubDesc.Text = _loc.Get("Settings_SupportGitHubDesc") ?? "Sponsor on GitHub";
             SupportStoreTitle.Text = _loc.Get("Settings_SupportStoreTitle") ?? "Microsoft Store";
             SupportStoreDesc.Text = _loc.Get("Settings_SupportStoreDesc") ?? "Support via Store purchase";
@@ -1005,8 +1019,20 @@ public sealed partial class SettingsModeView : UserControl
 
         var categories = Models.ShortcutCommands.GetAllCategories();
 
+        // S-3.40: 키보드 단축키로 의미 없는 설정 selector/toggle 카테고리는 숨김.
+        // (Settings: 각 토글, Sidebar: 항목 표시, Theme/Density/Language/IconPack:
+        //  단일 선택, SettingsSection: 섹션 오픈) — 설정 UI 에서 직접 조작하는 게 더 자연스러움.
+        var hiddenCategories = new HashSet<string>
+        {
+            "Settings", "Sidebar", "Theme", "Density",
+            "Language", "IconPack", "SettingsSection",
+            "CommandPalette"  // S-3.40: 명령 팔레트 기능 미사용 — 숨김
+        };
+
         foreach (var category in categories)
         {
+            if (hiddenCategories.Contains(category)) continue;
+
             _shortcutRowIndex = 0;
             var commands = Models.ShortcutCommands.GetCommandsByCategory(category);
             if (commands == null || !commands.Any()) continue;

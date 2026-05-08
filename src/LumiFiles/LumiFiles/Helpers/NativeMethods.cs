@@ -119,8 +119,10 @@ namespace LumiFiles.Helpers
             int X, int Y, int cx, int cy, uint uFlags);
 
         internal const uint SWP_NOSIZE = 0x0001;
+        internal const uint SWP_NOMOVE = 0x0002;
         internal const uint SWP_NOZORDER = 0x0004;
         internal const uint SWP_NOACTIVATE = 0x0010;
+        internal const uint SWP_FRAMECHANGED = 0x0020;
         internal const uint SWP_NOOWNERZORDER = 0x0200;
         // 위치만 변경 (크기/Z순서/활성화 안 건드림)
         internal const uint SWP_MOVE_ONLY = SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER;
