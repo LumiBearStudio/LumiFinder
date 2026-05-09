@@ -12,12 +12,12 @@
   <Identity
     Name="LumiBearStudio.LumiFinder"
     Publisher="CN=A55D3041-E7F5-46CB-8707-AD9C81D7CB43"
-    Version="1.0.12.0" />
+    Version="1.0.13.0" />
 
   <mp:PhoneIdentity PhoneProductId="9ebb11a8-9766-42b1-b043-c7b036e797cd" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>LumiFinder</DisplayName>
+    <DisplayName>Lumi Finder</DisplayName>
     <PublisherDisplayName>LumiBear Studio</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -44,7 +44,7 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="LumiFinder"
+        DisplayName="Lumi Finder"
         Description="LumiFinder - High-Performance Miller Columns File Explorer"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
