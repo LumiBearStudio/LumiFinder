@@ -82,6 +82,8 @@ Naviguez les hiérarchies de dossiers profondes sans perdre le contexte. Chaque 
 - **Liste** (Ctrl+3) — Mise en page multi-colonnes dense pour scanner de grands répertoires
 - **Icônes** (Ctrl+4) — Vue en grille avec 4 tailles jusqu'à 256×256
 
+![Mode vue Détails avec onglet Corbeille](details.png)
+
 ### Multi-onglet avec restauration complète de session
 
 - Onglets illimités, chacun avec son propre chemin, mode de vue et historique

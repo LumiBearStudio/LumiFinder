@@ -82,6 +82,8 @@ Navegue hierarquias profundas de pastas sem perder o contexto. Cada coluna repre
 - **Lista** (Ctrl+3) — Layout multi-coluna denso para escanear diretórios grandes
 - **Ícones** (Ctrl+4) — Visualização em grade com 4 tamanhos até 256×256
 
+![Modo Detalhes com aba Lixeira](details.png)
+
 ### Multi-aba com restauração completa de sessão
 
 - Abas ilimitadas, cada uma com seu próprio caminho, modo de visualização e histórico

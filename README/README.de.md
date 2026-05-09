@@ -82,6 +82,8 @@ Navigieren Sie tiefe Ordnerhierarchien, ohne den Kontext zu verlieren. Jede Spal
 - **Liste** (Strg+3) — Dichtes Mehrspalten-Layout zum Scannen großer Verzeichnisse
 - **Symbole** (Strg+4) — Rasteransicht mit 4 Größen bis 256×256
 
+![Details-Ansichtsmodus mit Papierkorb-Tab](details.png)
+
 ### Multi-Tab mit vollständiger Sitzungswiederherstellung
 
 - Unbegrenzte Tabs, jeder mit eigenem Pfad, Ansichtsmodus und Verlauf

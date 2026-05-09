@@ -82,6 +82,8 @@ Navegue jerarquías de carpetas profundas sin perder el contexto. Cada columna r
 - **Lista** (Ctrl+3) — Layout multi-columna denso para escanear directorios grandes
 - **Iconos** (Ctrl+4) — Vista de cuadrícula con 4 tamaños hasta 256×256
 
+![Modo de vista Detalles con pestaña Papelera](details.png)
+
 ### Multi-pestaña con restauración completa de sesión
 
 - Pestañas ilimitadas, cada una con su propia ruta, modo de vista e historial

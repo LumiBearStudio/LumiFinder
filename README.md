@@ -82,6 +82,8 @@ Navigate deep folder hierarchies without losing context. Each column represents 
 - **List** (Ctrl+3) — Dense multi-column layout for scanning large directories
 - **Icons** (Ctrl+4) — Grid view with 4 size options up to 256x256 thumbnails
 
+![Details view mode with Recycle Bin tab](README/details.png)
+
 ### Multi-Tab with Full Session Restore
 
 - Open unlimited tabs, each with its own path, view mode, and history
