@@ -176,7 +176,7 @@
             <SolidColorBrush x:Key="LumiTextTertiaryBrush" Color="{StaticResource LumiTextTertiaryColor}" />
 
             <!-- S-3.39 Light unification: SOLID white window frame.
-                 (v1.0.2 라이트 투명도 시도는 DesktopAcrylic 기본 white tint와 결합 시
+                 (v1.0.10 라이트 투명도 시도는 DesktopAcrylic 기본 white tint와 결합 시
                  흰 라인 + 지저분한 결과로 롤백. 라이트는 단일 흰 면으로 유지. 투명도는 다크만.) -->
             <LinearGradientBrush x:Key="LumiWindowFrameBrush" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Offset="0" Color="#FFFFFFFF" />
@@ -260,11 +260,11 @@
 
             <!-- Pane content area (Light): explicit pure white so the Miller
                  columns / Details / Icon view areas read as a unified white surface.
-                 (라이트 투명도 롤백 — v1.0.2에서 시도했으나 흰 라인 / 지저분 이슈로 복귀) -->
+                 (라이트 투명도 롤백 — v1.0.10에서 시도했으나 흰 라인 / 지저분 이슈로 복귀) -->
             <SolidColorBrush x:Key="LumiPaneContentBrush" Color="#FFFFFFFF" />
 
             <!-- Wallpaper base — pale warm wash, radials reduced to faint pastel hints.
-                 (라이트 투명도 롤백 — v1.0.2에서 시도했으나 흰 라인 / 지저분 이슈로 복귀) -->
+                 (라이트 투명도 롤백 — v1.0.10에서 시도했으나 흰 라인 / 지저분 이슈로 복귀) -->
             <LinearGradientBrush x:Key="LumiWallpaperBaseBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Offset="0" Color="#FFEFEFF3" />
                 <GradientStop Offset="1" Color="#FFE5E5EA" />

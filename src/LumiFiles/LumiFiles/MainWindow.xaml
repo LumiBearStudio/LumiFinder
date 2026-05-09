@@ -1601,7 +1601,7 @@
                                                                                FontFamily="{StaticResource LumiFontFamily}"
                                                                                FontSize="{StaticResource LumiFontSizeColHeader}"
                                                                                FontWeight="Medium"
-                                                                               Foreground="{ThemeResource LumiPaneColumnNameBrush}"
+                                                                               Foreground="{ThemeResource LumiAmberBrush}"
                                                                                TextTrimming="CharacterEllipsis"
                                                                                Visibility="{x:Bind IsActiveColumnVisible, Mode=OneWay}"/>
                                                                     <!-- Inactive column: standard tertiary tone -->
@@ -1984,7 +1984,7 @@
                                                                                FontFamily="{StaticResource LumiFontFamily}"
                                                                                FontSize="{StaticResource LumiFontSizeColHeader}"
                                                                                FontWeight="Medium"
-                                                                               Foreground="{ThemeResource LumiPaneColumnNameBrush}"
+                                                                               Foreground="{ThemeResource LumiAmberBrush}"
                                                                                TextTrimming="CharacterEllipsis"
                                                                                Visibility="{x:Bind IsActiveColumnVisible, Mode=OneWay}"/>
                                                                     <!-- Inactive column: standard tertiary tone -->

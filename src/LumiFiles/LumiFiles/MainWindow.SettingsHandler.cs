@@ -121,6 +121,15 @@ namespace LumiFiles
                     btb.TrueBrush = accentDimBrush;
                 }
 
+                // 버튼 아이콘 색상 갱신
+                UpdatePreviewButtonState();
+                UpdateSplitViewButtonState();
+
+                // S-3.40: pane indicator 브러시(LumiPaneColumnNameBrush, ListView 선택 등)는
+                // RefreshActivePaneIndicators 가 per-pane scope 에서 brush.Color = ... 로
+                // mutate 하므로 액센트 변경 후 재호출 필요.
+                try { RefreshActivePaneIndicators(); } catch { }
+
                 // 모든 탭의 IsActive 바인딩 재평가 (토글로 PropertyChanged 강제 발생)
                 // border.BorderBrush를 직접 설정하면 {Binding}이 파괴되므로 절대 금지
                 foreach (var tab in ViewModel.Tabs)
@@ -142,15 +151,6 @@ namespace LumiFiles
                     if (activeRight != null)
                         activeRight.IsActive = true;
                 }
-
-                // 버튼 아이콘 색상 갱신
-                UpdatePreviewButtonState();
-                UpdateSplitViewButtonState();
-
-                // S-3.40: pane indicator 브러시(LumiPaneColumnNameBrush, ListView 선택 등)는
-                // RefreshActivePaneIndicators 가 per-pane scope 에서 brush.Color = ... 로
-                // mutate 하므로 액센트 변경 후 재호출 필요.
-                try { RefreshActivePaneIndicators(); } catch { }
 
                 // S-3.39: view-mode pill (Miller / Details / Icons) was using
                 // the static ThemeBrush helper which keys off Application
@@ -176,39 +176,33 @@ namespace LumiFiles
         // 대신 IsActive 토글로 바인딩 재평가 방식 사용 (RefreshCachedAccentColors 참조).
 
         /// <summary>
-        /// DWM 윈도우 프레임 보더 색상을 현재 테마 배경에 맞춘다.
-        /// 최대화 시 1px 흰색 라인이 보이는 WinUI 3 이슈를 방지한다.
+        /// DWM 윈도우 프레임 보더 색상을 설정한다.
+        ///
+        /// v1.0.10 (Option A): DWMWA_COLOR_NONE (0xFFFFFFFE) 사용으로 변경.
+        ///
+        /// 이전엔 라이트=#FFFFFF / 다크=#202020 솔리드 색을 설정해 "최대화 시 1px 흰 라인" 문제는
+        /// 막았으나, 더 큰 이슈가 발생: 라이트→다크 테마 전환 시 ApplyTheme 호출 순서상
+        /// RequestedTheme 토글(line 52-54) 이 먼저 일어나고 UpdateDwmBorderColor 가
+        /// 마지막(line 92) 에 호출되어, DWM 보더가 1프레임 동안 prev 테마 색(흰색) 으로 잔류 →
+        /// 다크 클라이언트 + 흰 DWM 보더 = 창 상단에 흰 가로 라인 보임.
+        ///
+        /// COLOR_NONE 으로 두면 DWM 이 보더/캡션을 자체 합성하지 않고 클라이언트(WindowFrame)
+        /// 만 그려져서 테마 전환 시 잔류 흰 라인이 원천 제거됨.
+        /// OnboardingWindow.xaml.cs:120-121 에서 동일 패턴이 흰 라인 없이 동작 중 (검증됨).
+        ///
+        /// theme/isCustom 파라미터는 호출부 호환성 유지 위해 보존(현재 미사용).
         /// </summary>
         private void UpdateDwmBorderColor(string theme, bool isCustom)
         {
             if (_hwnd == IntPtr.Zero) return;
+            _ = theme; _ = isCustom;
 
-            Windows.UI.Color bgColor;
-            if (isCustom)
-            {
-                var p = GetThemePalette(theme);
-                bgColor = p.bgMica;
-            }
-            else
-            {
-                bool isLight = theme == "light" ||
-                               (theme == "system" && App.Current.RequestedTheme == ApplicationTheme.Light);
-                // S-3.39: Light caption #F3F3F3 → #FFFFFF.
-                // 윈도우 frame 이 솔리드 #FFFFFF 인데 DWM 이 그리는 caption(상단
-                // NonClient 영역) 이 #F3F3F3 라 frame 과 섞이면서 상단 툴바가
-                // 회색 띠처럼 보이는 원인. frame 색에 맞춰 흰색 통일.
-                bgColor = isLight
-                    ? Windows.UI.Color.FromArgb(255, 255, 255, 255)   // #FFFFFF (matches frame)
-                    : Windows.UI.Color.FromArgb(255, 32, 32, 32);     // #202020
-            }
-
-            // COLORREF = 0x00BBGGRR (BGR 순서)
-            int colorRef = bgColor.R | (bgColor.G << 8) | (bgColor.B << 16);
+            // DWMWA_COLOR_NONE = 0xFFFFFFFE — DWM 보더/캡션 자체 합성 비활성
+            int colorNone = unchecked((int)0xFFFFFFFE);
             Helpers.NativeMethods.DwmSetWindowAttribute(
-                _hwnd, Helpers.NativeMethods.DWMWA_BORDER_COLOR, ref colorRef, sizeof(int));
-            // 캡션(타이틀바) 색상도 동일하게 설정 — 최대화 시 상단 흰색 라인 방지
+                _hwnd, Helpers.NativeMethods.DWMWA_BORDER_COLOR, ref colorNone, sizeof(int));
             Helpers.NativeMethods.DwmSetWindowAttribute(
-                _hwnd, Helpers.NativeMethods.DWMWA_CAPTION_COLOR, ref colorRef, sizeof(int));
+                _hwnd, Helpers.NativeMethods.DWMWA_CAPTION_COLOR, ref colorNone, sizeof(int));
         }
 
         internal static void ApplyCustomThemeOverrides(FrameworkElement root, string theme)
@@ -475,9 +469,15 @@ namespace LumiFiles
             dict["AccentFillColorTertiary"] = accentDim;
 
             // AccentTextFillColor* (하이퍼링크 등)
-            var accentText = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentLight2);
-            dict["AccentTextFillColorPrimaryBrush"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentLight3);
-            dict["AccentTextFillColorSecondaryBrush"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentLight2);
+            // v1.0.10: 테마별 분기 — 라이트는 darker variant, 다크는 lighter variant.
+            // 이전엔 양 테마 모두 accentLight* 사용해 라이트 흰 배경에서 텍스트가 안 보였음.
+            bool isLight = dictKey == "Light";
+            var accentTextPrimary = isLight ? accentDark2 : accentLight3;   // 가장 진한/연한
+            var accentTextSecondary = isLight ? accentDark1 : accentLight2; // 중간
+            var accentTextTertiary = isLight ? accent : accentLight2;       // 가장 표준
+            var accentText = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentTextTertiary);
+            dict["AccentTextFillColorPrimaryBrush"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentTextPrimary);
+            dict["AccentTextFillColorSecondaryBrush"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentTextSecondary);
             dict["AccentTextFillColorTertiaryBrush"] = accentText;
             dict["AccentTextFillColorDisabledBrush"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentDim);
 
@@ -546,8 +546,10 @@ namespace LumiFiles
             dict["ProgressBarForegroundPointerOver"] = accentHoverBrush;
 
             // ── HyperlinkButton / 탭 아이콘 ──
+            // v1.0.10: 테마별 분기 — accentText 가 isLight ? accent : accentLight2.
+            //   PointerOver / Pressed 도 라이트는 darker, 다크는 lighter 사용.
             dict["HyperlinkButtonForeground"] = accentText;
-            dict["HyperlinkButtonForegroundPointerOver"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(accentLight3);
+            dict["HyperlinkButtonForegroundPointerOver"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(isLight ? accentDark2 : accentLight3);
             dict["HyperlinkButtonForegroundPressed"] = accentBrush;
 
             // ── S-3.40: Lumi 브랜딩 브러시 (사이드바 로고/아이템, 툴바 폴더 아이콘, 탭 dot,
