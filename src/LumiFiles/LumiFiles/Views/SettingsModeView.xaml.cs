@@ -800,7 +800,7 @@ public sealed partial class SettingsModeView : UserControl
             CopyrightLabel.Text = "© 2026 LumiBear Studio. All rights reserved.";
             UpdateText.Text = _loc.Get("Settings_CheckUpdate");
             LinksLabel.Text = _loc.Get("Settings_Links");
-            UserGuideText.Text = _loc.Get("Help_OpenGuide");
+            // v1.0.11: UserGuideText 제거 (LumiFinder 전용 docs 사이트 미준비)
             GitHubText.Text = _loc.Get("Settings_GitHub");
             BugReportText.Text = _loc.Get("Settings_BugReport");
             PrivacyText.Text = _loc.Get("Settings_Privacy");
