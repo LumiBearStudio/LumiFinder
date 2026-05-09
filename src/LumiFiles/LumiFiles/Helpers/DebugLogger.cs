@@ -25,7 +25,8 @@ namespace LumiFiles.Helpers
         private static string InitLogsDir()
         {
             // MSIX Packaged: ApplicationData.Current.LocalFolder.Path 가 실제 packaged LocalState 경로를 반환.
-            //   예: C:\Users\{user}\AppData\Local\Packages\LumiBearStudio.LumiFiles_*\LocalState\Logs
+            //   예: C:\Users\{user}\AppData\Local\Packages\LumiBearStudio.LumiFinder_*\LocalState\Logs
+            //   (MSIX Identity Name = LumiBearStudio.LumiFinder, Store PFN = ...LumiFinder_zv1cz7a6mb9x2)
             // Environment.SpecialFolder.LocalApplicationData는 virtualize되지 않은 논리 경로를 주므로
             //   탐색기로 열었을 때 "없는 폴더"로 보이는 문제 발생 → Packaged API 우선.
             string dir;

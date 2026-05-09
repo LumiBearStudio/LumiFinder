@@ -10,7 +10,7 @@
   IgnorableNamespaces="uap rescap uap3 desktop">
 
   <Identity
-    Name="LumiBearStudio.LumiFiles"
+    Name="LumiBearStudio.LumiFinder"
     Publisher="CN=A55D3041-E7F5-46CB-8707-AD9C81D7CB43"
     Version="1.0.11.0" />
 
