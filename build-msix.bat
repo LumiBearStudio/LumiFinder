@@ -1,13 +1,18 @@
 @echo off
-setlocal
+setlocal EnableDelayedExpansion
 
 echo =========================================
-echo   Lumi Files MSIX Store Upload Build (x64/x86/ARM64)
+echo   LumiFinder MSIX Store Upload Build (x64/x86/ARM64)
 echo =========================================
 echo.
 
-:: Extract version from Package.appxmanifest
-for /f "usebackq delims=" %%V in (`powershell -NoProfile -Command "([xml](Get-Content 'D:\11.AI\LumiFiles\src\LumiFiles\LumiFiles\Package.appxmanifest')).Package.Identity.Version"`) do set VER=%%V
+set REPO_ROOT=D:\11.AI\LumiFiles
+set MANIFEST=%REPO_ROOT%\src\LumiFiles\LumiFiles\Package.appxmanifest
+set CSPROJ=%REPO_ROOT%\src\LumiFiles\LumiFiles\LumiFiles.csproj
+set MSBUILD="C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe"
+
+:: -- Extract version from Package.appxmanifest --
+for /f "usebackq delims=" %%V in (`powershell -NoProfile -Command "([xml](Get-Content '%MANIFEST%')).Package.Identity.Version"`) do set VER=%%V
 
 if "%VER%"=="" (
     echo ERROR: Version not found in Package.appxmanifest
@@ -15,9 +20,18 @@ if "%VER%"=="" (
     exit /b 1
 )
 
-set OUTDIR=D:\11.AI\LumiFiles\AppPackages\VER_%VER%
-set CSPROJ=D:\11.AI\LumiFiles\src\LumiFiles\LumiFiles\LumiFiles.csproj
-set MSBUILD="C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe"
+set OUTDIR=%REPO_ROOT%\AppPackages\VER_%VER%
+
+:: -- SAFETY GUARD: validate OUTDIR is well-formed before any cleanup --
+:: This prevents catastrophic Remove-Item recursion against repo root if
+:: variable expansion goes wrong (e.g. encoding error scrambles 'set' lines).
+echo %OUTDIR% | findstr /C:"AppPackages\VER_" >nul
+if errorlevel 1 (
+    echo ERROR: OUTDIR safety check failed: %OUTDIR%
+    echo OUTDIR must contain the literal substring "AppPackages\VER_".
+    pause
+    exit /b 1
+)
 
 echo Version: %VER%
 echo Output:  %OUTDIR%
@@ -76,21 +90,27 @@ if %ERRORLEVEL% NEQ 0 (
 echo.
 
 :: -- Create ZIP packages for GitHub Release --
+:: AssemblyName is 'LumiFiles', so MSBuild creates LumiFiles_*_Test folders.
+:: We rename ZIP output to LumiFinder_v* prefix for consistency.
 echo Creating ZIP packages for GitHub Release...
 for %%P in (x64 x86 ARM64) do (
     if exist "%OUTDIR%\LumiFiles_%VER%_%%P_Test" (
-        powershell -NoProfile -Command "Compress-Archive -Path '%OUTDIR%\LumiFiles_%VER%_%%P_Test\*' -DestinationPath '%OUTDIR%\LumiFiles_v%VER%_%%P.zip' -Force"
-        echo [OK] LumiFiles_v%VER%_%%P.zip
+        powershell -NoProfile -Command "Compress-Archive -Path '%OUTDIR%\LumiFiles_%VER%_%%P_Test\*' -DestinationPath '%OUTDIR%\LumiFinder_v%VER%_%%P.zip' -Force"
+        echo [OK] LumiFinder_v%VER%_%%P.zip
     ) else (
         echo [SKIP] %%P test folder not found
     )
 )
 echo.
 
-:: -- Cleanup: keep only .msixupload and .zip files --
+:: -- Cleanup: keep only .msixupload and .zip files inside OUTDIR --
+:: SAFETY: only operate on OUTDIR after explicit Test-Path. Pass OUTDIR as
+:: parameter (-OutDir) instead of string interpolation to avoid empty-string
+:: cwd-defaulting bug that would recursively delete the repo root.
 echo Cleaning up build artifacts...
 powershell -NoProfile -Command ^
-    "Get-ChildItem '%OUTDIR%' -Recurse -Force | Where-Object { -not $_.PSIsContainer } | Where-Object { $_.Extension -notin '.msixupload','.zip' } | Remove-Item -Force -ErrorAction SilentlyContinue; Get-ChildItem '%OUTDIR%' -Directory -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue"
+    "param([string]$OutDir) if ([string]::IsNullOrWhiteSpace($OutDir) -or -not (Test-Path -LiteralPath $OutDir -PathType Container)) { Write-Host '[ERROR] Invalid OutDir, skipping cleanup'; exit 1 }; if ($OutDir -notmatch 'AppPackages') { Write-Host '[ERROR] OutDir does not match AppPackages*, skipping cleanup'; exit 1 }; Get-ChildItem -LiteralPath $OutDir -Recurse -Force | Where-Object { -not $_.PSIsContainer } | Where-Object { $_.Extension -notin '.msixupload','.zip' } | Remove-Item -Force -ErrorAction SilentlyContinue; Get-ChildItem -LiteralPath $OutDir -Directory -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue" ^
+    -OutDir "%OUTDIR%"
 echo [OK] Cleanup done
 echo.
 

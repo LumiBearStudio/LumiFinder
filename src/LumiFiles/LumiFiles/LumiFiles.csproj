@@ -15,9 +15,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <!-- Sentry release 정확도 — Package.appxmanifest와 동기화 필요 (수동) -->
-    <Version>1.0.11</Version>
-    <AssemblyVersion>1.0.11.0</AssemblyVersion>
-    <FileVersion>1.0.11.0</FileVersion>
+    <Version>1.0.12</Version>
+    <AssemblyVersion>1.0.12.0</AssemblyVersion>
+    <FileVersion>1.0.12.0</FileVersion>
     <!-- S-3.40: Windows 쉘(작업표시줄/Alt+Tab/시작메뉴) 이 .exe 의 Win32 리소스에서
          아이콘을 읽으므로 .ico 를 임베드 해야 함. Content Include 만으론 sidecar
          로 복사만 되어 시스템 아이콘에 반영 안 됨. -->
