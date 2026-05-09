@@ -13,14 +13,26 @@
   <a href="https://github.com/sponsors/LumiBearStudio"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-ff69b4?style=for-the-badge&logo=github-sponsors" alt="Sponsor"></a>
 </p>
 
+<p align="center">
+  <strong>English</strong> |
+  <a href="README/README.ko.md">한국어</a> |
+  <a href="README/README.ja.md">日本語</a> |
+  <a href="README/README.zh-CN.md">简体中文</a> |
+  <a href="README/README.zh-TW.md">繁體中文</a> |
+  <a href="README/README.de.md">Deutsch</a> |
+  <a href="README/README.es.md">Español</a> |
+  <a href="README/README.fr.md">Français</a> |
+  <a href="README/README.pt.md">Português</a>
+</p>
+
 ---
 
-![LumiFinder — Miller Columns in Action](README/hero.png)
+![Miller Columns navigation](README/miller-columns.gif)
 
 > **Navigate folder hierarchies the way they were meant to be navigated.**
 > Click a folder, its contents appear in the next column. You always see where you are, where you came from, and where you're going — all at once. No more clicking back and forth.
 
-![Miller Columns navigation](README/miller-columns.gif)
+![LumiFinder — Miller Columns in Action](README/hero.png)
 
 <p align="center">
   <a href="https://github.com/LumiBearStudio/LumiFinder/stargazers"><img src="https://img.shields.io/github/stars/LumiBearStudio/LumiFinder?style=social" alt="GitHub Stars"></a>
