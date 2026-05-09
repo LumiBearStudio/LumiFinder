@@ -169,10 +169,14 @@
                     </LinearGradientBrush>
                     <SolidColorBrush x:Key="ContentDialogBackground" Color="#F01E1C28" />
 
-                    <!-- S-3.38: 컨텐츠 카드(타이틀바/툴바/파일 리스트 통합 면) 전용 솔리드 브러시.
-                         다크: 사이드바 다크 톤(#1E1C28, SpanBgLayer1Color과 동일)으로 텍스트
-                         가시성 확보. 라이트는 아래 Light 사전에서 #FFFFFF 순백. -->
-                    <SolidColorBrush x:Key="LumiContentCardBrush" Color="#1E1C28" />
+                    <!-- S-3.38: 컨텐츠 카드(타이틀바/툴바/파일 리스트 통합 면) 전용 브러시.
+                         v1.0.2: Dark 테마만 LumiSidebarBrush와 동일한 translucency (55-65% 알파)
+                         적용 → DesktopAcrylic 백드롭이 비쳐 사이드바와 시각적 일관성 확보.
+                         라이트는 솔리드 #FFFFFF 유지 (라이트 투명도는 흰 라인 / 지저분 이슈로 미적용). -->
+                    <LinearGradientBrush x:Key="LumiContentCardBrush" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#8C1E1C28" />
+                        <GradientStop Offset="1" Color="#A6161420" />
+                    </LinearGradientBrush>
                 </ResourceDictionary>
 
                 <!-- ==================== LIGHT THEME ==================== -->
@@ -301,7 +305,9 @@
                     </LinearGradientBrush>
                     <SolidColorBrush x:Key="ContentDialogBackground" Color="#F01E1C28" />
 
-                    <!-- S-3.38: 컨텐츠 카드 라이트 테마 — 사용자 요청대로 순백(#FFFFFF). -->
+                    <!-- S-3.38: 라이트 테마 컨텐츠 카드 — 순백(#FFFFFF) 솔리드.
+                         (라이트 투명도는 v1.0.2에서 시도했으나 흰 라인 / 지저분 이슈로 롤백.
+                         반투명 효과는 다크 테마에만 적용.) -->
                     <SolidColorBrush x:Key="LumiContentCardBrush" Color="#FFFFFF" />
                 </ResourceDictionary>
 
