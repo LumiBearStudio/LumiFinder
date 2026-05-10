@@ -437,6 +437,18 @@ public class SettingsService : ISettingsService
         set => Set("RatingCompleted", value);
     }
 
+    /// <summary>
+    /// v1.0.15: About 페이지의 수동 'Rate this app' 버튼을 사용자가 클릭한 적이 있는지.
+    /// RatingCompleted 와 분리 — RatingCompleted 는 auto prompt rate-limit 용 (Cancel/Exception
+    /// 도 true로 마크해 재요청 차단), RateButtonClicked 는 사용자가 능동 클릭한 신호로 그 후
+    /// 버튼 자체 숨김 처리.
+    /// </summary>
+    public bool RateButtonClicked
+    {
+        get => Get("RateButtonClicked", false);
+        set => Set("RateButtonClicked", value);
+    }
+
     // ── Onboarding ──
 
     public bool OnboardingCompleted
