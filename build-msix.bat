@@ -104,14 +104,15 @@ for %%P in (x64 x86 ARM64) do (
 echo.
 
 :: -- Cleanup: keep only .msixupload and .zip files inside OUTDIR --
-:: SAFETY: only operate on OUTDIR after explicit Test-Path. Pass OUTDIR as
-:: parameter (-OutDir) instead of string interpolation to avoid empty-string
-:: cwd-defaulting bug that would recursively delete the repo root.
+:: SAFETY: pass OUTDIR via env var (LF_OUTDIR) instead of -param, because cmd
+:: parameter quoting with PowerShell -Command can lose value across long lines.
+:: PowerShell-side: triple validation (IsNullOrWhiteSpace + Test-Path + match
+:: 'AppPackages\VER_') before any Remove-Item.
 echo Cleaning up build artifacts...
+set "LF_OUTDIR=%OUTDIR%"
 powershell -NoProfile -Command ^
-    "param([string]$OutDir) if ([string]::IsNullOrWhiteSpace($OutDir) -or -not (Test-Path -LiteralPath $OutDir -PathType Container)) { Write-Host '[ERROR] Invalid OutDir, skipping cleanup'; exit 1 }; if ($OutDir -notmatch 'AppPackages') { Write-Host '[ERROR] OutDir does not match AppPackages*, skipping cleanup'; exit 1 }; Get-ChildItem -LiteralPath $OutDir -Recurse -Force | Where-Object { -not $_.PSIsContainer } | Where-Object { $_.Extension -notin '.msixupload','.zip' } | Remove-Item -Force -ErrorAction SilentlyContinue; Get-ChildItem -LiteralPath $OutDir -Directory -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue" ^
-    -OutDir "%OUTDIR%"
-echo [OK] Cleanup done
+    "$d = $env:LF_OUTDIR; if ([string]::IsNullOrWhiteSpace($d) -or -not (Test-Path -LiteralPath $d -PathType Container)) { Write-Host '[ERROR] Invalid OutDir, skipping cleanup'; exit 1 }; if ($d -notmatch 'AppPackages\\VER_') { Write-Host '[ERROR] OutDir does not match AppPackages\\VER_*, skipping cleanup'; exit 1 }; Get-ChildItem -LiteralPath $d -Recurse -Force | Where-Object { -not $_.PSIsContainer } | Where-Object { $_.Extension -notin '.msixupload','.zip' } | Remove-Item -Force -ErrorAction SilentlyContinue; Get-ChildItem -LiteralPath $d -Directory -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue; Write-Host ('[OK] Cleanup done in ' + $d)"
+set "LF_OUTDIR="
 echo.
 
 :: -- Results --
