@@ -2102,6 +2102,17 @@
                                         </Border>
                                         <TextBlock x:Name="LinksLabel" Text="관련 링크" Style="{StaticResource SettingsCardLabel}" VerticalAlignment="Center" />
                                     </StackPanel>
+                                    <!-- v1.0.14: 수동 별점/리뷰 진입. RatingCompleted=true 일 때 숨김
+                                         (LoadLocalization 에서 Visibility 결정). -->
+                                    <HyperlinkButton x:Name="RateAppButton"
+                                                     Style="{StaticResource LinkButtonStyle}" Margin="48,0,0,0"
+                                                     Click="OnRateAppClick">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE735;" FontSize="14" />
+                                            <TextBlock x:Name="RateAppText" Text="이 앱에 별점 주기" />
+                                            <FontIcon Glyph="&#xE8A7;" FontSize="10" Foreground="{ThemeResource SpanTextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </HyperlinkButton>
                                     <!-- v1.0.11: User Guide 링크 제거. SpanFinder 도메인을 그대로 가리키고
                                          있었고 LumiFinder 전용 가이드가 아직 없으므로 출시 시점에는 표시 안 함.
                                          추후 docs 사이트 마련되면 복구. -->

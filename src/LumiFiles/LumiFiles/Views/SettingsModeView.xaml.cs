@@ -801,6 +801,11 @@ public sealed partial class SettingsModeView : UserControl
             UpdateText.Text = _loc.Get("Settings_CheckUpdate");
             LinksLabel.Text = _loc.Get("Settings_Links");
             // v1.0.11: UserGuideText 제거 (LumiFinder 전용 docs 사이트 미준비)
+            // v1.0.14: 별점 버튼 — 이미 평가 완료 시 숨김 (재요청 방지)
+            RateAppText.Text = _loc.Get("Settings_RateThisApp");
+            RateAppButton.Visibility = _settings.RatingCompleted
+                ? Microsoft.UI.Xaml.Visibility.Collapsed
+                : Microsoft.UI.Xaml.Visibility.Visible;
             GitHubText.Text = _loc.Get("Settings_GitHub");
             BugReportText.Text = _loc.Get("Settings_BugReport");
             PrivacyText.Text = _loc.Get("Settings_Privacy");
@@ -1939,6 +1944,59 @@ public sealed partial class SettingsModeView : UserControl
         {
             Helpers.DebugLogger.Log($"[Store] Steak purchase error: {ex.Message}");
             try { App.Current.Services.GetService<Services.CrashReportingService>()?.CaptureException(ex, "OnSupportSteakClick"); } catch { }
+        }
+    }
+
+    /// <summary>
+    /// v1.0.14: About 페이지 'Rate this app' 수동 진입.
+    /// Store 패키지면 인앱 별점/리뷰 다이얼로그 (StoreContext.RequestRateAndReviewAppAsync),
+    /// sideload 패키지면 Store 페이지를 브라우저로 오픈 (https://apps.microsoft.com/detail/9nxk32lgn4zt).
+    /// 평가 완료(Succeeded) / 사용자 취소(CanceledByUser) 모두 RatingCompleted=true 로 마크 →
+    /// 다음 LoadLocalization 부터 버튼 자체가 숨겨짐 (재요청 방지).
+    /// </summary>
+    private async void OnRateAppClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var isStoreInstalled = false;
+            try
+            {
+                isStoreInstalled = Windows.ApplicationModel.Package.Current.SignatureKind
+                    == Windows.ApplicationModel.PackageSignatureKind.Store;
+            }
+            catch { /* sideload 환경에서 Package.Current 접근 실패 시 false 유지 */ }
+
+            if (isStoreInstalled)
+            {
+                var storeContext = Windows.Services.Store.StoreContext.GetDefault();
+                var windows = ((App)App.Current).GetRegisteredWindows();
+                if (windows.Count == 0) return;
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(windows[0]);
+                WinRT.Interop.InitializeWithWindow.Initialize(storeContext, hwnd);
+
+                var result = await storeContext.RequestRateAndReviewAppAsync();
+                Helpers.DebugLogger.Log($"[Rating] Manual: Result={result.Status}");
+                if (result.Status == Windows.Services.Store.StoreRateAndReviewStatus.Succeeded
+                    || result.Status == Windows.Services.Store.StoreRateAndReviewStatus.CanceledByUser)
+                {
+                    _settings.RatingCompleted = true;
+                    RateAppButton.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+                }
+            }
+            else
+            {
+                // Sideload (.zip / dev) 환경 — 브라우저로 Store 페이지 오픈
+                await Windows.System.Launcher.LaunchUriAsync(
+                    new Uri("https://apps.microsoft.com/detail/9nxk32lgn4zt"));
+                // sideload 사용자도 한번 클릭하면 다음부터 숨김
+                _settings.RatingCompleted = true;
+                RateAppButton.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+            }
+        }
+        catch (Exception ex)
+        {
+            Helpers.DebugLogger.Log($"[Rating] Manual rating click failed: {ex.Message}");
+            try { App.Current.Services.GetService<Services.CrashReportingService>()?.CaptureException(ex, "OnRateAppClick"); } catch { }
         }
     }
 
