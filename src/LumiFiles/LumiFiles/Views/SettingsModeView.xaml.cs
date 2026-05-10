@@ -165,6 +165,8 @@ public sealed partial class SettingsModeView : UserControl
             FavoritesTreeToggle.IsOn = _settings.ShowFavoritesTree;
             SystemTrayToggle.IsOn = _settings.MinimizeToTray;
             WindowPositionToggle.IsOn = _settings.RememberWindowPosition;
+            // v1.0.17 (Span Discussion #30 port): 온보딩 표시 안 함 토글
+            DisableOnboardingToggle.IsOn = _settings.OnboardingDisabled;
 
             // Appearance — Stage S-3.32: only System/Light/Dark.
             // Legacy custom-theme strings (dracula, tokyonight, catppuccin,
@@ -350,6 +352,18 @@ public sealed partial class SettingsModeView : UserControl
         FavoritesTreeToggle.Toggled += (s, e) => { if (!_isLoading) _settings.ShowFavoritesTree = FavoritesTreeToggle.IsOn; };
         SystemTrayToggle.Toggled += (s, e) => { if (!_isLoading) _settings.MinimizeToTray = SystemTrayToggle.IsOn; };
         WindowPositionToggle.Toggled += (s, e) => { if (!_isLoading) _settings.RememberWindowPosition = WindowPositionToggle.IsOn; };
+
+        // v1.0.17 (Span Discussion #30 port): 온보딩 표시 안 함 토글
+        // Fail-safe 이중 보호: 토글 ON 시 OnboardingCompleted도 동시에 true → 두 플래그 중 하나가
+        // 손실돼도 나머지가 차단 가드를 통과시킴. 진단 로그로 사용자 보고 시 상태 즉시 확인 가능.
+        DisableOnboardingToggle.Toggled += (s, e) =>
+        {
+            if (_isLoading) return;
+            bool on = DisableOnboardingToggle.IsOn;
+            _settings.OnboardingDisabled = on;
+            if (on) _settings.OnboardingCompleted = true;
+            Helpers.DebugLogger.Log($"[Onboarding] DisableOnboardingToggle changed: disabled={on}, completed={_settings.OnboardingCompleted}");
+        };
 
         // Stage S-3.32: only System/Light/Dark wired up. Custom theme
         // RadioButtons (Dracula, TokyoNight, Catppuccin, Gruvbox, Solarized,
@@ -765,6 +779,9 @@ public sealed partial class SettingsModeView : UserControl
             OpenLogsBtn.Content = _loc.Get("Settings_OpenLogsButton");
             IsolatedThumbsLabel.Text = _loc.Get("Settings_IsolatedThumbs");
             IsolatedThumbsDesc.Text = _loc.Get("Settings_IsolatedThumbsDesc");
+            // v1.0.17 (Span Discussion #30 port): 온보딩 표시 안 함 카드 다국어
+            DisableOnboardingLabel.Text = _loc.Get("Settings_DisableOnboarding");
+            DisableOnboardingDesc.Text = _loc.Get("Settings_DisableOnboardingDesc");
             // S-3.40: 온보딩 다시 보기 — 옛 "Span" 명칭이 desc 에 남아있던 문제도 해결
             OnboardingReplayLabel.Text = _loc.Get("Settings_OnboardingReplay");
             OnboardingReplayDesc.Text = _loc.Get("Settings_OnboardingReplayDesc");
