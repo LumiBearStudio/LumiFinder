@@ -389,7 +389,7 @@ namespace LumiFiles.Services
             ("Help_OpenGuide", "User Guide", "사용 가이드", "ユーザーガイド", "用户指南", "使用者指南", "Benutzerhandbuch", "Guía del usuario", "Guide d'utilisation", "Guia do usuário"),
             ("Shortcut_OpenHelp", "User Guide", "사용 가이드", "ユーザーガイド", "用户指南", "使用者指南", "Benutzerhandbuch", "Guía del usuario", "Guide d'utilisation", "Guia do usuário"),
             ("Settings_GitHub", "GitHub Repository", "GitHub 저장소", "GitHubリポジトリ", "GitHub 仓库", "GitHub 存放庫", "GitHub-Repository", "Repositorio de GitHub", "Dépôt GitHub", "Repositório do GitHub"),
-            ("Settings_RateThisApp", "Rate this app on the Store", "스토어에서 별점 주기", "ストアでこのアプリを評価", "在 Store 上为这个应用打分", "在 Store 上為這個應用評分", "Diese App im Store bewerten", "Calificar esta app en la Store", "Évaluer cette app sur le Store", "Avalie este app na Store"),
+            ("Settings_RateThisApp", "Rate & review on the Store", "스토어에 리뷰 남기기", "ストアにレビューを書く", "在 Store 上写评价", "在 Store 上寫評論", "Im Store bewerten & rezensieren", "Calificar y reseñar en la Store", "Évaluer & laisser un avis sur le Store", "Avalie e comente na Store"),
             ("Settings_BugReport", "Report a Bug", "버그 제보", "バグ報告", "报告错误", "回報錯誤", "Fehler melden", "Reportar un error", "Signaler un bug", "Relatar um bug"),
             ("Settings_Privacy", "Privacy Policy", "개인정보 처리방침", "プライバシーポリシー", "隐私政策", "隱私權原則", "Datenschutzrichtlinie", "Política de privacidad", "Politique de confidentialité", "Política de privacidade"),
             ("Settings_EvalCopy", "Evaluation Copy (Unregistered)", "Evaluation Copy (미등록)", "評価版（未登録）", "评估版 (未注册)", "評估版 (未註冊)", "Evaluierungsversion (nicht registriert)", "Copia de evaluación (sin registrar)", "Version d'évaluation (non enregistrée)", "Cópia de avaliação (não registrada)"),
