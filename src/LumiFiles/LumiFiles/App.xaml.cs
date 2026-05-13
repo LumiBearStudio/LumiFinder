@@ -638,6 +638,8 @@ namespace LumiFiles
                 {
                     Helpers.DebugLogger.Log($"[App] Virtual folder at launch → explorer.exe: {StartupArguments}");
                     DelegateToExplorer(StartupArguments);
+                    // clean-exit 마커 기록 — 다음 실행에서 post-mortem.abnormal-exit 오탐 방지
+                    Helpers.DebugLogger.Shutdown();
                     Environment.Exit(0);
                     return;
                 }
