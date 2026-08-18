@@ -296,6 +296,9 @@ namespace LumiFiles
             var columns = explorer.Columns;
             if (columns.Count == 0) return;
 
+            // Issue #47: AnimationsEnabled 설정이 OFF면 강제로 즉시 점프
+            if (!_settings.AnimationsEnabled) disableAnimation = true;
+
             scrollViewer.DispatcherQueue.TryEnqueue(
                 Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
                 () =>
@@ -335,6 +338,10 @@ namespace LumiFiles
             {
                 var columns = explorer.Columns;
                 if (columns.Count == 0) return;
+
+                // Issue #47: AnimationsEnabled 설정이 OFF면 강제로 즉시 점프
+                if (!_settings.AnimationsEnabled) disableAnimation = true;
+
                 var control = scrollViewer == MillerScrollViewerRight ? (ItemsControl)MillerColumnsControlRight : GetActiveMillerColumnsControl();
                 double totalWidth = GetTotalColumnsActualWidth(control, columns.Count);
                 double viewportWidth = scrollViewer.ViewportWidth;
@@ -840,11 +847,104 @@ namespace LumiFiles
         #region Address Bar Control Events
 
         /// <summary>
-        /// 주소 표시줄 편집 모드 표시 (Ctrl+L, Alt+D에서 호출).
+        /// 주소 표시줄 편집 모드 표시 (Ctrl+L, Alt+D, 연필 버튼에서 호출).
+        /// 화면에 보이는 LumiToolbar 주소 영역(폴더명 라벨)을 경로 입력 박스로 전환한다.
         /// </summary>
         private void ShowAddressBarEditMode()
         {
-            GetActiveAddressBar().EnterEditMode();
+            ShowLumiAddressEdit();
+        }
+
+        /// <summary>
+        /// 하단 path bar 주소 영역: 브레드크럼 → 경로 입력 AutoSuggestBox 전환.
+        /// 현재 전체 경로를 미리 채우고 전체 선택하여 즉시 붙여넣기/수정 가능.
+        /// </summary>
+        private void ShowLumiAddressEdit()
+        {
+            if (LumiAddressEdit == null || LumiPathBarItems == null) return;
+
+            var path = ViewModel.ActiveExplorer?.CurrentPath ?? string.Empty;
+            if (Helpers.ArchivePathHelper.IsArchivePath(path))
+                path = path.Substring(Helpers.ArchivePathHelper.Prefix.Length);
+            LumiAddressEdit.Text = path;
+
+            LumiPathBarItems.Visibility = Visibility.Collapsed;
+            LumiAddressEdit.Visibility = Visibility.Visible;
+
+            // 비주얼 트리 materialize 후 내부 TextBox 포커스 + 전체 선택
+            DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal, () =>
+            {
+                var tb = FindDescendantTextBox(LumiAddressEdit);
+                if (tb != null)
+                {
+                    tb.Focus(FocusState.Programmatic);
+                    tb.SelectAll();
+                }
+                else
+                {
+                    LumiAddressEdit.Focus(FocusState.Programmatic);
+                }
+            });
+        }
+
+        private void HideLumiAddressEdit()
+        {
+            if (LumiAddressEdit == null || LumiPathBarItems == null) return;
+            LumiAddressEdit.Visibility = Visibility.Collapsed;
+            LumiPathBarItems.Visibility = Visibility.Visible;
+        }
+
+        private void OnLumiAddressEditClick(object sender, RoutedEventArgs e)
+        {
+            // 연필 토글: 편집 중이면 브레드크럼으로 원복, 아니면 편집 모드 진입.
+            if (LumiAddressEdit != null && LumiAddressEdit.Visibility == Visibility.Visible)
+                HideLumiAddressEdit();
+            else
+                ShowLumiAddressEdit();
+        }
+
+        private void OnLumiAddressQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        {
+            var path = args.QueryText?.Trim();
+            HideLumiAddressEdit();
+            if (string.IsNullOrEmpty(path)) return;
+            path = Environment.ExpandEnvironmentVariables(path);
+            OnAddressBarPathNavigated(this, path);
+        }
+
+        private void OnLumiAddressKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Escape)
+            {
+                HideLumiAddressEdit();
+                e.Handled = true;
+            }
+        }
+
+        private void OnLumiAddressLostFocus(object sender, RoutedEventArgs e)
+        {
+            // 제안 팝업 클릭이 처리될 시간을 준 뒤, 포커스가 입력박스 밖으로 나갔으면 닫는다.
+            DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+            {
+                if (LumiAddressEdit == null || LumiAddressEdit.Visibility != Visibility.Visible) return;
+                var focused = FocusManager.GetFocusedElement(this.Content.XamlRoot) as DependencyObject;
+                if (focused != null && IsDescendant(LumiAddressEdit, focused)) return;
+                if (LumiAddressEdit.FocusState != FocusState.Unfocused) return;
+                HideLumiAddressEdit();
+            });
+        }
+
+        private static TextBox? FindDescendantTextBox(DependencyObject parent)
+        {
+            int count = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is TextBox tb) return tb;
+                var r = FindDescendantTextBox(child);
+                if (r != null) return r;
+            }
+            return null;
         }
 
         /// <summary>

@@ -19,14 +19,32 @@ namespace LumiFiles.ViewModels
     /// </summary>
     public class FileViewModel : FileSystemViewModel
     {
+        // Issue #56: .jfif는 JPEG 별칭 → WIC 네이티브 디코딩(완전 지원).
+        // .psd는 "썸네일만" 지원 — 격리 워커(LumiFiles.Thumbs.exe)의 셸 썸네일 경로가
+        // 서드파티 PSD 핸들러(Photoshop/무료 코덱)를 크래시 격리하에 호출한다.
+        // .clip(CLIP STUDIO)은 격리 워커가 내장 SQLite 미리보기(CanvasPreview)를 직접
+        // 추출한다(ClipThumbnailExtractor) — 셸 핸들러 불필요, 전 사용자 동작.
+        // 핸들러/추출 실패 시 빈 아이콘(현상 유지)이라 손해 없음. 미리보기 패널
+        // (PreviewService.ImageExtensions)에는 .psd/.clip을 넣지 않음 — 그쪽은 인프로세스
+        // 경로라 서드파티 핸들러 크래시 리스크가 있어 격리된 썸네일 게이트에서만 연다.
         private static readonly HashSet<string> _imageExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
-            ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".ico", ".tiff", ".tif"
+            ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".ico", ".tiff", ".tif",
+            ".jfif", ".psd", ".clip"
         };
 
         private static readonly HashSet<string> _videoExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
             ".mp4", ".mov", ".avi", ".mkv", ".wmv", ".webm", ".m4v", ".flv", ".3gp"
+        };
+
+        /// <summary>
+        /// Issue #41: 자체 리소스 아이콘을 표시할 실행형 파일 확장자.
+        /// FolderIconService(IShellItemImageFactory)가 shell-associated 아이콘을 반환.
+        /// </summary>
+        private static readonly HashSet<string> _executableExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".exe", ".lnk", ".msi", ".bat", ".cmd", ".ps1"
         };
 
         /// <summary>
@@ -42,6 +60,84 @@ namespace LumiFiles.ViewModels
 
         public FileViewModel(FileItem model) : base(model)
         {
+            // Issue #41: 실행형 파일(.exe/.lnk 등)은 shell-associated 아이콘 로드 요청.
+            // FolderIconService를 재사용 — 파일 형식과 무관하게 IShellItemImageFactory가
+            // 적절한 아이콘을 반환한다. 실패/OFF 시 기본 글리프 유지.
+            RequestExecutableIconLoad();
+        }
+
+        private bool _executableIconRequested;
+
+        /// <summary>
+        /// Issue #41: .exe/.lnk 등의 자체 리소스 아이콘을 shell API로 lazy 로드.
+        /// 중복 호출 방지 (_executableIconRequested 플래그).
+        /// </summary>
+        public void RequestExecutableIconLoad()
+        {
+            if (_executableIconRequested) return;
+            if (string.IsNullOrEmpty(Path)) return;
+
+            var ext = System.IO.Path.GetExtension(Name);
+            if (string.IsNullOrEmpty(ext) || !_executableExtensions.Contains(ext)) return;
+
+            try
+            {
+                var settings = App.Current.Services.GetService(typeof(Services.SettingsService)) as Services.SettingsService;
+                if (settings == null || !settings.ExecutableIconsEnabled) return;
+
+                var iconSvc = App.Current.Services.GetService(typeof(Services.FolderIconService)) as Services.FolderIconService;
+                if (iconSvc == null) return;
+
+                _executableIconRequested = true;
+                _ = LoadExecutableIconAsync(iconSvc);
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[ExeIcon] RequestExecutableIconLoad failed for {Path}: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Issue #41: 실행 파일은 48px로 요청. 256(jumbo)으로 요청하면 레거시 exe에서 셸이
+        /// '창 프레임+작은 아이콘' 합성을 반환하지만, 48은 실제 아이콘 프레임을 반환하고
+        /// ScaleUp이 캔버스를 꽉 채운다. 표시 슬롯(16~40px)에도 충분한 해상도.
+        /// </summary>
+        private const int ExecutableIconSizePx = 48;
+
+        private async Task LoadExecutableIconAsync(Services.FolderIconService iconSvc)
+        {
+            try
+            {
+                var icon = await iconSvc.GetCustomIconAsync(Path, ExecutableIconSizePx).ConfigureAwait(false);
+                if (icon == null) return;
+
+                var settings = App.Current.Services.GetService(typeof(Services.SettingsService)) as Services.SettingsService;
+                if (settings == null || !settings.ExecutableIconsEnabled) return;
+                if (!_executableIconRequested) return;
+
+                var dispatcher = iconSvc.GetUiDispatcher();
+                if (dispatcher == null) return;
+
+                var iconToSet = icon;
+                dispatcher.TryEnqueue(() =>
+                {
+                    if (!_executableIconRequested) return;
+                    CustomIcon = iconToSet;
+                });
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[ExeIcon] LoadExecutableIconAsync failed for {Path}: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 설정 OFF 시 호출되어 캐시된 실행형 아이콘을 초기화.
+        /// </summary>
+        public void ClearExecutableIcon()
+        {
+            _executableIconRequested = false;
+            CustomIcon = null;
         }
 
         /// <summary>

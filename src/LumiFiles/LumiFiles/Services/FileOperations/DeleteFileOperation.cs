@@ -74,6 +74,9 @@ public class DeleteFileOperation : IFileOperation
         _router = router;
     }
 
+    /// <summary>Issue #61: FileOperationManager의 진행률 팝업 표시 휴리스틱용.</summary>
+    public IReadOnlyList<string> SourcePaths => _sourcePaths;
+
     /// <inheritdoc/>
     public string Description => _sourcePaths.Count == 1
         ? (_permanent
@@ -96,68 +99,91 @@ public class DeleteFileOperation : IFileOperation
 
         try
         {
+            // Issue #61: 로컬 경로는 IFileOperation(탐색기와 동일 API)으로 일괄 처리 —
+            // 폴더 내부에서도 항목별 콜백이 오므로 실시간 진행률 + 즉시 취소가 가능하고,
+            // 휴지통에는 폴더가 통째로 들어가 기존 Undo(복원) 로직이 그대로 유지된다.
+            var localPaths = new List<string>();
+            foreach (var p in _sourcePaths)
+            {
+                if (!FileSystemRouter.IsRemotePath(p)) localPaths.Add(p);
+            }
+
+            if (localPaths.Count > 0)
+            {
+                var shellResult = await Task.Run(() => ShellDeleteWithProgress.Execute(
+                    localPaths,
+                    _permanent,
+                    (pct, name) => progress?.Report(new FileOperationProgress
+                    {
+                        CurrentFile = name,
+                        CurrentFileIndex = 1,
+                        TotalFileCount = localPaths.Count,
+                        Percentage = pct
+                    }),
+                    cancellationToken), cancellationToken);
+
+                foreach (var deletedPath in localPaths)
+                {
+                    // 애초에 없던 경로는 삭제 성공이 아니라 오류로 보고한다 (아래 MissingPaths)
+                    if (shellResult.MissingPaths.Contains(deletedPath)) continue;
+
+                    // 삭제 성공 여부는 실제 존재 여부로 판정 (취소 시 일부만 삭제될 수 있음)
+                    if (!FileExistsWin32(deletedPath) && !Directory.Exists(deletedPath))
+                    {
+                        result.AffectedPaths.Add(deletedPath);
+                        if (!_permanent) _recycledPaths[deletedPath] = deletedPath;
+                    }
+                }
+
+                if (shellResult.Cancelled)
+                {
+                    result.Success = false;
+                    result.ErrorMessage = L("Op_Cancelled_Delete");
+                    return result;
+                }
+                if (shellResult.Error != null)
+                {
+                    errors.Add(shellResult.Error);
+                }
+                // 존재하지 않던 경로는 기존 동작대로 오류로 보고
+                foreach (var missingPath in shellResult.MissingPaths)
+                {
+                    errors.Add(string.Format(L("Op_PathNotFound"),
+                        FileOperationHelpers.GetFileName(missingPath)));
+                }
+            }
+
+            // 원격(FTP/SFTP) 경로는 기존 항목별 경로로 처리
             for (int i = 0; i < _sourcePaths.Count; i++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var sourcePath = _sourcePaths[i];
+                if (!FileSystemRouter.IsRemotePath(sourcePath)) continue;
                 var fileName = FileOperationHelpers.GetFileName(sourcePath);
 
+                // Issue #61: 항목 "시작" 시점 기준으로 보고 (기존 (i+1)*100은 작업 전에
+                // 이미 완료율로 표시되어 단일 항목이 시작 직후 100%로 보였음)
                 progress?.Report(new FileOperationProgress
                 {
                     CurrentFile = fileName,
                     CurrentFileIndex = i + 1,
                     TotalFileCount = _sourcePaths.Count,
-                    Percentage = (i + 1) * 100 / _sourcePaths.Count
+                    Percentage = i * 100 / _sourcePaths.Count
                 });
 
                 try
                 {
-                    if (FileSystemRouter.IsRemotePath(sourcePath))
+                    // ── 원격 삭제 (로컬은 위 IFileOperation 경로에서 이미 처리됨) ──
+                    var provider = _router?.GetConnectionForPath(sourcePath);
+                    if (provider == null)
                     {
-                        // ── 원격 삭제 ──
-                        var provider = _router?.GetConnectionForPath(sourcePath);
-                        if (provider == null)
-                        {
-                            errors.Add(string.Format(L("Op_NoRemoteRouter"), sourcePath));
-                            continue;
-                        }
-
-                        var remotePath = FileSystemRouter.ExtractRemotePath(sourcePath);
-                        await provider.DeleteAsync(remotePath, recursive: true, cancellationToken);
+                        errors.Add(string.Format(L("Op_NoRemoteRouter"), sourcePath));
+                        continue;
                     }
-                    else if (_permanent)
-                    {
-                        // ── 로컬 영구 삭제 (Task.Run으로 UI 스레드 블록 방지) ──
-                        var deleteError = await Task.Run(() => TryDeleteDirect(sourcePath), cancellationToken);
-                        if (deleteError != null)
-                        {
-                            errors.Add($"{deleteError}: {fileName}");
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        // ── 로컬 휴지통 삭제 (Task.Run으로 UI 스레드 블록 방지) ──
-                        var recycleError = await Task.Run(() =>
-                        {
-                            if (!FileExistsWin32(sourcePath) && !Directory.Exists(sourcePath))
-                                return (string?)null; // Already gone — treat as successful delete
 
-                            var err = TryRecycle(sourcePath);
-                            if (err != null)
-                                return $"{err}: {fileName}";
-
-                            return (string?)null;
-                        }, cancellationToken);
-
-                        if (recycleError != null)
-                        {
-                            errors.Add(recycleError);
-                            continue;
-                        }
-                        _recycledPaths[sourcePath] = sourcePath;
-                    }
+                    var remotePath = FileSystemRouter.ExtractRemotePath(sourcePath);
+                    await provider.DeleteAsync(remotePath, recursive: true, cancellationToken);
 
                     result.AffectedPaths.Add(sourcePath);
                 }
@@ -170,6 +196,14 @@ public class DeleteFileOperation : IFileOperation
                     errors.Add(string.Format(L("Op_FailedTo_Delete"), fileName, ex.Message));
                 }
             }
+
+            // Issue #61: 전 항목 처리 완료 → 100% 보고 (시작 시점 기준 보고의 마무리)
+            progress?.Report(new FileOperationProgress
+            {
+                CurrentFileIndex = _sourcePaths.Count,
+                TotalFileCount = _sourcePaths.Count,
+                Percentage = 100
+            });
 
             FileOperationHelpers.FinalizeResultWithErrors(result, errors, "Op_SomeNotDeleted");
         }
@@ -230,6 +264,30 @@ public class DeleteFileOperation : IFileOperation
                     {
                         dynamic items = recycleBin.Items();
 
+                        // Issue #61 후속: 휴지통을 1회만 스캔해 (원래위치|이름) → 항목 인덱스를 만든다.
+                        // 기존에는 복원 대상마다 휴지통 전체를 순회하며 GetDetailsOf(COM)를 호출해
+                        // O(N×M)이었고, 휴지통에 항목이 많으면 복원이 눈에 띄게 느렸다.
+                        var recycleIndex = new Dictionary<string, dynamic>(StringComparer.OrdinalIgnoreCase);
+                        foreach (dynamic item in items)
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            try
+                            {
+                                // Column 1 = "Original Location" (휴지통 항목의 원래 디렉토리)
+                                string? itemOriginalDir = recycleBin.GetDetailsOf(item, 1)?.ToString();
+                                string? itemName = item.Name?.ToString();
+                                if (itemOriginalDir != null && itemName != null)
+                                {
+                                    // 같은 경로가 여러 번 삭제된 경우 나중 항목(더 최근)이 우선
+                                    recycleIndex[itemOriginalDir + "|" + itemName] = item;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"[DeleteUndo] Error indexing Recycle Bin item: {ex.Message}");
+                            }
+                        }
+
                         foreach (var originalPath in _recycledPaths.Keys)
                         {
                             cancellationToken.ThrowIfCancellationRequested();
@@ -238,34 +296,24 @@ public class DeleteFileOperation : IFileOperation
                             string originalName = Path.GetFileName(originalPath);
                             bool found = false;
 
-                            foreach (dynamic item in items)
+                            if (recycleIndex.TryGetValue(originalDir + "|" + originalName, out dynamic? match))
                             {
                                 try
                                 {
-                                    // Column 1 = "Original Location" (휴지통 항목의 원래 디렉토리)
-                                    string? itemOriginalDir = recycleBin.GetDetailsOf(item, 1)?.ToString();
-                                    string? itemName = item.Name?.ToString();
-
-                                    if (itemName != null && itemOriginalDir != null &&
-                                        string.Equals(itemName, originalName, StringComparison.OrdinalIgnoreCase) &&
-                                        string.Equals(itemOriginalDir, originalDir, StringComparison.OrdinalIgnoreCase))
+                                    // 원래 디렉토리로 복원
+                                    dynamic? targetFolder = shell.NameSpace(originalDir);
+                                    if (targetFolder != null)
                                     {
-                                        // 원래 디렉토리로 복원
-                                        dynamic? targetFolder = shell.NameSpace(originalDir);
-                                        if (targetFolder != null)
-                                        {
-                                            // 0x0014 = FOF_NOCONFIRMATION (0x10) | FOF_SILENT (0x04)
-                                            targetFolder.MoveHere(item, 0x0014);
-                                            restored.Add(originalPath);
-                                            found = true;
-                                            Marshal.ReleaseComObject(targetFolder);
-                                        }
-                                        break;
+                                        // 0x0014 = FOF_NOCONFIRMATION (0x10) | FOF_SILENT (0x04)
+                                        targetFolder.MoveHere(match, 0x0014);
+                                        restored.Add(originalPath);
+                                        found = true;
+                                        Marshal.ReleaseComObject(targetFolder);
                                     }
                                 }
                                 catch (Exception ex)
                                 {
-                                    Debug.WriteLine($"[DeleteUndo] Error checking Recycle Bin item: {ex.Message}");
+                                    Debug.WriteLine($"[DeleteUndo] Error restoring item: {ex.Message}");
                                 }
                             }
 

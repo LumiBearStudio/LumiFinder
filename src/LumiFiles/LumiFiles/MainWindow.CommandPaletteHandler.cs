@@ -97,6 +97,7 @@ namespace LumiFiles
         private void OpenCommandPalette()
         {
             _isCommandPaletteOpen = true;
+            UpdateResponsiveSearchLayout();   // 현재 창 크기에 맞춰 팝업/검색창 크기 산정
             CommandPaletteOverlay.Visibility = Visibility.Visible;
             CommandPaletteInput.Text = string.Empty;
             CommandPaletteInput.PlaceholderText = _loc.Get("CommandPalette_Placeholder");
@@ -104,6 +105,27 @@ namespace LumiFiles
 
             _commandCatalog = BuildCommandCatalog();
             UpdateCommandPaletteResults(string.Empty);
+        }
+
+        /// <summary>
+        /// 검색창(툴바)과 명령 팔레트 팝업을 현재 창(RootGrid) 크기에 비례해 동적으로 조정.
+        /// 창 리사이즈, 팔레트 열기, 검색창 펼치기 시 호출된다. (이슈 #2: 검색 UI 크기 반응형)
+        /// </summary>
+        internal void UpdateResponsiveSearchLayout()
+        {
+            double w = RootGrid?.ActualWidth ?? 0;
+            double h = RootGrid?.ActualHeight ?? 0;
+            if (w <= 0 || h <= 0) return;
+
+            // 명령 팔레트 카드: 폭은 창의 ~55%(480~960), 결과 리스트 높이는 창의 ~62%(320~760)
+            if (CommandPaletteCard != null)
+                CommandPaletteCard.Width = Math.Clamp(w * 0.55, 480, 960);
+            if (CommandPaletteList != null)
+                CommandPaletteList.MaxHeight = Math.Clamp(h * 0.62, 320, 760);
+
+            // 툴바 검색창(펼친 상태): 원래 250px에서 살짝 키우되 과하지 않게 (~16%, 280~360)
+            if (LumiSearchExpanded != null)
+                LumiSearchExpanded.Width = Math.Clamp(w * 0.16, 280, 360);
         }
 
         private void CloseCommandPalette()

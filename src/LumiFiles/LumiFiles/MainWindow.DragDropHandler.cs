@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -29,7 +29,9 @@ namespace LumiFiles
         // 드래그 시각 피드백용 브러시 캐시 (매 이벤트 할당 방지)
         private static readonly SolidColorBrush _dragHighlightBrush = new(Microsoft.UI.Colors.White) { Opacity = 0.08 };
         private static readonly SolidColorBrush _transparentBrush = new(Microsoft.UI.Colors.Transparent);
-        private static readonly SolidColorBrush _sidebarHoverBrush = new(Microsoft.UI.Colors.White) { Opacity = 0.05 };
+        // Issue #62: 사이드바 hover는 테마 브러시(LumiHoverBrush)를 호출 시점에 조회한다.
+        // 기존의 흰색 5% 고정값은 라이트 테마(거의 흰 배경)에서 사실상 보이지 않아
+        // 드라이브/휴지통 클릭이 아무 반응 없는 것처럼 느껴졌다.
         private static readonly SolidColorBrush _gripHighlightBrush = new(Microsoft.UI.Colors.Gray) { Opacity = 0.3 };
 
         /// <summary>
@@ -821,23 +823,31 @@ namespace LumiFiles
 
         private void OnModifierPollTick(object? state)
         {
-            if (!IsDragInProgress) return;
-
-            var snapshot = GetModifierSnapshot();
-            if (snapshot != _lastModifierSnapshot)
+            // v1.4.15: ThreadPool Timer callback throw → AppDomain unhandled. outer try/catch로 봉인.
+            try
             {
-                _lastModifierSnapshot = snapshot;
-                _nudgeCountdown = 3; // 변경 감지 → 3회 연속 nudge로 DragOver 확실히 트리거
+                if (!IsDragInProgress) return;
+
+                var snapshot = GetModifierSnapshot();
+                if (snapshot != _lastModifierSnapshot)
+                {
+                    _lastModifierSnapshot = snapshot;
+                    _nudgeCountdown = 3; // 변경 감지 → 3회 연속 nudge로 DragOver 확실히 트리거
+                }
+
+                if (_nudgeCountdown > 0)
+                {
+                    _nudgeCountdown--;
+                    // SetCursorPos를 동일 좌표로 호출 → 커서 이동 없이 WM_MOUSEMOVE 발생.
+                    // Windows는 좌표 변경 여부와 무관하게 항상 WM_MOUSEMOVE를 생성하므로
+                    // OLE 드래그 모달 루프에서도 DragOver가 재발생한다.
+                    Helpers.NativeMethods.GetCursorPos(out var pt);
+                    Helpers.NativeMethods.SetCursorPos(pt.X, pt.Y);
+                }
             }
-
-            if (_nudgeCountdown > 0)
+            catch (Exception ex)
             {
-                _nudgeCountdown--;
-                // SetCursorPos를 동일 좌표로 호출 → 커서 이동 없이 WM_MOUSEMOVE 발생.
-                // Windows는 좌표 변경 여부와 무관하게 항상 WM_MOUSEMOVE를 생성하므로
-                // OLE 드래그 모달 루프에서도 DragOver가 재발생한다.
-                Helpers.NativeMethods.GetCursorPos(out var pt);
-                Helpers.NativeMethods.SetCursorPos(pt.X, pt.Y);
+                Helpers.DebugLogger.Log($"[ModifierPollTimer] {ex.Message}");
             }
         }
 
@@ -1236,7 +1246,8 @@ namespace LumiFiles
         {
             if (sender is Grid grid)
             {
-                grid.Background = _sidebarHoverBrush;
+                // 테마 변경에도 따라가도록 매번 현재 테마의 브러시를 조회
+                grid.Background = GetThemeBrush("LumiHoverBrush");
                 Helpers.CursorHelper.SetHandCursor(grid);
             }
         }
@@ -1249,6 +1260,28 @@ namespace LumiFiles
             if (sender is Grid grid)
             {
                 grid.Background = _transparentBrush;
+            }
+        }
+
+        /// <summary>
+        /// Issue #62: 사이드바 항목 클릭 피드백(눌림 표시).
+        /// 드라이브/휴지통 항목은 Grid라 포커스·선택 비주얼이 없어 클릭해도 아무 반응이
+        /// 없는 것처럼 보였다. 눌리는 순간 진하게, 떼면 hover 상태로 되돌린다.
+        /// </summary>
+        private void OnSidebarItemPointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            if (sender is Grid grid)
+            {
+                grid.Background = GetThemeBrush("LumiPillHoverBrush");
+            }
+        }
+
+        /// <summary>포인터를 떼면 hover 상태로 복귀 (커서가 아직 항목 위에 있으므로).</summary>
+        private void OnSidebarItemPointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            if (sender is Grid grid)
+            {
+                grid.Background = GetThemeBrush("LumiHoverBrush");
             }
         }
 

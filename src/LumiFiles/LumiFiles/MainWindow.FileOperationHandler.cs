@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.Extensions.DependencyInjection;
@@ -364,19 +364,11 @@ namespace LumiFiles
         /// 선택된 항목의 경로를 내부 _clipboardPaths에 저장하고 _isCutOperation=false로 설정한다.
         /// 시스템 클립보드에 StorageItems도 제공하여 Windows 탐색기와의 호환성을 보장한다.
         /// </summary>
-        private void HandleCopy()
+        private async void HandleCopy()
         {
+            // Issue #62: 선택이 없을 때 Children[0]을 대신 복사하던 fallback 제거.
+            // 사용자가 고르지 않은 '첫 번째 항목'이 복사되어 의도와 다른 결과를 냈다.
             var selectedItems = GetCurrentSelectedItems();
-            if (selectedItems.Count == 0)
-            {
-                // Fallback: auto-select first item if nothing is selected
-                var folder = GetCurrentViewFolder();
-                if (folder != null && folder.Children.Count > 0)
-                {
-                    folder.SelectedChild = folder.Children[0];
-                    selectedItems = new List<FileSystemViewModel> { folder.Children[0] };
-                }
-            }
             if (selectedItems.Count == 0) return;
 
             // 이전 잘라내기 항목의 반투명 효과 해제
@@ -387,19 +379,18 @@ namespace LumiFiles
                 _clipboardPaths.Add(item.Path);
             _isCutOperation = false;
 
-            var dataPackage = new DataPackage();
-            dataPackage.RequestedOperation = DataPackageOperation.Copy;
-            dataPackage.SetText(string.Join("\n", _clipboardPaths));
-
-            // Provide StorageItems for Windows Explorer compatibility
-            var capturedPaths = new List<string>(_clipboardPaths);
-            dataPackage.SetDataProvider(StandardDataFormats.StorageItems, request =>
+            // Issue #62: 즉시 렌더링 + Flush — 지연 렌더링 콜백이 빈 목록을 넘겨
+            // 탐색기에서 CLIPBRD_E_BAD_DATA가 발생하던 문제 해결.
+            _suppressNextClipboardChange = true;
+            if (!await Helpers.ClipboardInteropHelper.SetFilesAsync(_clipboardPaths, isCut: false))
             {
-                var deferral = request.GetDeferral();
-                _ = Helpers.ViewDragDropHelper.ProvideStorageItemsAsync(request, capturedPaths, deferral);
-            });
-
-            Clipboard.SetContent(dataPackage);
+                _suppressNextClipboardChange = false;
+                _clipboardPaths.Clear();
+                UpdateToolbarButtonStates();
+                ViewModel.ShowToast(_loc.Get("Toast_ClipboardFailed"));
+                return;
+            }
+            UpdateToolbarButtonStates();
 
             // Toast notification
             if (selectedItems.Count == 1)
@@ -421,18 +412,11 @@ namespace LumiFiles
         /// HandleCopy와 동일한 흐름이지만 _isCutOperation=true로 설정하고,
         /// DataPackage.RequestedOperation을 Move로 지정하여 붙여넣기 시 이동 동작을 수행한다.
         /// </summary>
-        private void HandleCut()
+        private async void HandleCut()
         {
+            // Issue #62: Children[0] 자동 선택 제거 — 고르지 않은 파일이 이동 대상이 되는
+            // 위험 동작이었다.
             var selectedItems = GetCurrentSelectedItems();
-            if (selectedItems.Count == 0)
-            {
-                var folder = GetCurrentViewFolder();
-                if (folder != null && folder.Children.Count > 0)
-                {
-                    folder.SelectedChild = folder.Children[0];
-                    selectedItems = new List<FileSystemViewModel> { folder.Children[0] };
-                }
-            }
             if (selectedItems.Count == 0) return;
 
             if (selectedItems.Any(i => Helpers.ArchivePathHelper.IsArchivePath(i.Path)))
@@ -449,19 +433,19 @@ namespace LumiFiles
                 _clipboardPaths.Add(item.Path);
             _isCutOperation = true;
 
-            var dataPackage = new DataPackage();
-            dataPackage.RequestedOperation = DataPackageOperation.Move;
-            dataPackage.SetText(string.Join("\n", _clipboardPaths));
-
-            // Provide StorageItems for Windows Explorer compatibility
-            var capturedCutPaths = new List<string>(_clipboardPaths);
-            dataPackage.SetDataProvider(StandardDataFormats.StorageItems, request =>
+            // Issue #62: 즉시 렌더링 + Flush (HandleCopy와 동일)
+            _suppressNextClipboardChange = true;
+            if (!await Helpers.ClipboardInteropHelper.SetFilesAsync(_clipboardPaths, isCut: true))
             {
-                var deferral = request.GetDeferral();
-                _ = Helpers.ViewDragDropHelper.ProvideStorageItemsAsync(request, capturedCutPaths, deferral);
-            });
-
-            Clipboard.SetContent(dataPackage);
+                _suppressNextClipboardChange = false;
+                ClearCutState();
+                _clipboardPaths.Clear();
+                _isCutOperation = false;
+                UpdateToolbarButtonStates();
+                ViewModel.ShowToast(_loc.Get("Toast_ClipboardFailed"));
+                return;
+            }
+            UpdateToolbarButtonStates();
 
             // Toast notification
             if (selectedItems.Count == 1)
@@ -521,8 +505,25 @@ namespace LumiFiles
                 if (activeIndex < 0 || activeIndex >= columns.Count) return;
 
                 var col = columns[activeIndex];
-                destDir = col.Path;
-                targetFolder = col;
+
+                // Issue #49: 선택된 항목이 폴더면 그 폴더가 붙여넣기 대상 (Windows Explorer 동작).
+                // Column View에서 부모 컬럼의 폴더를 선택 → 자식 컬럼에 내용 표시 상태에서
+                // Ctrl+V는 부모 폴더가 아닌 선택된 자식 폴더에 붙여넣어야 자연스러움.
+                if (col.SelectedChild is FolderViewModel selectedFolder
+                    && !string.IsNullOrEmpty(selectedFolder.Path)
+                    && System.IO.Directory.Exists(selectedFolder.Path))
+                {
+                    destDir = selectedFolder.Path;
+                    targetFolder = selectedFolder;
+                    // targetColumnIndex는 자식 컬럼(activeIndex + 1)이 있으면 그쪽을 리프레시
+                    if (activeIndex + 1 < columns.Count && columns[activeIndex + 1].Path.Equals(destDir, StringComparison.OrdinalIgnoreCase))
+                        activeIndex = activeIndex + 1;
+                }
+                else
+                {
+                    destDir = col.Path;
+                    targetFolder = col;
+                }
                 Helpers.DebugLogger.Log($"[HandlePaste] FINAL destDir={destDir}");
             }
 
@@ -547,6 +548,7 @@ namespace LumiFiles
                 // External clipboard (Windows Explorer → LumiFiles)
                 try
                 {
+                    sourcePaths = new List<string>();
                     var content = Clipboard.GetContent();
                     if (!content.Contains(StandardDataFormats.StorageItems))
                     {
@@ -577,26 +579,51 @@ namespace LumiFiles
 
                     // Bug 1: 클립보드 접근에 타임아웃 적용 (COM 교착 방지)
                     var clipTask = content.GetStorageItemsAsync().AsTask();
-                    if (await Task.WhenAny(clipTask, Task.Delay(5000)) != clipTask)
+                    if (await Task.WhenAny(clipTask, Task.Delay(5000)) == clipTask)
                     {
-                        Helpers.DebugLogger.Log("[Clipboard] GetStorageItemsAsync timed out (5s)");
+                        // await로 받아야 실제 예외가 드러난다 (.Result는 AggregateException으로 감쌈)
+                        var items = await clipTask;
+                        sourcePaths = items
+                            .Select(i => i.Path)
+                            .Where(p => !string.IsNullOrEmpty(p))
+                            .ToList();
+                    }
+                    else
+                    {
+                        Helpers.DebugLogger.Log("[Clipboard] GetStorageItemsAsync timed out (5s) — CF_HDROP 폴백");
+                    }
+
+                    // Issue #62: WinRT StorageItems 변환은 압축 폴더 내부·클라우드 placeholder·
+                    // 경로 없는 셸 아이템이 섞이면 통째로 실패한다. 탐색기는 항상 CF_HDROP를
+                    // 넣으므로 원본 형식을 직접 읽는 폴백을 둔다.
+                    if (sourcePaths.Count == 0)
+                    {
+                        var win32Paths = Helpers.Win32ClipboardHelper.GetFileDropList();
+                        if (win32Paths.Count > 0)
+                        {
+                            Helpers.DebugLogger.Log($"[Clipboard] CF_HDROP 폴백으로 {win32Paths.Count}개 항목 확보");
+                            sourcePaths = win32Paths;
+                        }
+                    }
+
+                    if (sourcePaths.Count == 0)
+                    {
+                        Helpers.DebugLogger.Log("[Clipboard] 붙여넣을 파일을 찾지 못함 (StorageItems/CF_HDROP 모두 없음)");
+                        ViewModel.ShowToast(_loc.Get("Toast_PasteFailed") ?? "Paste failed", 3000, isError: true);
                         return;
                     }
-                    var items = clipTask.Result;
-                    sourcePaths = items
-                        .Select(i => i.Path)
-                        .Where(p => !string.IsNullOrEmpty(p))
-                        .ToList();
-                    if (sourcePaths.Count == 0) return;
 
-                    // Detect Cut vs Copy from Windows clipboard
-                    isCut = content.RequestedOperation.HasFlag(DataPackageOperation.Move);
+                    // Issue #62: 잘라내기 여부는 탐색기가 "Preferred DropEffect"로 전달한다.
+                    // RequestedOperation만 보면 탐색기에서 Ctrl+X 한 항목도 복사로 처리됐다.
+                    isCut = Helpers.Win32ClipboardHelper.IsCutOperation()
+                            ?? content.RequestedOperation.HasFlag(DataPackageOperation.Move);
 
                     Helpers.DebugLogger.Log($"[Clipboard] External paste: {sourcePaths.Count} item(s), isCut={isCut}");
                 }
                 catch (Exception ex)
                 {
-                    Helpers.DebugLogger.Log($"[Clipboard] External paste error: {ex.Message}");
+                    Helpers.DebugLogger.Log($"[Clipboard] External paste error: {ex.GetType().Name}: {ex.Message}");
+                    ViewModel.ShowToast(_loc.Get("Toast_PasteFailed") ?? "Paste failed", 3000, isError: true);
                     return;
                 }
             }
@@ -832,17 +859,57 @@ namespace LumiFiles
                 var op = new LumiFiles.Services.FileOperations.NewFolderOperation(newPath, router);
                 await ViewModel.ExecuteFileOperationAsync(op, activeIndex >= 0 ? activeIndex : (int?)null);
 
-                // Select the new folder and start inline rename
-                var newFolder = currentFolder.Children.FirstOrDefault(c =>
-                    c.Path.Equals(newPath, StringComparison.OrdinalIgnoreCase));
-                if (newFolder != null)
+                // 새 폴더가 Children에 반영될 때까지 짧게 polling (Refresh가 끝났어도 SyncChildren race 대비)
+                FileSystemViewModel? newFolder = null;
+                for (int i = 0; i < 10; i++)
                 {
-                    currentFolder.SelectedChild = newFolder;
-                    newFolder.BeginRename();
-                    await System.Threading.Tasks.Task.Delay(100);
-                    if (viewMode == ViewMode.MillerColumns && activeIndex >= 0)
-                        FocusRenameTextBox(activeIndex);
-                    // non-Miller: 해당 뷰에서 rename TextBox 포커스는 IsRenaming 바인딩으로 자동 처리
+                    newFolder = currentFolder.Children.FirstOrDefault(c =>
+                        c.Path.Equals(newPath, StringComparison.OrdinalIgnoreCase));
+                    if (newFolder != null) break;
+                    await System.Threading.Tasks.Task.Delay(50);
+                }
+
+                if (newFolder == null)
+                {
+                    Helpers.DebugLogger.Log($"[FileOp] HandleNewFolder: new folder not found in Children after polling ({newPath})");
+                    return;
+                }
+
+                Helpers.DebugLogger.Log($"[FileOp] HandleNewFolder: viewMode={viewMode}, activeIndex={activeIndex}, newFolder='{newFolder.Name}' found");
+
+                // 핵심 가드: _renamePendingFocus = true 동안
+                //  - CancelAnyActiveRename() 첫 줄에서 return
+                //  - OnRenameTextBoxLostFocus 첫 줄에서 return
+                // → ListView SelectionChanged가 fire되어도 rename이 즉시 취소되지 않음.
+                //
+                // 추가로 SuppressAutoNavigationScope로 자식 컬럼 자동 생성도 함께 차단하여
+                // UI 컨테이너 재구성 race를 막는다.
+                var explorer = ViewModel.ActiveExplorer;
+                _renamePendingFocus = true;
+                try
+                {
+                    using (explorer.SuppressAutoNavigationScope())
+                    {
+                        currentFolder.SelectedChild = newFolder;
+                        newFolder.BeginRename();
+                        _renameTargetPath = newFolder.Path;
+                        _renameSelectionCycle = 0;
+
+                        var itemsHost = GetItemsHostForViewMode(viewMode, activeIndex);
+                        if (itemsHost != null)
+                            await FocusRenameTextBoxWithPollingAsync(itemsHost, newFolder);
+                        else
+                            Helpers.DebugLogger.Log($"[FileOp] HandleNewFolder: no ItemsHost for viewMode={viewMode}");
+
+                        // FolderVm_PropertyChanged의 Task.Yield continuation 및 늦게 도착하는
+                        // ListView SelectionChanged 이벤트를 흡수.
+                        await System.Threading.Tasks.Task.Delay(200);
+                    }
+                }
+                finally
+                {
+                    _renamePendingFocus = false;
+                    Helpers.DebugLogger.Log($"[FileOp] HandleNewFolder: cleared _renamePendingFocus, final IsRenaming={newFolder.IsRenaming}");
                 }
             }
             catch (Exception ex)
@@ -1039,6 +1106,67 @@ namespace LumiFiles
             }
 
             FocusRenameTextBoxCore(listView, columnIndex);
+        }
+
+        /// <summary>
+        /// HandleNewFolder 전용: 현재 활성 뷰의 ListViewBase(ListView/GridView)를 반환.
+        /// Miller / Details / List / Icon 모두 지원.
+        /// </summary>
+        private Microsoft.UI.Xaml.Controls.ListViewBase? GetItemsHostForViewMode(ViewMode viewMode, int activeIndex)
+        {
+            switch (viewMode)
+            {
+                case ViewMode.MillerColumns:
+                    return activeIndex >= 0 ? GetListViewForColumn(activeIndex) : null;
+                case ViewMode.Details:
+                    return GetActiveDetailsView()?.ItemsHost;
+                case ViewMode.List:
+                    return GetActiveListView()?.ItemsHost;
+                case ViewMode.IconSmall:
+                case ViewMode.IconMedium:
+                case ViewMode.IconLarge:
+                case ViewMode.IconExtraLarge:
+                    return GetActiveIconView()?.ItemsHost;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// 새 폴더 생성 직후 rename TextBox에 포커스를 잡기 위한 polling 헬퍼.
+        /// 컨테이너 생성/가상화 race를 50ms × 최대 10회 polling으로 흡수.
+        /// </summary>
+        private async System.Threading.Tasks.Task FocusRenameTextBoxWithPollingAsync(
+            Microsoft.UI.Xaml.Controls.ListViewBase listView,
+            FileSystemViewModel item)
+        {
+            if (listView == null || item == null) return;
+
+            try { listView.ScrollIntoView(item); } catch { /* ignore */ }
+
+            bool containerFound = false;
+            bool textBoxFound = false;
+            for (int i = 0; i < 20; i++)
+            {
+                if (_isClosed) return;
+
+                var container = listView.ContainerFromItem(item) as UIElement;
+                if (container != null)
+                {
+                    containerFound = true;
+                    var textBox = VisualTreeHelpers.FindChild<TextBox>(container as DependencyObject);
+                    if (textBox != null)
+                    {
+                        textBoxFound = true;
+                        Helpers.DebugLogger.Log($"[FileOp] FocusRename: TextBox found at attempt {i + 1}, IsRenaming={item.IsRenaming}");
+                        ApplyRenameSelection(textBox, item is FolderViewModel);
+                        return;
+                    }
+                }
+                await System.Threading.Tasks.Task.Delay(50);
+            }
+
+            Helpers.DebugLogger.Log($"[FileOp] FocusRename: FAILED — containerFound={containerFound}, textBoxFound={textBoxFound}, IsRenaming={item.IsRenaming}, path={item.Path}");
         }
 
         private void FocusRenameTextBoxCore(ListView listView, int columnIndex)
@@ -1240,6 +1368,37 @@ namespace LumiFiles
                 }
             }
             if (cancelled)
+            {
+                _justFinishedRename = true;
+            }
+            _renameTargetPath = null;
+        }
+
+        /// <summary>
+        /// Issue #59: 활성 상태인 인라인 이름 변경을 커밋(저장)한다.
+        /// 빈 영역 좌클릭 시 Windows 탐색기 표준대로 변경 내용을 저장하기 위해 사용.
+        /// CancelAnyActiveRename과 동일 구조 — LostFocus를 "커밋"으로 바꾼 정책 전환
+        /// (커밋 eb083e0) 당시 전역 좌클릭 핸들러만 취소로 남아 편집이 유실되던 불일치 해소.
+        /// </summary>
+        private void CommitAnyActiveRename()
+        {
+            // 우클릭 메뉴에서 이름 바꾸기 실행 시, MenuFlyout 닫힘 → 컬럼 GotFocus → 여기 호출됨
+            // _renamePendingFocus가 true이면 PerformRename이 진행 중이므로 건드리지 않음 (Issue #37 보호)
+            if (_renamePendingFocus) return;
+
+            var explorer = ViewModel?.ActiveExplorer;
+            if (explorer == null) return;
+
+            bool committed = false;
+            foreach (var col in explorer.Columns)
+            {
+                if (col.SelectedChild?.IsRenaming == true)
+                {
+                    col.SelectedChild.CommitRename();
+                    committed = true;
+                }
+            }
+            if (committed)
             {
                 _justFinishedRename = true;
             }
@@ -1570,6 +1729,81 @@ namespace LumiFiles
 
                 e.Handled = true;
             }
+        }
+
+        /// <summary>
+        /// 파일 재귀 검색 실행 (툴바 Lumi 검색창 / 레거시 검색박스 공용).
+        /// 빈 검색어면 활성 검색/필터 해제. 활성 폴더 기준, Ctrl 동시 입력 시 루트 전역 검색.
+        /// </summary>
+        internal void ExecuteFileSearch(string? rawText)
+        {
+            string queryText = rawText?.Trim() ?? string.Empty;
+
+            // 빈 검색어 → 활성 검색 결과/인라인 필터 해제 후 원래 폴더 복원
+            if (string.IsNullOrEmpty(queryText))
+            {
+                var exp = ViewModel.ActiveExplorer;
+                if (exp?.HasActiveSearchResults == true)
+                {
+                    exp.CancelRecursiveSearch();
+                    ViewModel.UpdateStatusBar();
+                }
+                else if (_isSearchFiltered)
+                {
+                    RestoreSearchFilter();
+                }
+                return;
+            }
+
+            // RecycleBin 모드: 자체 필터링
+            if (ViewModel.CurrentViewMode == ViewMode.RecycleBin)
+            {
+                RecycleBinView.FilterItems(queryText);
+                return;
+            }
+
+            var query = Helpers.SearchQueryParser.Parse(queryText);
+            if (query.IsEmpty) return;
+
+            var explorer = ViewModel.ActiveExplorer;
+            if (explorer == null) return;
+
+            if (_isSearchFiltered) RestoreSearchFilter();
+
+            // Enter = 현재 활성 폴더 기준, Ctrl+Enter = 전역(루트) 검색
+            bool isGlobalSearch = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(
+                Windows.System.VirtualKey.Control).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+
+            string rootPath;
+            if (isGlobalSearch)
+            {
+                var rootFolder = explorer.Columns.FirstOrDefault();
+                rootPath = rootFolder?.Path ?? explorer.CurrentPath;
+            }
+            else
+            {
+                rootPath = explorer.CurrentPath;
+                for (int i = explorer.Columns.Count - 1; i >= 0; i--)
+                {
+                    var col = explorer.Columns[i];
+                    if (!string.IsNullOrEmpty(col.Path))
+                    {
+                        rootPath = col.Path;
+                        break;
+                    }
+                }
+            }
+            if (string.IsNullOrEmpty(rootPath) || rootPath == "PC") return;
+
+            bool showHidden = false;
+            try
+            {
+                var settings = App.Current.Services.GetService(typeof(Services.SettingsService)) as Services.SettingsService;
+                if (settings != null) showHidden = settings.ShowHiddenFiles;
+            }
+            catch (Exception ex) { Helpers.DebugLogger.Log($"[FileOp] Settings access error: {ex.Message}"); }
+
+            _ = explorer.StartRecursiveSearchAsync(query, rootPath, showHidden);
         }
 
         // ── Search Filter State ──

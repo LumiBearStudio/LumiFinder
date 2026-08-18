@@ -296,6 +296,9 @@ namespace LumiFiles.ViewModels
                         {
                             ClearFolderCustomIconsRecursive(tab.Explorer?.CurrentFolder);
                         }
+                        // Issue #39 a: 사이드바/홈 즐겨찾기도 클리어
+                        foreach (var fav in Favorites)
+                            fav.ClearCustomIcon();
                     }
                     else
                     {
@@ -303,6 +306,9 @@ namespace LumiFiles.ViewModels
                         {
                             RequestFolderCustomIconsRecursive(tab.Explorer?.CurrentFolder);
                         }
+                        // Issue #39 a: 사이드바/홈 즐겨찾기도 다시 로드
+                        foreach (var fav in Favorites)
+                            fav.RequestCustomIconLoad();
                     }
                 }
             };

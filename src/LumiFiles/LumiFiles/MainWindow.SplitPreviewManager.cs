@@ -774,6 +774,9 @@ namespace LumiFiles
             // Initialize Git status bars
             InitializeGitStatusBars();
 
+            // 이슈 #2: 검색창/명령 팔레트를 창 크기에 비례해 반응형으로 조정
+            RootGrid.SizeChanged += (s, e) => UpdateResponsiveSearchLayout();
+
             // Stage S-3.2: seed pane indicator brushes for the initial state
             // (left active, right inactive). XAML literal colors already match
             // this case, but call explicitly so future XAML edits don't drift.

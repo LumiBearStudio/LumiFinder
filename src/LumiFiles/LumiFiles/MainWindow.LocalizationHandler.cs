@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 //  MainWindow.LocalizationHandler.cs (S-3.40)
 //
 //  Centralizes all i18n updates for MainWindow XAML elements that don't auto-
@@ -43,6 +43,10 @@ namespace LumiFiles
                 // ── LumiSidebar 우상단 / 하단 ─────────────────────────────
                 if (LumiSidebarWorkspaceRow != null)
                     ToolTipService.SetToolTip(LumiSidebarWorkspaceRow, _loc.Get("Toolbar_Workspaces"));
+
+                // ── 하단 path bar 경로 편집 연필 (LumiFinder #1) ───────────
+                if (LumiAddressEditButton != null)
+                    ToolTipService.SetToolTip(LumiAddressEditButton, _loc.Get("AddressBar_EditTooltip"));
 
                 // ── LumiToolbar nav 버튼 (Back/Forward/Up) ─────────────────
                 if (BackButton != null)

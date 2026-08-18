@@ -20,9 +20,15 @@ namespace LumiFiles.Services
     /// </summary>
     public class PreviewService : IPreviewService
     {
+        // Issue #56: .jfif는 JPEG 별칭(WIC 네이티브)이라 미리보기까지 완전 동작.
+        // .clip은 자체 추출기(ClipThumbnailExtractor)로 내장 미리보기(CanvasPreview)를 뽑으므로
+        // 셸 코덱 호출 없이 안전 → 미리보기도 지원(LoadImagePreviewAsync의 .clip 분기).
+        // .psd만 제외 — 미리보기는 인프로세스 셸 코덱 호출이라 크래시 리스크가 있어
+        // 격리 워커가 처리하는 썸네일 게이트(FileViewModel)에서만 연다.
         private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
-            ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif", ".webp", ".ico"
+            ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif", ".webp", ".ico",
+            ".jfif", ".clip"
         };
 
         private static readonly HashSet<string> MarkdownExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -141,6 +147,10 @@ namespace LumiFiles.Services
         {
             try
             {
+                // Issue #56: .clip은 셸/WIC로 못 여니 격리 워커가 내장 SQLite 미리보기를 추출·리사이즈.
+                if (string.Equals(Path.GetExtension(filePath), ".clip", StringComparison.OrdinalIgnoreCase))
+                    return await LoadClipPreviewAsync(filePath, maxSize, ct);
+
                 var fi = new FileInfo(filePath);
                 if (fi.Length > MaxPreviewFileSize) return null;
 
@@ -186,6 +196,34 @@ namespace LumiFiles.Services
             }
         }
 
+        /// <summary>
+        /// Issue #56: .clip 미리보기 — 격리 워커(LumiFiles.Thumbs)가 내장 SQLite 미리보기(CanvasPreview)를
+        /// 추출·리사이즈해 PNG 캐시로 반환하고, 메인은 그 file:// URI를 BitmapImage로 로드한다.
+        /// SQLite 네이티브를 메인 프로세스에 두지 않기 위해 썸네일과 동일한 워커 경로를 재사용한다
+        /// (SQLitePCLRaw 네이티브가 WinUI 3 MSIX 레이아웃에 포함되지 않는 문제 회피 + 크래시 격리).
+        /// 워커 비활성/실패 시 null(미리보기 없음).
+        /// </summary>
+        private static async Task<BitmapImage?> LoadClipPreviewAsync(string filePath, uint maxSize, CancellationToken ct)
+        {
+            var client = App.Current.Services.GetService(typeof(Services.Thumbnails.ThumbnailClientService))
+                as Services.Thumbnails.ThumbnailClientService;
+            if (client == null) return null;
+
+            var uri = await client.GetThumbnailUriAsync(
+                filePath,
+                (int)maxSize,
+                mode: "SingleItem",
+                isCloudOnly: false,
+                applyExif: false,
+                theme: "Default",
+                dpi: 96,
+                ct: ct);
+            if (uri == null) return null;
+            ct.ThrowIfCancellationRequested();
+
+            return new BitmapImage { UriSource = uri };
+        }
+
         public async Task<string?> LoadTextPreviewAsync(string filePath, CancellationToken ct)
         {
             try
@@ -223,10 +261,22 @@ namespace LumiFiles.Services
                 var fi = new FileInfo(filePath);
                 if (fi.Length > MaxPreviewFileSize) return null;
 
-                var file = await StorageFile.GetFileFromPathAsync(filePath);
+                // Issue #60: PdfDocument.LoadFromFileAsync(StorageFile)는 파일 핸들을 문서 수명
+                // 동안 유지하는데 PdfDocument에는 Close API가 없어 GC 시점까지(비결정적) 락이
+                // 지속됨 → 미리보기 중인 PDF를 삭제/이동할 수 없었다. 파일을 읽고 즉시 닫은 뒤
+                // 메모리 스트림으로 로드하여 파일 핸들을 결정적으로 해제한다.
+                // (FileShare.Delete 포함 — 읽는 도중의 삭제도 허용)
+                byte[] pdfBytes;
+                using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read,
+                                               FileShare.ReadWrite | FileShare.Delete))
+                {
+                    pdfBytes = new byte[fs.Length];
+                    await fs.ReadExactlyAsync(pdfBytes, ct);
+                }
                 ct.ThrowIfCancellationRequested();
 
-                var pdfDoc = await PdfDocument.LoadFromFileAsync(file);
+                var pdfDoc = await PdfDocument.LoadFromStreamAsync(
+                    new MemoryStream(pdfBytes).AsRandomAccessStream());
                 if (pdfDoc.PageCount == 0) return null;
 
                 using var page = pdfDoc.GetPage(0);

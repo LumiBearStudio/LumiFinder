@@ -349,6 +349,38 @@ public class SettingsService : ISettingsService
         set => Set("StartupBehavior", value);
     }
 
+    /// <summary>
+    /// Issue #43: Home에서 폴더 진입 시 기본 뷰 모드 (fallback).
+    /// _lastClosedViewMode / preferred / _viewModeBeforeHome이 모두 없을 때 사용.
+    /// 값은 Models.ViewMode 캐스팅 (0=MillerColumns, 1=Details, 3=IconMedium, 8=List).
+    /// </summary>
+    public int DefaultViewMode
+    {
+        get => Get("DefaultViewMode", 0); // 0 = MillerColumns
+        set => Set("DefaultViewMode", value);
+    }
+
+    /// <summary>
+    /// Issue #41: 실행 파일(.exe/.lnk 등)의 자체 리소스 아이콘 표시 여부.
+    /// OFF 시 기본 파일 글리프 표시. 대용량 실행 파일 폴더에서 성능 우려 시 OFF.
+    /// </summary>
+    public bool ExecutableIconsEnabled
+    {
+        get => Get("ExecutableIconsEnabled", true);
+        set => Set("ExecutableIconsEnabled", value);
+    }
+
+    /// <summary>
+    /// Issue #45: Miller 컬럼 너비를 내용(가장 긴 이름)에 맞춰 자동 조정할지 여부.
+    /// 기본 OFF — 기존 고정 폭(MillerColumnWidth) 동작 유지. ON이면 컬럼 로드 시
+    /// 내용에 맞춰 자동 fit (XtraFinder 스타일). 사용자가 수동 리사이즈하면 그 컬럼은 존중.
+    /// </summary>
+    public bool AutoFitColumnWidth
+    {
+        get => Get("AutoFitColumnWidth", false);
+        set => Set("AutoFitColumnWidth", value);
+    }
+
     // ── Per-tab startup settings ──
 
     public int Tab1StartupBehavior

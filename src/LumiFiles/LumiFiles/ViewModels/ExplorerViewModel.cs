@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using LumiFiles.Helpers;
 using LumiFiles.Models;
 using LumiFiles.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -166,6 +167,29 @@ namespace LumiFiles.ViewModels
 
         /// <summary>현재 탐색 루프가 자동 네비게이션을 억제 중인지 여부.</summary>
         private bool IsAutoNavSuppressed => Volatile.Read(ref _autoNavSuppressCount) > 0;
+
+        /// <summary>
+        /// 외부에서 짧은 임계 구간 동안 자동 네비게이션을 억제할 수 있는 핸들.
+        /// 예: HandleNewFolder에서 SelectedChild를 새 폴더로 설정할 때 자식 컬럼이
+        /// 생성되어 UI race가 일어나지 않도록 일시 억제. using 블록과 함께 사용.
+        /// </summary>
+        public IDisposable SuppressAutoNavigationScope()
+        {
+            Interlocked.Increment(ref _autoNavSuppressCount);
+            return new AutoNavSuppressionToken(this);
+        }
+
+        private sealed class AutoNavSuppressionToken : IDisposable
+        {
+            private ExplorerViewModel? _owner;
+            public AutoNavSuppressionToken(ExplorerViewModel owner) => _owner = owner;
+            public void Dispose()
+            {
+                var owner = Interlocked.Exchange(ref _owner, null);
+                if (owner != null)
+                    Interlocked.Decrement(ref owner._autoNavSuppressCount);
+            }
+        }
 
         /// <summary>
         /// 탭 전환 시 SelectionChanged로 인한 컬럼 자동 추가 억제용 타임스탬프.
@@ -597,7 +621,8 @@ namespace LumiFiles.ViewModels
                     as Services.Thumbnails.ThumbnailClientService;
                 if (thumbClient != null)
                 {
-                    _ = thumbClient.CancelAllInflightAsync();
+                    // v1.4.15: IPC cancel 중 워커 죽음 시 ObjectDisposedException 흐름 방지
+                    thumbClient.CancelAllInflightAsync().FireAndForget("CancelAllInflight");
                     thumbClient.PrewarmWorker();
                 }
             }
@@ -1277,6 +1302,16 @@ namespace LumiFiles.ViewModels
                 await Task.Yield();
                 if (!EnableAutoNavigation) return; // Re-check after yield
                 if (IsAutoNavSuppressed) return;   // 비동기 경계 이후 재확인
+
+                // CRITICAL: 새 폴더 생성 직후의 인라인 rename 진행 중이면 자식 컬럼 생성으로 인한
+                // 포커스 가로채기를 방지하기 위해 자동 네비게이션을 skip.
+                // 사용자가 rename 완료(Enter)하거나 취소(Esc)하면 IsRenaming=false가 되어
+                // 다음 selection 변경부터는 정상 동작.
+                if (parentFolder.SelectedChild?.IsRenaming == true)
+                {
+                    Helpers.DebugLogger.Log($"[FolderVm_PropertyChanged] SUPPRESSED — SelectedChild '{parentFolder.SelectedChild.Name}' is renaming");
+                    return;
+                }
 
                 // CRITICAL: 탭 전환 후 패널 Visible 전환으로 인한 phantom SelectionChanged 억제
                 if (Environment.TickCount64 < TabSwitchSuppressionTicks)
