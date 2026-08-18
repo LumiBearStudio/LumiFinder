@@ -1,4 +1,4 @@
-using LumiFiles.Helpers;
+﻿using LumiFiles.Helpers;
 
 namespace LumiFiles.Tests.Helpers;
 
@@ -27,9 +27,10 @@ public class DebugLoggerTests
             $"Log filename should start with 'LumiFiles_Debug_', but was: {fileName}");
         Assert.IsTrue(fileName.EndsWith(".log"),
             $"Log filename should end with '.log', but was: {fileName}");
-        // yyyyMMdd_HHmmss = 15자 + prefix(11) + suffix(4) = 30자
-        Assert.AreEqual(30, fileName.Length,
-            $"Filename length mismatch (expected 30 = 11 prefix + 15 timestamp + 4 suffix): {fileName}");
+        // LumiFiles 리브랜딩으로 prefix 가 "Span_Debug_"(11) → "LumiFiles_Debug_"(16) 로 바뀜.
+        // yyyyMMdd_HHmmss = 15자 + prefix(16) + suffix(4) = 35자
+        Assert.AreEqual(35, fileName.Length,
+            $"Filename length mismatch (expected 35 = 16 prefix + 15 timestamp + 4 suffix): {fileName}");
     }
 
     [TestMethod]

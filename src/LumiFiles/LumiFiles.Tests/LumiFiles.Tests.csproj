@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <!-- Windows10.0 TFM은 Windows.System.VirtualKey 등 WinRT 프로젝션 접근에 필요 (KeyBindingService 테스트용) -->
@@ -52,6 +52,7 @@
     <Compile Include="..\LumiFiles\Helpers\HangulSearchHelper.cs" Link="Sources\Helpers\HangulSearchHelper.cs" />
     <Compile Include="..\LumiFiles\Helpers\DebugLogger.cs" Link="Sources\Helpers\DebugLogger.cs" />
     <Compile Include="..\LumiFiles\Helpers\FontScaleService.cs" Link="Sources\Helpers\FontScaleService.cs" />
+    <Compile Include="..\LumiFiles\Helpers\AppDataPaths.cs" Link="Sources\Helpers\AppDataPaths.cs" />
     <!-- Services - file operations (pure C#) -->
     <Compile Include="..\LumiFiles\Services\FileOperations\OperationResult.cs" Link="Sources\Services\OperationResult.cs" />
     <Compile Include="..\LumiFiles\Services\FileOperations\FileOperationProgress.cs" Link="Sources\Services\FileOperationProgress.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="..\LumiFiles\Services\FileOperations\NewFileOperation.cs" Link="Sources\Services\NewFileOperation.cs" />
     <Compile Include="..\LumiFiles\Services\FileOperations\BatchRenameOperation.cs" Link="Sources\Services\BatchRenameOperation.cs" />
     <Compile Include="..\LumiFiles\Services\FileOperations\DeleteFileOperation.cs" Link="Sources\Services\DeleteFileOperation.cs" />
+    <Compile Include="..\LumiFiles\Services\FileOperations\ShellDeleteWithProgress.cs" Link="Sources\Services\ShellDeleteWithProgress.cs" />
     <Compile Include="..\LumiFiles\Services\FileOperations\CompressOperation.cs" Link="Sources\Services\CompressOperation.cs" />
     <Compile Include="..\LumiFiles\Services\FileOperations\ExtractOperation.cs" Link="Sources\Services\ExtractOperation.cs" />
     <!-- Services - folder size (pure C#) -->

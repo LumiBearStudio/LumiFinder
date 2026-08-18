@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using LumiFiles.Helpers;
@@ -100,10 +100,12 @@ public class FontScaleServiceTests
     }
 
     // ---------------------------------------------------------------------
-    // T-6: Level 변경 시 8개 PropertyChanged 이벤트 발생
+    // T-6: Level 변경 시 12개 PropertyChanged 이벤트 발생
     //     (Level + ItemFontSize + ItemFontSizeXL + IconFontSize +
     //      SecondaryFontSize + AddressBarFontSize + AddressBarIconFontSize +
-    //      MillerColumnWidth)
+    //      MillerColumnWidth + Stage S-3.40 사이드바 4종:
+    //      SidebarTitleFontSize + SidebarHeaderFontSize + SidebarItemFontSize +
+    //      SidebarItemIconFontSize)
     // ---------------------------------------------------------------------
     [TestMethod]
     public void SetLevel_RaisesPropertyChanged()
@@ -128,9 +130,13 @@ public class FontScaleServiceTests
                 nameof(FontScaleService.AddressBarFontSize),
                 nameof(FontScaleService.AddressBarIconFontSize),
                 nameof(FontScaleService.MillerColumnWidth),
+                nameof(FontScaleService.SidebarTitleFontSize),
+                nameof(FontScaleService.SidebarHeaderFontSize),
+                nameof(FontScaleService.SidebarItemFontSize),
+                nameof(FontScaleService.SidebarItemIconFontSize),
             },
             raised,
-            $"Expected exactly 8 PropertyChanged events, got {raised.Count}: [{string.Join(", ", raised)}]");
+            $"Expected exactly 12 PropertyChanged events, got {raised.Count}: [{string.Join(", ", raised)}]");
     }
 
     // ---------------------------------------------------------------------

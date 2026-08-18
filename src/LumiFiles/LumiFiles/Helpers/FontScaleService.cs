@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
 
@@ -21,7 +21,7 @@ namespace LumiFiles.Helpers
     /// WinUI 타입(DispatcherQueue)을 직접 참조하면 LumiFiles.Tests에서 컴파일 불가하므로
     /// 런타임 어서트 대신 convention으로 보장.
     /// </summary>
-    public sealed class FontScaleService : INotifyPropertyChanged
+    public sealed partial class FontScaleService : INotifyPropertyChanged
     {
         // 테스트(LumiFiles.Tests) 는 Application.Current == null 이므로 별도 싱글톤이 필요.
         // 런타임은 App.xaml 의 XAML 파서가 <helpers:FontScaleService x:Key="FontScale"/>
@@ -42,26 +42,25 @@ namespace LumiFiles.Helpers
             {
                 // 런타임: Application.Current.Resources 에서 가져옴.
                 // {StaticResource FontScale} 와 정확히 같은 객체를 보장.
-                try
-                {
-                    if (Microsoft.UI.Xaml.Application.Current is { } app)
-                    {
-                        if (app.Resources.TryGetValue("FontScale", out var val)
-                            && val is FontScaleService svc)
-                        {
-                            return svc;
-                        }
-                    }
-                }
-                catch
-                {
-                    // Application.Current.Resources 접근 실패 시 fallback 으로 내려감
-                }
+                //
+                // WinUI(Application) 의존 코드는 FontScaleService.Sidebar.cs 의 partial
+                // 구현에 있다. 테스트 프로젝트는 그 파일을 컴파일하지 않으므로 구현 없는
+                // partial method 호출이 컴파일러에 의해 제거되고 → 아래 fallback 을 쓴다.
+                FontScaleService? resolved = null;
+                TryResolveXamlInstance(ref resolved);
+                if (resolved != null) return resolved;
 
                 // 테스트 / 초기 부팅 fallback
                 return _fallback ??= new FontScaleService();
             }
         }
+
+        /// <summary>
+        /// 런타임(WinUI)에서 App.xaml 의 {StaticResource FontScale} 인스턴스를 해석한다.
+        /// 구현은 FontScaleService.Sidebar.cs (WinUI 의존). 테스트 프로젝트에는 구현이
+        /// 없으므로 이 호출은 컴파일 시 제거되고 fallback 싱글톤이 사용된다.
+        /// </summary>
+        static partial void TryResolveXamlInstance(ref FontScaleService? result);
 
         /// <summary>
         /// XAML 파서용 public ctor.
@@ -125,23 +124,13 @@ namespace LumiFiles.Helpers
                     $"[FontScale] view=service tab=- density={clamped} reason=setter");
 
                 Raise(nameof(Density));
-                Raise(nameof(SidebarItemPadding));
-                Raise(nameof(SidebarHeaderPadding));
+                // 두 Padding 속성은 WinUI(Thickness) 의존이라 FontScaleService.Sidebar.cs 로
+                // 분리되어 있다(테스트 프로젝트는 해당 파일을 컴파일하지 않음).
+                // 따라서 nameof 대신 문자열 리터럴을 사용한다.
+                Raise("SidebarItemPadding");
+                Raise("SidebarHeaderPadding");
             }
         }
-
-        /// <summary>
-        /// LumiSidebar 항목 Grid Padding. baseline (10,5) at density=3.
-        /// vertical = 2 + density, horizontal = 10 고정.
-        /// 0→(10,2) / 1→(10,3) / 2→(10,4) / 3→(10,5) / 4→(10,6) / 5→(10,7)
-        /// </summary>
-        public Thickness SidebarItemPadding => new Thickness(10, 2 + _density, 10, 2 + _density);
-
-        /// <summary>
-        /// LumiSidebar 섹션 헤더 Grid Padding. baseline (4,10,4,3).
-        /// 헤더는 항목 간격에 비해 약하게만 영향 — vertical top 만 density-1 로 살짝 변동.
-        /// </summary>
-        public Thickness SidebarHeaderPadding => new Thickness(4, Math.Max(6, 7 + _density), 4, 3);
 
         // --- Sidebar font derived (S-3.40) ----------------------------------
         // baseline 11 (title) / 10.5 (header) / 13 (item) / 14 (icon) + level
