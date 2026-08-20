@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 using System;
@@ -516,6 +516,7 @@ namespace LumiFiles
             services.AddSingleton<Services.LocalizationService>();
             services.AddSingleton<Services.ContextMenuService>();
             services.AddSingleton<Services.FolderIconService>();
+            services.AddSingleton<Services.FolderTagService>();  // Span #58: 폴더 컬러 태그
             services.AddSingleton<Services.ActionLogService>();
             services.AddSingleton<Services.SettingsService>();
             services.AddSingleton<Services.FolderContentCache>();

@@ -1822,6 +1822,40 @@ public sealed partial class SettingsModeView : UserControl
             if (service == null) return;
 
             bool wantOn = DefaultFileManagerToggle.IsOn;
+
+            // Span #55: 기본 파일 관리자로 둔 채 앱을 삭제하면 레지스트리가 사라진 실행 파일을
+            // 계속 가리켜 모든 폴더가 열리지 않는다. MSIX 는 삭제 훅이 없어 자동 해제가 불가하므로
+            // 켜기 전에 명확히 알리고, 삭제 후에도 쓸 수 있는 복구 .reg 를 패키지 밖에 남긴다.
+            if (wantOn)
+            {
+                var recoveryPath = service.WriteRecoveryRegFile();
+                var body = _loc?.Get("Settings_DefaultFMWarnContent")
+                           ?? "앱을 삭제하기 전에 반드시 이 설정을 먼저 해제하세요. 켠 상태로 삭제하면 모든 폴더가 열리지 않게 됩니다.";
+                if (recoveryPath != null)
+                {
+                    var note = _loc?.Get("Settings_DefaultFMWarnRecovery") ?? "복구 파일이 저장되었습니다:";
+                    body += $"\n\n{note}\n{recoveryPath}";
+                }
+
+                var warn = new ContentDialog
+                {
+                    Title = _loc?.Get("Settings_DefaultFMWarnTitle") ?? "삭제 전 해제가 필요합니다",
+                    Content = body,
+                    PrimaryButtonText = _loc?.Get("Continue") ?? "계속",
+                    CloseButtonText = _loc?.Get("Cancel") ?? "취소",
+                    XamlRoot = this.XamlRoot,
+                    DefaultButton = ContentDialogButton.Primary
+                };
+                Helpers.DialogStyleHelper.ApplyLumiStyle(warn);
+                if (await warn.ShowAsync() != ContentDialogResult.Primary)
+                {
+                    _isLoading = true;
+                    DefaultFileManagerToggle.IsOn = false;
+                    _isLoading = false;
+                    return;
+                }
+            }
+
             bool success = wantOn ? await service.SetAsDefaultAsync() : await service.UnsetDefaultAsync();
 
             if (!success)

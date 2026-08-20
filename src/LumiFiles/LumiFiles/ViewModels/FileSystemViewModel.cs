@@ -80,6 +80,29 @@ namespace LumiFiles.ViewModels
         }
 
         /// <summary>
+        /// Span #58: 폴더 컬러 태그(desktop.ini 기반). 폴더에만 설정되며 파일은 항상 None.
+        /// CustomIcon 과 같은 이유로 베이스에 둔다 — 공통 DataTemplate 에서 x:Bind 로 접근.
+        /// </summary>
+        [ObservableProperty]
+        private Models.FolderTagColor _tagColor = Models.FolderTagColor.None;
+
+        public Microsoft.UI.Xaml.Visibility TagVisibility =>
+            TagColor != Models.FolderTagColor.None
+                ? Microsoft.UI.Xaml.Visibility.Visible
+                : Microsoft.UI.Xaml.Visibility.Collapsed;
+
+        /// <summary>태그 점 색상. 태그가 없으면 투명.</summary>
+        public Microsoft.UI.Xaml.Media.Brush TagBrush =>
+            new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                Helpers.ColorHelpers.FromHex(Models.FolderTagPalette.ToHex(TagColor)));
+
+        partial void OnTagColorChanged(Models.FolderTagColor value)
+        {
+            OnPropertyChanged(nameof(TagVisibility));
+            OnPropertyChanged(nameof(TagBrush));
+        }
+
+        /// <summary>
         /// ContainerContentChanging에서 Cloud/Git 상태 주입 완료 플래그.
         /// 스크롤 중 동일 아이템 재주입을 방지하여 PropertyChanged 폭포를 줄인다.
         /// </summary>

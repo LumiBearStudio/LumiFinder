@@ -1712,6 +1712,12 @@
                                                                                         <FontIcon FontFamily="{StaticResource RemixIcons}" Glyph="{StaticResource Icon_Folder}" FontSize="{Binding IconFontSize, Source={StaticResource FontScale}}" Foreground="{x:Bind IconBrush}"
                                                                                                   Opacity="{x:Bind viewmodels:FileSystemViewModel.OpacityIfFalse(HasCustomIcon), Mode=OneWay}"
                                                                                                   IsHitTestVisible="False"/>
+                                                                                      <!-- Span #58: 폴더 컬러 태그 점 (태그 없으면 Collapsed) -->
+                                                                                      <Border Visibility="{x:Bind TagVisibility, Mode=OneWay}"
+                                                                                              Background="{x:Bind TagBrush, Mode=OneWay}"
+                                                                                              Width="8" Height="8" CornerRadius="4"
+                                                                                              HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                                                              Margin="0,-2,-3,0" IsHitTestVisible="False"/>
                                                                                     </Grid>
                                                                                     <TextBlock Grid.Column="2" Text="{x:Bind TruncatedDisplayName, Mode=OneWay}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="{Binding ItemFontSize, Source={StaticResource FontScale}}"
                                                                                                Visibility="{x:Bind viewmodels:FileSystemViewModel.NotRenaming(IsRenaming), Mode=OneWay}"/>

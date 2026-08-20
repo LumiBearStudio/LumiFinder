@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -40,6 +40,17 @@ internal sealed class ThumbnailGenerator
         if (!isCloudOnly &&
             string.Equals(Path.GetExtension(filePath), ".clip", StringComparison.OrdinalIgnoreCase))
             return await GenerateFromClipAsync(filePath, requestedSize, ct);
+
+        // ── 0b. Issue #56: .psd는 Windows에 PSD 셸 코덱이 있어야만 썸네일이 나온다.
+        // 최신 Photoshop은 코덱을 설치해주지 않아 대부분 환경에서 기본 아이콘만 보였다.
+        // PSD는 파일 안에 JPEG 썸네일을 갖고 있으므로 직접 추출한다 (코덱 불필요).
+        // 추출 실패 시에는 아래 셸 경로로 계속 진행 — 코덱이 있는 환경의 동작을 유지.
+        if (!isCloudOnly &&
+            string.Equals(Path.GetExtension(filePath), ".psd", StringComparison.OrdinalIgnoreCase))
+        {
+            var fromPsd = await GenerateFromPsdAsync(filePath, requestedSize, ct);
+            if (fromPsd != null) return fromPsd;
+        }
 
         // ── 1. StorageFile 획득 ──
         var storageFile = await StorageFile.GetFileFromPathAsync(filePath).AsTask(ct);
@@ -136,13 +147,40 @@ internal sealed class ThumbnailGenerator
     {
         byte[]? previewPng = ClipThumbnailExtractor.TryExtractPreviewPng(filePath, ct);
         if (previewPng == null || previewPng.Length == 0) return null;
+        return await GenerateFromEmbeddedImageAsync(previewPng, requestedSize, ct);
+    }
+
+    /// <summary>
+    /// Issue #56: .psd 내장 JPEG 썸네일을 추출해 요청 크기로 축소 후 재인코딩.
+    /// PSD Image Resources 의 썸네일 리소스를 직접 읽으므로 Windows PSD 코덱이 없어도 동작한다.
+    /// 추출 실패 시 null — 호출측이 기존 셸 썸네일 경로로 폴백한다.
+    /// </summary>
+    private static async Task<GenerateResult?> GenerateFromPsdAsync(
+        string filePath,
+        int requestedSize,
+        CancellationToken ct)
+    {
+        byte[]? jpeg = PsdThumbnailExtractor.TryExtractThumbnailJpeg(filePath, ct);
+        if (jpeg == null || jpeg.Length == 0) return null;
+        return await GenerateFromEmbeddedImageAsync(jpeg, requestedSize, ct);
+    }
+
+    /// <summary>
+    /// 파일에서 뽑아낸 내장 미리보기 바이트(PNG/JPEG)를 디코드해 요청 크기로 축소하고
+    /// PNG 로 재인코딩한다. .clip / .psd 등 커스텀 추출 경로가 공유한다.
+    /// </summary>
+    private static async Task<GenerateResult?> GenerateFromEmbeddedImageAsync(
+        byte[] imageBytes,
+        int requestedSize,
+        CancellationToken ct)
+    {
         ct.ThrowIfCancellationRequested();
 
-        // 추출 PNG를 메모리 스트림에 실어 디코드
+        // 추출 바이트를 메모리 스트림에 실어 디코드
         using var srcStream = new InMemoryRandomAccessStream();
         using (var dw = new DataWriter(srcStream))
         {
-            dw.WriteBytes(previewPng);
+            dw.WriteBytes(imageBytes);
             await dw.StoreAsync().AsTask(ct);
             dw.DetachStream();
         }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -324,12 +324,15 @@ namespace LumiFiles.Services
 
         #endregion
 
-        public ContextMenuService(ShellService shellService, LocalizationService localizationService, SettingsService settingsService, ShellNewService shellNewService)
+        private readonly FolderTagService _folderTagService;
+
+        public ContextMenuService(ShellService shellService, LocalizationService localizationService, SettingsService settingsService, ShellNewService shellNewService, FolderTagService folderTagService)
         {
             _shellService = shellService;
             _loc = localizationService;
             _settings = settingsService;
             _shellNewService = shellNewService;
+            _folderTagService = folderTagService;
         }
 
         public async Task<MenuFlyout> BuildFileMenuAsync(FileViewModel file, IContextMenuHost host, bool forceShellExtensions = false)
@@ -473,6 +476,14 @@ namespace LumiFiles.Services
                     menu.Items.Add(CreateItem(_loc.Get("RemoveFromFavorites"), "\uE735", () => host.RemoveFromFavorites(folder.Path), "I"));
                 else
                     menu.Items.Add(CreateItem(_loc.Get("AddToFavorites"), "\uE734", () => host.AddToFavorites(folder.Path), "I"));
+                menu.Items.Add(new MenuFlyoutSeparator());
+            }
+
+            // Span #58: 폴더 컬러 태그 — desktop.ini 에 기록하므로 로컬 폴더에서만 제공.
+            // (원격/압축 내부는 desktop.ini 를 쓸 수 없거나 의미가 없다)
+            if (!isRemote && !isArchive)
+            {
+                menu.Items.Add(BuildFolderTagSubMenu(folder));
                 menu.Items.Add(new MenuFlyoutSeparator());
             }
 
@@ -1516,6 +1527,64 @@ namespace LumiFiles.Services
         }
 
         private static readonly Microsoft.UI.Xaml.Thickness CompactPadding = new(10, 2, 10, 2);
+
+        /// <summary>
+        /// Span #58: 폴더 컬러 태그 서브메뉴. 고정 팔레트 + '태그 없음'(해제).
+        /// 현재 태그에는 체크 표시를 하고, 쓰기 실패(읽기 전용 미디어·보호된 폴더)는
+        /// 조용히 넘기지 않고 토스트로 알린다.
+        /// </summary>
+        private MenuFlyoutSubItem BuildFolderTagSubMenu(FolderViewModel folder)
+        {
+            var sub = new MenuFlyoutSubItem
+            {
+                Text = _loc.Get("Tag_Menu"),
+                FontSize = 12,
+                Padding = CompactPadding,
+                MinHeight = 24,
+            };
+
+            var current = _folderTagService.Load(folder.Path);
+
+            void AddTagItem(Models.FolderTagColor color)
+            {
+                var text = _loc.Get(Models.FolderTagPalette.ToLocalizationKey(color));
+                var item = new ToggleMenuFlyoutItem
+                {
+                    Text = text,
+                    IsChecked = current == color,
+                    FontSize = 12,
+                    Padding = CompactPadding,
+                    MinHeight = 24,
+                };
+                item.Click += (_, _) =>
+                {
+                    bool ok = _folderTagService.SetTag(folder.Path, color);
+                    if (ok)
+                    {
+                        folder.TagColor = color;
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var main = (App.Current as App)?.GetRegisteredWindows();
+                            if (main != null && main.Count > 0 && main[0] is MainWindow mw)
+                                mw.ViewModel?.ShowToast(_loc.Get("Tag_WriteFailed"), 3000, isError: true);
+                        }
+                        catch { }
+                    }
+                };
+                sub.Items.Add(item);
+            }
+
+            foreach (var color in Models.FolderTagPalette.SelectableOrder)
+                AddTagItem(color);
+
+            sub.Items.Add(new MenuFlyoutSeparator());
+            AddTagItem(Models.FolderTagColor.None);
+
+            return sub;
+        }
 
         private static MenuFlyoutItem CreateItem(string text, string? glyph, Action action, string? accessKey = null)
         {

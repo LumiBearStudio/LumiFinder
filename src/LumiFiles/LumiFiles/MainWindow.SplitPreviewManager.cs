@@ -777,6 +777,24 @@ namespace LumiFiles
             // 이슈 #2: 검색창/명령 팔레트를 창 크기에 비례해 반응형으로 조정
             RootGrid.SizeChanged += (s, e) => UpdateResponsiveSearchLayout();
 
+            // Span #55: 삭제된 파일 관리자를 가리키는 기본 앱 등록이 남아 있으면
+            // 모든 폴더가 열리지 않는다. 시작 시 감지해 우리(또는 Span 시절) 등록만 정리.
+            // UAC 없이 HKCU 에서 지우므로 사용자를 방해하지 않는다.
+            try
+            {
+                var dfm = App.Current.Services.GetService(typeof(Services.DefaultFileManagerService))
+                          as Services.DefaultFileManagerService;
+                if (dfm?.RepairStaleRegistrationIfOwn() == true)
+                {
+                    Helpers.DebugLogger.Log("[DefaultFM] Stale default-file-manager registration repaired at startup");
+                    ViewModel?.ShowToast(_loc.Get("Toast_DefaultFMRepaired"));
+                }
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[DefaultFM] startup repair skipped: {ex.Message}");
+            }
+
             // Stage S-3.2: seed pane indicator brushes for the initial state
             // (left active, right inactive). XAML literal colors already match
             // this case, but call explicitly so future XAML edits don't drift.

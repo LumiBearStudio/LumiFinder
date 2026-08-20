@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -524,6 +524,58 @@ namespace LumiFiles.ViewModels
             // 커스텀 아이콘 로드 요청 (설정 OFF이면 내부에서 즉시 return, Read-Only 없으면 skip).
             // 결과는 비동기로 CustomIcon 속성에 반영되며 실패 시 기본 글리프 유지.
             RequestCustomIconLoad();
+
+            // Span #58: 폴더 컬러 태그도 같은 게이트(MaybeHasCustomIcon)를 쓴다.
+            // 태그가 있는 폴더는 SetTag 가 System 속성을 남기므로, 평범한 폴더에서는
+            // desktop.ini 존재 확인조차 하지 않는다 → 목록/네트워크 성능에 영향 없음.
+            RequestTagLoad();
+        }
+
+        private bool _tagRequested;
+
+        /// <summary>
+        /// Span #58: desktop.ini 의 컬러 태그를 백그라운드로 읽어 <see cref="TagColor"/> 에 반영.
+        /// 커스터마이즈 표시가 없는 폴더는 디스크를 건드리지 않고 즉시 반환한다.
+        /// </summary>
+        public void RequestTagLoad()
+        {
+            if (_tagRequested) return;
+            if (!_folderModel.MaybeHasCustomIcon) return;
+            if (string.IsNullOrEmpty(Path)) return;
+
+            try
+            {
+                var tagSvc = App.Current.Services.GetService(typeof(FolderTagService)) as FolderTagService;
+                if (tagSvc == null) return;
+
+                _tagRequested = true;
+
+                // 캐시에 이미 있으면 디스크 접근 없이 즉시 반영
+                var cached = tagSvc.TryGetCached(Path);
+                if (cached != Models.FolderTagColor.None)
+                {
+                    TagColor = cached;
+                    return;
+                }
+
+                // 생성자는 UI 스레드에서 호출되므로 여기서 디스패처를 캡처해 둔다
+                // (백그라운드 완료 콜백에서 GetForCurrentThread() 는 null 이 된다).
+                _uiDispatcher ??= Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+                var dispatcher = _uiDispatcher;
+                var path = Path;
+
+                _ = Task.Run(() =>
+                {
+                    var tag = tagSvc.Load(path);
+                    if (tag == Models.FolderTagColor.None) return;
+                    if (dispatcher == null) return;
+                    dispatcher.TryEnqueue(() => TagColor = tag);
+                });
+            }
+            catch (Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[FolderTag] RequestTagLoad failed: {ex.Message}");
+            }
         }
 
         private System.Threading.CancellationTokenSource? _cts;

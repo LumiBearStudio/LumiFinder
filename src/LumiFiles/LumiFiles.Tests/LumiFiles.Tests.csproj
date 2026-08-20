@@ -55,6 +55,13 @@
     <Compile Include="..\LumiFiles\Helpers\AppDataPaths.cs" Link="Sources\Helpers\AppDataPaths.cs" />
     <!-- Services - file operations (pure C#) -->
     <Compile Include="..\LumiFiles\Services\FileOperations\OperationResult.cs" Link="Sources\Services\OperationResult.cs" />
+    <Compile Include="..\LumiFiles\Services\DefaultFileManagerService.cs" Link="Sources\Services\DefaultFileManagerService.cs" />
+    <!-- Span #58: 폴더 컬러 태그 (desktop.ini 저장) -->
+    <Compile Include="..\LumiFiles\Models\FolderTagColor.cs" Link="Sources\Models\FolderTagColor.cs" />
+    <Compile Include="..\LumiFiles\Services\FolderTagService.cs" Link="Sources\Services\FolderTagService.cs" />
+    <!-- Issue #56: PSD 내장 썸네일 파서 (순수 바이트 처리 — 워커 프로젝트 소스를 직접 컴파일) -->
+    <Compile Include="..\LumiFiles.Thumbs\PsdThumbnailExtractor.cs" Link="Sources\Thumbs\PsdThumbnailExtractor.cs" />
+    <Compile Include="..\LumiFiles.Thumbs\WorkerLogger.cs" Link="Sources\Thumbs\WorkerLogger.cs" />
     <Compile Include="..\LumiFiles\Services\FileOperations\FileOperationProgress.cs" Link="Sources\Services\FileOperationProgress.cs" />
     <Compile Include="..\LumiFiles\Services\FileOperations\FileOperationHistory.cs" Link="Sources\Services\FileOperationHistory.cs" />
     <Compile Include="..\LumiFiles\Services\FileOperations\IFileOperation.cs" Link="Sources\Services\IFileOperation.cs" />
