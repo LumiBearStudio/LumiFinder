@@ -1,4 +1,4 @@
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Threading;
 
 namespace LumiFiles.Services.FileOperations;
@@ -55,6 +55,12 @@ public class ExtractOperation : IFileOperation, IPausableOperation
                 long lastReportTick = Environment.TickCount64;
                 var buffer = new byte[BufferSize];
 
+                // 보안(path traversal): 구분자 없이 StartsWith 로 비교하면 대상이 "C:\dest" 일 때
+                // "C:\dest2\evil.txt" 가 검사를 통과해 대상 폴더 '밖'에 파일이 쓰인다.
+                // 루트 끝에 구분자를 붙여 비교한다. (Span dc5d7b8 과 동일한 수정)
+                var destRoot = Path.GetFullPath(_destinationPath)
+                                   .TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+
                 foreach (var entry in fileEntries)
                 {
                     FileOperationHelpers.WaitIfPaused(_pauseEvent, cancellationToken);
@@ -71,7 +77,7 @@ public class ExtractOperation : IFileOperation, IPausableOperation
                     }
 
                     // Security: prevent path traversal
-                    if (!fullPath.StartsWith(Path.GetFullPath(_destinationPath), StringComparison.OrdinalIgnoreCase))
+                    if (!fullPath.StartsWith(destRoot, StringComparison.OrdinalIgnoreCase))
                         continue;
 
                     if (string.IsNullOrEmpty(entry.Name))

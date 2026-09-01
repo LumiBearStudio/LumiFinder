@@ -1,4 +1,4 @@
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using LumiFiles.Services.FileOperations;
 
 namespace LumiFiles.Tests.Integration;
@@ -346,6 +346,33 @@ public class ExtractOperationTests
     /// Helper: creates a ZIP file at the given path with the specified entries.
     /// Each entry is (entryName, content). If content is null, it creates a directory entry.
     /// </summary>
+    /// <summary>
+    /// 보안 회귀 방지 (Span Issue #63 후속): 목적지 루트를 구분자 없이 StartsWith 로
+    /// 비교하면 "…\extracted" 와 "…\extracted2\evil.txt" 가 매칭되어, 악의적으로 만든
+    /// zip 이 대상 폴더 '밖'(형제 폴더)에 파일을 쓸 수 있다.
+    /// </summary>
+    [TestMethod]
+    public async Task Execute_PathTraversalSiblingPrefix_DoesNotEscapeDestination()
+    {
+        var zipPath = Path.Combine(_tempDir, "traversal.zip");
+        CreateTestZip(zipPath,
+            ("safe.txt", "safe"),
+            ("../extracted2/evil.txt", "escaped!"));
+        var destPath = Path.Combine(_tempDir, "extracted");
+
+        var op = new ExtractOperation(zipPath, destPath);
+        await op.ExecuteAsync();
+
+        // 안전한 항목은 정상 추출된다
+        Assert.IsTrue(File.Exists(Path.Combine(destPath, "safe.txt")),
+            "정상 항목까지 막으면 안 된다");
+
+        // 목적지 밖(형제 폴더)에는 어떤 파일도 생기면 안 된다
+        var escaped = Path.Combine(_tempDir, "extracted2", "evil.txt");
+        Assert.IsFalse(File.Exists(escaped),
+            "압축 항목이 대상 폴더를 벗어나 파일을 썼다 (path traversal)");
+    }
+
     private static void CreateTestZip(string zipPath, params (string entryName, string? content)[] entries)
     {
         using var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create);
