@@ -528,53 +528,45 @@ namespace LumiFiles.ViewModels
             // Span #58: 폴더 컬러 태그도 같은 게이트(MaybeHasCustomIcon)를 쓴다.
             // 태그가 있는 폴더는 SetTag 가 System 속성을 남기므로, 평범한 폴더에서는
             // desktop.ini 존재 확인조차 하지 않는다 → 목록/네트워크 성능에 영향 없음.
-            RequestTagLoad();
         }
 
-        private bool _tagRequested;
-
         /// <summary>
-        /// Span #58: desktop.ini 의 컬러 태그를 백그라운드로 읽어 <see cref="TagColor"/> 에 반영.
-        /// 커스터마이즈 표시가 없는 폴더는 디스크를 건드리지 않고 즉시 반환한다.
+        /// Span #58: 화면에 보이는 항목에만 폴더 태그를 주입한다.
+        /// 클라우드/Git 뱃지와 동일한 지연 주입 패턴 — 열거 루프에는 I/O 를 추가하지 않는다.
+        /// (폴더 속성을 쓰지 않으므로 값싼 사전 게이트가 없다. 대신 보이는 것만 읽는다.)
         /// </summary>
-        public void RequestTagLoad()
+        public void InjectTagIfNeeded(FileSystemViewModel item)
         {
-            if (_tagRequested) return;
-            if (!_folderModel.MaybeHasCustomIcon) return;
-            if (string.IsNullOrEmpty(Path)) return;
+            if (item.TagInjected) return;      // 스크롤 시 재주입 방지
+            item.TagInjected = true;
+
+            if (item is not FolderViewModel) return;   // 태그는 폴더 전용
+            if (string.IsNullOrEmpty(item.Path)) return;
 
             try
             {
-                var tagSvc = App.Current.Services.GetService(typeof(FolderTagService)) as FolderTagService;
-                if (tagSvc == null) return;
+                var svc = App.Current.Services.GetService(typeof(FolderTagService)) as FolderTagService;
+                if (svc == null) return;
 
-                _tagRequested = true;
-
-                // 캐시에 이미 있으면 디스크 접근 없이 즉시 반영
-                var cached = tagSvc.TryGetCached(Path);
-                if (cached != Models.FolderTagColor.None)
+                var cached = svc.TryGetCached(item.Path);
+                if (cached.HasValue)
                 {
-                    TagColor = cached;
+                    item.TagColor = cached.Value;
                     return;
                 }
 
-                // 생성자는 UI 스레드에서 호출되므로 여기서 디스패처를 캡처해 둔다
-                // (백그라운드 완료 콜백에서 GetForCurrentThread() 는 null 이 된다).
-                _uiDispatcher ??= Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
-                var dispatcher = _uiDispatcher;
-                var path = Path;
-
+                var dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+                var path = item.Path;
                 _ = Task.Run(() =>
                 {
-                    var tag = tagSvc.Load(path);
+                    var tag = svc.Get(path);
                     if (tag == Models.FolderTagColor.None) return;
-                    if (dispatcher == null) return;
-                    dispatcher.TryEnqueue(() => TagColor = tag);
+                    dispatcher?.TryEnqueue(() => item.TagColor = tag);
                 });
             }
             catch (Exception ex)
             {
-                Helpers.DebugLogger.Log($"[FolderTag] RequestTagLoad failed: {ex.Message}");
+                Helpers.DebugLogger.Log($"[FolderTag] InjectTagIfNeeded failed: {ex.Message}");
             }
         }
 

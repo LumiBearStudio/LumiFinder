@@ -62,6 +62,7 @@
     <!-- Span #58: 폴더 컬러 태그 (desktop.ini 저장) -->
     <Compile Include="..\LumiFiles\Models\FolderTagColor.cs" Link="Sources\Models\FolderTagColor.cs" />
     <Compile Include="..\LumiFiles\Services\FolderTagService.cs" Link="Sources\Services\FolderTagService.cs" />
+    <Compile Include="..\LumiFiles\Helpers\ArchivePathHelper.cs" Link="Sources\Helpers\ArchivePathHelper.cs" />
     <!-- Issue #56: PSD 내장 썸네일 파서 (순수 바이트 처리 — 워커 프로젝트 소스를 직접 컴파일) -->
     <Compile Include="..\LumiFiles.Thumbs\PsdThumbnailExtractor.cs" Link="Sources\Thumbs\PsdThumbnailExtractor.cs" />
     <Compile Include="..\LumiFiles.Thumbs\WorkerLogger.cs" Link="Sources\Thumbs\WorkerLogger.cs" />

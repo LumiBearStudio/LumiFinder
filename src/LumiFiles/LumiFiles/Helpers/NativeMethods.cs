@@ -405,5 +405,19 @@ namespace LumiFiles.Helpers
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         internal static extern ushort RegisterClipboardFormatW(string lpszFormat);
+
+        // ── Span #58: desktop.ini 읽기/쓰기 (폴더 컬러 태그) ──
+        // File.WriteAllText 계열은 Hidden+System 파일에서 UnauthorizedAccessException 을
+        // 던지므로 desktop.ini 조작에는 반드시 이 API 를 사용한다.
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        internal static extern uint GetPrivateProfileStringW(
+            string lpAppName, string lpKeyName, string lpDefault,
+            System.Text.StringBuilder lpReturnedString, uint nSize, string lpFileName);
+
+        /// <summary>lpKeyName=null 이면 섹션 전체 삭제, lpString=null 이면 키 삭제.</summary>
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool WritePrivateProfileStringW(
+            string lpAppName, string? lpKeyName, string? lpString, string lpFileName);
     }
 }

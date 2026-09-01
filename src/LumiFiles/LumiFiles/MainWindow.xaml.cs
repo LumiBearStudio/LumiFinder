@@ -4977,7 +4977,7 @@ namespace LumiFiles
                 if (args.Item is ViewModels.FileSystemViewModel fsVm
                     && sender.DataContext is ViewModels.FolderViewModel folderVm)
                 {
-                    try { folderVm.InjectCloudStateIfNeeded(fsVm); }
+                    try { folderVm.InjectCloudStateIfNeeded(fsVm); folderVm.InjectTagIfNeeded(fsVm); }
                     catch (Exception ex) { Helpers.DebugLogger.Log($"[OnMillerCCC] InjectCloud failed: {ex.Message}"); }
                     try { folderVm.InjectGitStateIfNeeded(fsVm); }
                     catch (Exception ex) { Helpers.DebugLogger.Log($"[OnMillerCCC] InjectGit failed: {ex.Message}"); }

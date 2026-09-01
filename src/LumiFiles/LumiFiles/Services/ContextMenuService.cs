@@ -1543,7 +1543,7 @@ namespace LumiFiles.Services
                 MinHeight = 24,
             };
 
-            var current = _folderTagService.Load(folder.Path);
+            var current = _folderTagService.Get(folder.Path);
 
             void AddTagItem(Models.FolderTagColor color)
             {

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -85,6 +85,9 @@ namespace LumiFiles.ViewModels
         /// </summary>
         [ObservableProperty]
         private Models.FolderTagColor _tagColor = Models.FolderTagColor.None;
+
+        /// <summary>Span #58: 태그 지연 주입 완료 여부(스크롤 시 재주입 방지).</summary>
+        public bool TagInjected { get; set; }
 
         public Microsoft.UI.Xaml.Visibility TagVisibility =>
             TagColor != Models.FolderTagColor.None

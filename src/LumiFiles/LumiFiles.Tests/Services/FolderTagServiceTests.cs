@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.IO;
+using System.Text;
 using LumiFiles.Models;
 using LumiFiles.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -7,8 +8,12 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace LumiFiles.Tests.Services;
 
 /// <summary>
-/// Span #58: 폴더 컬러 태그. 저장 위치가 사용자의 기존 desktop.ini 이므로
-/// <b>남의 내용을 망가뜨리지 않는 것</b>이 가장 중요하다 (커스텀 폴더 아이콘 설정 등).
+/// Span #58: 폴더 컬러 태그.
+///
+/// 이 기능은 <b>사용자의 실제 폴더에 파일을 쓴다</b>. 그래서 검증의 중심은 두 가지다:
+///   1. 기존 desktop.ini 내용(커스텀 아이콘 설정 등)을 망가뜨리지 않는가
+///   2. 폴더 속성을 건드리지 않는가 — 건드리면 폴더가 목록에서 사라지거나(System)
+///      삭제가 불가능해진다(ReadOnly). 둘 다 실측으로 확인된 피해다.
 /// </summary>
 [TestClass]
 public class FolderTagServiceTests
@@ -34,161 +39,132 @@ public class FolderTagServiceTests
         catch { }
     }
 
-    // ── ParseTag ────────────────────────────────────────────────
+    private string IniPath => Path.Combine(_dir, "desktop.ini");
 
-    [TestMethod]
-    public void ParseTag_ReadsOurSection()
+    private static void WriteIni(string path, string content, Encoding encoding)
     {
-        var ini = "[LumiFiles]\r\nTagColor=Blue\r\n";
-        Assert.AreEqual(FolderTagColor.Blue, FolderTagService.ParseTag(ini));
+        File.WriteAllText(path, content, encoding);
     }
 
-    /// <summary>다른 섹션에 같은 이름의 키가 있어도 우리 것만 읽어야 한다.</summary>
-    [TestMethod]
-    public void ParseTag_IgnoresSameKeyInOtherSection()
-    {
-        var ini = "[.ShellClassInfo]\r\nTagColor=Red\r\n\r\n[LumiFiles]\r\nTagColor=Green\r\n";
-        Assert.AreEqual(FolderTagColor.Green, FolderTagService.ParseTag(ini));
-    }
+    // ── 기본 왕복 ────────────────────────────────────────────────
 
     [TestMethod]
-    public void ParseTag_IsCaseInsensitive()
+    public void SetTag_ThenGet_RoundTripsThroughDisk()
     {
-        var ini = "[lumifiles]\r\ntagcolor=purple\r\n";
-        Assert.AreEqual(FolderTagColor.Purple, FolderTagService.ParseTag(ini));
-    }
+        Assert.IsTrue(new FolderTagService().SetTag(_dir, FolderTagColor.Green));
 
-    [DataTestMethod]
-    [DataRow("")]
-    [DataRow(null)]
-    [DataRow("[.ShellClassInfo]\r\nIconResource=x.ico,0\r\n")]     // 우리 섹션 없음
-    [DataRow("[LumiFiles]\r\nTagColor=Chartreuse\r\n")]            // 팔레트에 없는 값
-    [DataRow("[LumiFiles]\r\n; TagColor=Blue\r\n")]                // 주석 처리됨
-    public void ParseTag_UnknownOrAbsent_ReturnsNone(string? ini)
-    {
-        Assert.AreEqual(FolderTagColor.None, FolderTagService.ParseTag(ini));
-    }
-
-    // ── ApplyTag: 기존 내용 보존 ─────────────────────────────────
-
-    /// <summary>커스텀 아이콘 설정이 있는 desktop.ini 에 태그를 추가해도 아이콘 설정이 살아야 한다.</summary>
-    [TestMethod]
-    public void ApplyTag_PreservesExistingSections()
-    {
-        var original = "[.ShellClassInfo]\r\nIconResource=C:\\icons\\my.ico,0\r\nInfoTip=hello\r\n";
-
-        var updated = FolderTagService.ApplyTag(original, FolderTagColor.Orange);
-
-        StringAssert.Contains(updated, "IconResource=C:\\icons\\my.ico,0");
-        StringAssert.Contains(updated, "InfoTip=hello");
-        Assert.AreEqual(FolderTagColor.Orange, FolderTagService.ParseTag(updated));
+        // 다른 인스턴스 = 캐시 없음 → 디스크에서 읽어야 한다
+        Assert.AreEqual(FolderTagColor.Green, new FolderTagService().Get(_dir));
     }
 
     [TestMethod]
-    public void ApplyTag_ReplacesExistingTag()
-    {
-        var original = "[LumiFiles]\r\nTagColor=Red\r\n";
-
-        var updated = FolderTagService.ApplyTag(original, FolderTagColor.Blue);
-
-        Assert.AreEqual(FolderTagColor.Blue, FolderTagService.ParseTag(updated));
-        // 중복 키가 남지 않아야 한다
-        var occurrences = updated.Split("TagColor=").Length - 1;
-        Assert.AreEqual(1, occurrences, "TagColor 키가 중복되었다");
-    }
-
-    [TestMethod]
-    public void ApplyTag_NoneRemovesOnlyOurKey()
-    {
-        var original = "[.ShellClassInfo]\r\nIconResource=x.ico,0\r\n\r\n[LumiFiles]\r\nTagColor=Green\r\n";
-
-        var updated = FolderTagService.ApplyTag(original, FolderTagColor.None);
-
-        Assert.AreEqual(FolderTagColor.None, FolderTagService.ParseTag(updated));
-        StringAssert.Contains(updated, "IconResource=x.ico,0", "다른 섹션이 사라졌다");
-    }
-
-    /// <summary>우리 태그만 있던 파일에서 해제하면 내용이 비어야 한다(호출측이 파일을 지움).</summary>
-    [TestMethod]
-    public void ApplyTag_NoneOnOurOnlyContent_YieldsEmpty()
-    {
-        var updated = FolderTagService.ApplyTag("[LumiFiles]\r\nTagColor=Gray\r\n", FolderTagColor.None);
-        Assert.AreEqual(string.Empty, updated.Trim());
-    }
-
-    [TestMethod]
-    public void ApplyTag_OnEmptyInput_CreatesSection()
-    {
-        var updated = FolderTagService.ApplyTag(string.Empty, FolderTagColor.Yellow);
-        Assert.AreEqual(FolderTagColor.Yellow, FolderTagService.ParseTag(updated));
-    }
-
-    /// <summary>설정 → 변경 → 해제를 반복해도 원본이 그대로 복원돼야 한다.</summary>
-    [TestMethod]
-    public void ApplyTag_RoundTrip_RestoresOriginal()
-    {
-        var original = "[.ShellClassInfo]\r\nIconResource=x.ico,0\r\n";
-
-        var tagged = FolderTagService.ApplyTag(original, FolderTagColor.Red);
-        var retagged = FolderTagService.ApplyTag(tagged, FolderTagColor.Blue);
-        var cleared = FolderTagService.ApplyTag(retagged, FolderTagColor.None);
-
-        Assert.AreEqual(original.Trim(), cleared.Trim());
-    }
-
-    // ── 파일 입출력 ──────────────────────────────────────────────
-
-    [TestMethod]
-    public void SetTag_ThenLoad_RoundTripsThroughDisk()
+    public void SetTag_Overwrite_KeepsSingleValue()
     {
         var svc = new FolderTagService();
-
-        Assert.IsTrue(svc.SetTag(_dir, FolderTagColor.Green));
-        Assert.AreEqual(FolderTagColor.Green, new FolderTagService().Load(_dir),
-            "다른 인스턴스(=캐시 없음)에서도 디스크에서 읽혀야 한다");
-    }
-
-    /// <summary>desktop.ini 는 숨김+시스템 속성이 관례 — 그래야 탐색기가 노출하지 않는다.</summary>
-    [TestMethod]
-    public void SetTag_MarksIniHiddenAndSystem()
-    {
-        var svc = new FolderTagService();
-        svc.SetTag(_dir, FolderTagColor.Blue);
-
-        var attrs = File.GetAttributes(Path.Combine(_dir, "desktop.ini"));
-        Assert.IsTrue(attrs.HasFlag(FileAttributes.Hidden), "Hidden 속성 없음");
-        Assert.IsTrue(attrs.HasFlag(FileAttributes.System), "System 속성 없음");
-    }
-
-    /// <summary>이미 숨김+시스템인 파일에도 다시 쓸 수 있어야 한다(속성 때문에 실패하면 안 됨).</summary>
-    [TestMethod]
-    public void SetTag_CanRewriteHiddenSystemFile()
-    {
-        var svc = new FolderTagService();
+        Assert.IsTrue(svc.SetTag(_dir, FolderTagColor.Red));
         Assert.IsTrue(svc.SetTag(_dir, FolderTagColor.Blue));
-        Assert.IsTrue(svc.SetTag(_dir, FolderTagColor.Red), "두 번째 쓰기 실패");
-        Assert.AreEqual(FolderTagColor.Red, new FolderTagService().Load(_dir));
+
+        Assert.AreEqual(FolderTagColor.Blue, new FolderTagService().Get(_dir));
+    }
+
+    [TestMethod]
+    public void Get_NoDesktopIni_ReturnsNone()
+    {
+        Assert.AreEqual(FolderTagColor.None, new FolderTagService().Get(_dir));
+    }
+
+    [TestMethod]
+    public void Get_UnknownColorValue_ReturnsNone()
+    {
+        WriteIni(IniPath, "[LumiFiles]\r\nTag=Chartreuse\r\n", new UnicodeEncoding(false, true));
+        Assert.AreEqual(FolderTagColor.None, new FolderTagService().Get(_dir));
+    }
+
+    // ── 폴더 속성을 건드리지 않는다 (회귀 방지) ──────────────────
+
+    /// <summary>
+    /// System 을 붙이면 숨김 표시 OFF(기본값)에서 폴더가 목록에서 사라지고,
+    /// ReadOnly 를 붙이면 Directory.Delete(recursive) 가 실패한다. 둘 다 금지.
+    /// </summary>
+    [TestMethod]
+    public void SetTag_DoesNotChangeFolderAttributes()
+    {
+        var before = File.GetAttributes(_dir);
+
+        new FolderTagService().SetTag(_dir, FolderTagColor.Blue);
+
+        var after = File.GetAttributes(_dir);
+        Assert.IsFalse(after.HasFlag(FileAttributes.System),
+            "System 을 붙이면 숨김 표시 OFF 에서 폴더가 목록에서 사라진다");
+        Assert.IsFalse(after.HasFlag(FileAttributes.ReadOnly),
+            "ReadOnly 를 붙이면 Directory.Delete(recursive) 가 실패해 폴더를 지울 수 없다");
+        Assert.AreEqual(before, after, "폴더 속성이 변경되었다");
+    }
+
+    /// <summary>속성 회귀의 실제 피해를 직접 확인 — 태그 후에도 폴더가 지워져야 한다.</summary>
+    [TestMethod]
+    public void SetTag_FolderRemainsDeletable()
+    {
+        var target = Path.Combine(_dir, "tagged");
+        Directory.CreateDirectory(target);
+        File.WriteAllText(Path.Combine(target, "child.txt"), "x");
+
+        new FolderTagService().SetTag(target, FolderTagColor.Purple);
+
+        Directory.Delete(target, recursive: true);   // 실패하면 테스트가 예외로 깨진다
+        Assert.IsFalse(Directory.Exists(target));
+    }
+
+    // ── 기존 desktop.ini 보존 ────────────────────────────────────
+
+    [TestMethod]
+    public void SetTag_PreservesExistingIniContent()
+    {
+        WriteIni(IniPath,
+            "[.ShellClassInfo]\r\nIconResource=C:\\icons\\my.ico,0\r\nInfoTip=hello\r\n",
+            new UnicodeEncoding(false, true));
+
+        Assert.IsTrue(new FolderTagService().SetTag(_dir, FolderTagColor.Orange));
+
+        var text = File.ReadAllText(IniPath);
+        StringAssert.Contains(text, "IconResource=C:\\icons\\my.ico,0", "커스텀 아이콘 설정이 사라졌다");
+        StringAssert.Contains(text, "InfoTip=hello");
+        Assert.AreEqual(FolderTagColor.Orange, new FolderTagService().Get(_dir));
     }
 
     /// <summary>
-    /// 회귀 방지: 태그를 단 폴더에 <b>System</b> 속성을 붙이면 안 된다.
-    /// FolderViewModel 의 열거가 숨김 표시 OFF(기본값)일 때 Hidden|System 을 건너뛰므로
-    /// System 을 붙이면 태그를 다는 순간 그 폴더가 목록에서 사라진다.
-    /// Windows 가 '폴더 사용자 지정' 시 실제로 쓰는 속성도 ReadOnly 다.
+    /// UTF-8 BOM 으로 저장된 desktop.ini 는 Win32 INI API 가 섹션을 못 찾아 중복 생성한다.
+    /// 정규화가 없으면 기존 [.ShellClassInfo] 설정이 파괴된다.
     /// </summary>
     [TestMethod]
-    public void SetTag_MarksFolderReadOnly_NotSystem()
+    public void SetTag_Utf8BomIni_DoesNotDestroyExistingSection()
+    {
+        WriteIni(IniPath,
+            "[.ShellClassInfo]\r\nIconResource=C:\\icons\\my.ico,0\r\n",
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+
+        Assert.IsTrue(new FolderTagService().SetTag(_dir, FolderTagColor.Yellow));
+
+        var text = File.ReadAllText(IniPath);
+        StringAssert.Contains(text, "IconResource=C:\\icons\\my.ico,0",
+            "UTF-8 BOM 파일에서 기존 섹션이 파괴됐다");
+        Assert.AreEqual(FolderTagColor.Yellow, new FolderTagService().Get(_dir));
+
+        // 섹션이 중복 생성되지 않아야 한다
+        var occurrences = text.Split("[.ShellClassInfo]").Length - 1;
+        Assert.AreEqual(1, occurrences, "[.ShellClassInfo] 섹션이 중복 생성되었다");
+    }
+
+    // ── 해제 ─────────────────────────────────────────────────────
+
+    [TestMethod]
+    public void SetTag_None_RemovesTag()
     {
         var svc = new FolderTagService();
         svc.SetTag(_dir, FolderTagColor.Blue);
+        Assert.IsTrue(svc.SetTag(_dir, FolderTagColor.None));
 
-        var attrs = File.GetAttributes(_dir);
-        Assert.IsTrue(attrs.HasFlag(FileAttributes.ReadOnly),
-            "desktop.ini 가 해석되려면 폴더에 ReadOnly 가 필요하다");
-        Assert.IsFalse(attrs.HasFlag(FileAttributes.System),
-            "System 을 붙이면 숨김 표시 OFF 상태에서 폴더가 목록에서 사라진다");
-        Assert.IsFalse(attrs.HasFlag(FileAttributes.Hidden),
-            "폴더 자체를 숨기면 안 된다");
+        Assert.AreEqual(FolderTagColor.None, new FolderTagService().Get(_dir));
     }
 
     [TestMethod]
@@ -198,70 +174,105 @@ public class FolderTagServiceTests
         svc.SetTag(_dir, FolderTagColor.Blue);
         svc.SetTag(_dir, FolderTagColor.None);
 
-        Assert.IsFalse(File.Exists(Path.Combine(_dir, "desktop.ini")),
+        Assert.IsFalse(File.Exists(IniPath),
             "우리 태그만 있던 desktop.ini 는 해제 시 남기지 않는다");
     }
 
-    /// <summary>사용자의 기존 desktop.ini 는 태그 해제 후에도 남아 있어야 한다.</summary>
     [TestMethod]
     public void SetTag_None_KeepsIniWhenOtherContentExists()
     {
-        var ini = Path.Combine(_dir, "desktop.ini");
-        File.WriteAllText(ini, "[.ShellClassInfo]\r\nIconResource=x.ico,0\r\n");
+        WriteIni(IniPath, "[.ShellClassInfo]\r\nIconResource=x.ico,0\r\n",
+            new UnicodeEncoding(false, true));
 
         var svc = new FolderTagService();
         svc.SetTag(_dir, FolderTagColor.Blue);
         svc.SetTag(_dir, FolderTagColor.None);
 
-        Assert.IsTrue(File.Exists(ini), "다른 내용이 있는 desktop.ini 를 지워버렸다");
-        StringAssert.Contains(File.ReadAllText(ini), "IconResource=x.ico,0");
+        Assert.IsTrue(File.Exists(IniPath), "다른 내용이 있는 desktop.ini 를 지워버렸다");
+        StringAssert.Contains(File.ReadAllText(IniPath), "IconResource=x.ico,0");
     }
 
+    // ── desktop.ini 파일 속성 ────────────────────────────────────
+
+    /// <summary>desktop.ini 자체는 숨김+시스템이 관례 (탐색기에 노출되지 않도록).</summary>
     [TestMethod]
-    public void Load_NoDesktopIni_ReturnsNone()
+    public void SetTag_MarksIniHiddenAndSystem()
     {
-        Assert.AreEqual(FolderTagColor.None, new FolderTagService().Load(_dir));
+        new FolderTagService().SetTag(_dir, FolderTagColor.Blue);
+
+        var attrs = File.GetAttributes(IniPath);
+        Assert.IsTrue(attrs.HasFlag(FileAttributes.Hidden), "Hidden 속성 없음");
+        Assert.IsTrue(attrs.HasFlag(FileAttributes.System), "System 속성 없음");
     }
 
+    /// <summary>
+    /// 숨김+시스템 파일에 다시 쓸 수 있어야 한다.
+    /// (File.WriteAllText 는 여기서 UnauthorizedAccessException 을 던진다 —
+    ///  그래서 구현이 WritePrivateProfileStringW 를 쓴다)
+    /// </summary>
     [TestMethod]
-    public void Load_MissingFolder_ReturnsNone()
+    public void SetTag_CanRewriteHiddenSystemIni()
     {
         var svc = new FolderTagService();
-        Assert.AreEqual(FolderTagColor.None, svc.Load(Path.Combine(_dir, "nope")));
+        Assert.IsTrue(svc.SetTag(_dir, FolderTagColor.Blue));
+        Assert.IsTrue(svc.SetTag(_dir, FolderTagColor.Red), "두 번째 쓰기 실패");
+
+        Assert.AreEqual(FolderTagColor.Red, new FolderTagService().Get(_dir));
+    }
+
+    // ── 대상 경로 제한 ───────────────────────────────────────────
+
+    [DataTestMethod]
+    [DataRow(@"archive://C:\a.zip\inner")]
+    [DataRow(@"\\server\share\folder")]      // UNC
+    [DataRow("")]
+    [DataRow("relative\\path")]
+    public void IsTaggable_RejectsUnsupportedLocations(string path)
+    {
+        Assert.IsFalse(FolderTagService.IsTaggable(path));
+    }
+
+    [TestMethod]
+    public void IsTaggable_AcceptsLocalPath()
+    {
+        Assert.IsTrue(FolderTagService.IsTaggable(_dir));
+    }
+
+    [TestMethod]
+    public void SetTag_UncPath_ReturnsFalse()
+    {
+        Assert.IsFalse(new FolderTagService().SetTag(@"\\server\share\folder", FolderTagColor.Red));
     }
 
     [TestMethod]
     public void SetTag_MissingFolder_ReturnsFalse()
     {
-        var svc = new FolderTagService();
-        Assert.IsFalse(svc.SetTag(Path.Combine(_dir, "nope"), FolderTagColor.Red));
+        Assert.IsFalse(new FolderTagService().SetTag(Path.Combine(_dir, "nope"), FolderTagColor.Red));
     }
 
-    // ── 캐시 동작 ───────────────────────────────────────────────
+    // ── 캐시 ─────────────────────────────────────────────────────
 
-    /// <summary>목록 렌더링 경로는 디스크를 건드리지 않는다 — 읽기 전에는 None.</summary>
+    /// <summary>렌더링 경로는 디스크를 건드리지 않는다 — 읽기 전에는 null.</summary>
     [TestMethod]
-    public void TryGetCached_BeforeLoad_ReturnsNoneWithoutDiskAccess()
+    public void TryGetCached_BeforeRead_ReturnsNull()
     {
-        var svc = new FolderTagService();
         new FolderTagService().SetTag(_dir, FolderTagColor.Purple);
 
-        Assert.AreEqual(FolderTagColor.None, svc.TryGetCached(_dir));
-        svc.Load(_dir);
+        var svc = new FolderTagService();      // 새 인스턴스 = 빈 캐시
+        Assert.IsNull(svc.TryGetCached(_dir));
+
+        svc.Get(_dir);
         Assert.AreEqual(FolderTagColor.Purple, svc.TryGetCached(_dir));
     }
 
     [TestMethod]
-    public void TagChanged_FiresOnlyWhenValueChanges()
+    public void Invalidate_ClearsCachedValue()
     {
         var svc = new FolderTagService();
-        int count = 0;
-        svc.TagChanged += _ => count++;
+        svc.SetTag(_dir, FolderTagColor.Gray);
+        Assert.IsNotNull(svc.TryGetCached(_dir));
 
-        svc.Load(_dir);            // None → 변화 있음(최초 기록)
-        int afterFirst = count;
-        svc.Load(_dir);            // 동일 → 이벤트 없어야 함
-
-        Assert.AreEqual(afterFirst, count, "값이 그대로인데 이벤트가 또 발생했다");
+        svc.Invalidate(_dir);
+        Assert.IsNull(svc.TryGetCached(_dir));
     }
 }
