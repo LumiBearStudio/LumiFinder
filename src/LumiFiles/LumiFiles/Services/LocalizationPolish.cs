@@ -975,6 +975,8 @@ namespace LumiFiles.Services
                 ["Tag_Purple"] = "Fioletowy",
                 ["Tag_Gray"] = "Szary",
                 ["Tag_WriteFailed"] = "Nie udało się zapisać etykiety — folder może być tylko do odczytu lub chroniony",
+                ["Op_SomeNotExtracted"] = "Nie udało się wypakować niektórych elementów",
+                ["Op_CrcMismatch"] = "Uszkodzony (niezgodna suma kontrolna)",
                 ["Settings_OnboardingReplayButton"] = "Odtwórz ponownie",
                 ["Settings_PreviewFolderInfoDesc"] = "Pokazuj ikonę folderu i liczbę elementów w panelu podglądu po zaznaczeniu folderu",
                 ["AddressBar_Placeholder"] = "Wprowadź ścieżkę…",

@@ -20,6 +20,8 @@
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.6.4" />
     <PackageReference Include="MSTest.TestFramework" Version="3.6.4" />
+    <!-- ExtractOperation.cs의 CRC32 검증에 필요 (본 프로젝트를 직접 컴파일하므로 동일 참조 필요) -->
+    <PackageReference Include="System.IO.Hashing" Version="8.0.0" />
   </ItemGroup>
 
   <!--
@@ -51,6 +53,7 @@
     <Compile Include="..\LumiFiles\Helpers\SearchQueryParser.cs" Link="Sources\Helpers\SearchQueryParser.cs" />
     <Compile Include="..\LumiFiles\Helpers\HangulSearchHelper.cs" Link="Sources\Helpers\HangulSearchHelper.cs" />
     <Compile Include="..\LumiFiles\Helpers\DebugLogger.cs" Link="Sources\Helpers\DebugLogger.cs" />
+    <Compile Include="..\LumiFiles\Helpers\ZipEntryNameEncoding.cs" Link="Sources\Helpers\ZipEntryNameEncoding.cs" />
     <Compile Include="..\LumiFiles\Helpers\FontScaleService.cs" Link="Sources\Helpers\FontScaleService.cs" />
     <Compile Include="..\LumiFiles\Helpers\AppDataPaths.cs" Link="Sources\Helpers\AppDataPaths.cs" />
     <!-- Services - file operations (pure C#) -->
