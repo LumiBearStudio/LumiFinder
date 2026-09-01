@@ -1159,7 +1159,7 @@ namespace LumiFiles
             else if (System.IO.File.Exists(path))
             {
                 // 압축 파일이면 아카이브로 진입
-                if (Helpers.ArchivePathHelper.IsArchiveFile(path))
+                if (Helpers.ArchivePathHelper.IsBrowsableArchive(path))
                 {
                     var archivePath = Helpers.ArchivePathHelper.Combine(path, "");
                     _ = explorer.NavigateToPath(archivePath);

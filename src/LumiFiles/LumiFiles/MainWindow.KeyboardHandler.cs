@@ -1516,7 +1516,7 @@ namespace LumiFiles
             }
             else if (currentColumn.SelectedChild is FileViewModel fileVm)
             {
-                if (Helpers.ArchivePathHelper.IsArchiveFile(fileVm.Path))
+                if (Helpers.ArchivePathHelper.IsBrowsableArchive(fileVm.Path))
                 {
                     // Archive already navigated on selection; Enter is no-op
                     Helpers.DebugLogger.Log($"[Keyboard] Enter on archive: {fileVm.Name} (already navigated)");

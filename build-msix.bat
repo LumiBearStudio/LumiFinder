@@ -39,6 +39,29 @@ echo.
 
 if not exist "%OUTDIR%" mkdir "%OUTDIR%"
 
+:: -- Ship gate: vendored native archive engine --
+:: A DLL built without crt-static loads fine on this machine (Visual Studio ships
+:: the VC++ redistributable) but fails on a clean Windows install. That exact
+:: defect failed Microsoft Store certification on 2026-07-21, policy 10.1.2.10.
+:: Fail the release here rather than in certification.
+:: The DLL is vendored in this repo, so a missing file means the checkout is
+:: broken - fail rather than skip the gate silently.
+if not exist "%~dp0third_party\otterzip\x64\otterzip_ffi.dll" (
+    echo.
+    echo ERROR: third_party\otterzip\x64\otterzip_ffi.dll is missing - aborting release build.
+    pause
+    exit /b 1
+)
+echo [0/3] Verifying vendored otterzip_ffi.dll...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0third_party\otterzip\verify-otterzip-dll.ps1"
+if errorlevel 1 (
+    echo.
+    echo ERROR: otterzip_ffi.dll failed the ship gate - aborting release build.
+    pause
+    exit /b 1
+)
+echo.
+
 set FAILED=0
 
 :: -- x64 Build --

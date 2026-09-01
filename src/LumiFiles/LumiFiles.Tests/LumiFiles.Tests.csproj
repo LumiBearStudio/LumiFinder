@@ -55,6 +55,13 @@
     <Compile Include="..\LumiFiles\Helpers\DebugLogger.cs" Link="Sources\Helpers\DebugLogger.cs" />
     <Compile Include="..\LumiFiles\Helpers\ZipEntryNameEncoding.cs" Link="Sources\Helpers\ZipEntryNameEncoding.cs" />
     <Compile Include="..\LumiFiles\Helpers\FontScaleService.cs" Link="Sources\Helpers\FontScaleService.cs" />
+    <Compile Include="..\LumiFiles\Helpers\ArchivePathHelper.cs" Link="Sources\Helpers\ArchivePathHelper.cs" />
+    <!-- Issue #66 — OtterZip 네이티브 엔진 바인딩 (WinUI 의존 없음) -->
+    <Compile Include="..\LumiFiles\Services\Archive\OtterZipNative.cs" Link="Sources\Services\Archive\OtterZipNative.cs" />
+    <Compile Include="..\LumiFiles\Services\Archive\OtterZipArchiveHandle.cs" Link="Sources\Services\Archive\OtterZipArchiveHandle.cs" />
+    <Compile Include="..\LumiFiles\Services\Archive\OtterZipEngine.cs" Link="Sources\Services\Archive\OtterZipEngine.cs" />
+    <Compile Include="..\LumiFiles\Services\Archive\ArchiveEntryStaging.cs" Link="Sources\Services\Archive\ArchiveEntryStaging.cs" />
+    <Compile Include="..\LumiFiles\Helpers\ArchivePreviewResolver.cs" Link="Sources\Helpers\ArchivePreviewResolver.cs" />
     <Compile Include="..\LumiFiles\Helpers\AppDataPaths.cs" Link="Sources\Helpers\AppDataPaths.cs" />
     <Compile Include="..\LumiFiles\Helpers\UncPathHelper.cs" Link="Sources\Helpers\UncPathHelper.cs" />
     <!-- Services - file operations (pure C#) -->
@@ -63,7 +70,6 @@
     <!-- Span #58: 폴더 컬러 태그 (desktop.ini 저장) -->
     <Compile Include="..\LumiFiles\Models\FolderTagColor.cs" Link="Sources\Models\FolderTagColor.cs" />
     <Compile Include="..\LumiFiles\Services\FolderTagService.cs" Link="Sources\Services\FolderTagService.cs" />
-    <Compile Include="..\LumiFiles\Helpers\ArchivePathHelper.cs" Link="Sources\Helpers\ArchivePathHelper.cs" />
     <!-- Issue #56: PSD 내장 썸네일 파서 (순수 바이트 처리 — 워커 프로젝트 소스를 직접 컴파일) -->
     <Compile Include="..\LumiFiles.Thumbs\PsdThumbnailExtractor.cs" Link="Sources\Thumbs\PsdThumbnailExtractor.cs" />
     <Compile Include="..\LumiFiles.Thumbs\WorkerLogger.cs" Link="Sources\Thumbs\WorkerLogger.cs" />
@@ -114,6 +120,22 @@
 
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <!-- Issue #66 — 네이티브 엔진 테스트용. DllImportSearchPath.AssemblyDirectory로 찾으므로
+       테스트 어셈블리 옆에 있어야 한다. x64 전용이며, 다른 플랫폼에서는 엔진 테스트가
+       "사용 불가"를 확인하는 경로로 자동 전환된다. -->
+  <ItemGroup Condition="'$(Platform)' == 'x64'">
+    <Content Include="..\..\..\third_party\otterzip\x64\otterzip_ffi.dll">
+      <Link>otterzip_ffi.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Fixtures\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

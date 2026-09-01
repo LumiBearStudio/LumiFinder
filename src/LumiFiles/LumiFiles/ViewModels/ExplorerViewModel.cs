@@ -1373,7 +1373,7 @@ namespace LumiFiles.ViewModels
         private void HandleFileSelection(FileViewModel fileVm, int nextIndex)
         {
             // Archive files: navigate into them like folders
-            if (Helpers.ArchivePathHelper.IsArchiveFile(fileVm.Path))
+            if (Helpers.ArchivePathHelper.IsBrowsableArchive(fileVm.Path))
             {
                 _ = NavigateIntoArchiveAsync(fileVm, nextIndex);
                 return;
