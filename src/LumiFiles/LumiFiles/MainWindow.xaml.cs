@@ -7764,6 +7764,52 @@ namespace LumiFiles
         ///   - Pass it to SetWindowRgn(_hwnd, rgn, redraw=true). The OS now
         ///     owns the region; we don't DeleteObject it.
         /// </summary>
+        /// <summary>
+        /// LumiFinder #3: 현재 최대화 상태인지. Presenter 가 OverlappedPresenter 가
+        /// 아닌 경우(FullScreen 등)는 최대화로 간주하지 않는다.
+        /// </summary>
+        private bool IsWindowMaximized()
+        {
+            try
+            {
+                return AppWindow?.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p
+                    && p.State == Microsoft.UI.Windowing.OverlappedPresenterState.Maximized;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// LumiFinder #3: 최대화면 XAML 프레임도 각지게, 복원되면 다시 18px 곡률로.
+        /// OS 영역(SetWindowRgn)과 XAML 곡률이 어긋나면 모서리에 배경이 드러난다.
+        /// </summary>
+        private void ApplyWindowFrameCornerRadius(bool maximized)
+        {
+            try
+            {
+                if (WindowFrame == null) return;
+                if (maximized)
+                {
+                    WindowFrame.CornerRadius = new CornerRadius(0);
+                }
+                else if (Application.Current.Resources.TryGetValue("LumiWindowCornerRadius", out var v)
+                         && v is CornerRadius cr)
+                {
+                    WindowFrame.CornerRadius = cr;
+                }
+                else
+                {
+                    WindowFrame.CornerRadius = new CornerRadius(18);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Helpers.DebugLogger.Log($"[MainWindow] ApplyWindowFrameCornerRadius failed: {ex.Message}");
+            }
+        }
+
         private void ApplyRoundedWindowRegion()
         {
             try
@@ -7813,19 +7859,40 @@ namespace LumiFiles
                 //   노출되며 그 가장자리에 binary stair-step이 보임. Floor는 GDI radius
                 //   ≤ XAML radius를 보장 → 보이는 곡선 = AA'd XAML border (계단은 stroke
                 //   내부에 가려져 시각적으로 안 보임).
-                int radiusPx = (int)System.Math.Floor(18 * scale);
-                if (radiusPx < 1) radiusPx = 1;
+                // LumiFinder #3: 최대화 상태에서는 각진 영역을 쓴다.
+                //
+                //   둥근 영역을 그대로 두면 잘려나간 네 모서리가 '창 밖'이 되어,
+                //   화면 맨 끝/모서리 클릭이 LumiFinder 가 아니라 그 아래 창이나
+                //   바탕화면으로 전달된다(제보된 증상). Windows 자체도 최대화된
+                //   창은 모서리를 둥글리지 않으므로 동작·외형 모두 이쪽이 맞다.
+                //
+                //   XAML 쪽 곡률도 함께 0 으로 맞춘다. 영역만 각지게 하면 둥근
+                //   XAML 모서리 바깥으로 배경(acrylic)이 드러나 어색해진다.
+                bool maximized = IsWindowMaximized();
 
-                // CreateRoundRectRgn coords are inclusive on top/left and
-                // exclusive on bottom/right; +1 prevents a 1px clip on the
-                // far edge.
-                IntPtr rgn = Helpers.NativeMethods.CreateRoundRectRgn(
-                    0, 0, widthPx + 1, heightPx + 1,
-                    radiusPx * 2, radiusPx * 2);
+                IntPtr rgn;
+                if (maximized)
+                {
+                    rgn = Helpers.NativeMethods.CreateRectRgn(0, 0, widthPx + 1, heightPx + 1);
+                }
+                else
+                {
+                    int radiusPx = (int)System.Math.Floor(18 * scale);
+                    if (radiusPx < 1) radiusPx = 1;
+
+                    // CreateRoundRectRgn coords are inclusive on top/left and
+                    // exclusive on bottom/right; +1 prevents a 1px clip on the
+                    // far edge.
+                    rgn = Helpers.NativeMethods.CreateRoundRectRgn(
+                        0, 0, widthPx + 1, heightPx + 1,
+                        radiusPx * 2, radiusPx * 2);
+                }
                 if (rgn == IntPtr.Zero) return;
 
                 // SetWindowRgn takes ownership; do NOT DeleteObject.
                 Helpers.NativeMethods.SetWindowRgn(hwnd, rgn, true);
+
+                ApplyWindowFrameCornerRadius(maximized);
             }
             catch (System.Exception ex)
             {

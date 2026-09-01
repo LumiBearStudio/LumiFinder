@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 
 namespace LumiFiles.Helpers
@@ -68,6 +68,11 @@ namespace LumiFiles.Helpers
         // Pattern ported from DragShelf ShelfWindow.UpdateXamlClip.
         [DllImport("gdi32.dll")]
         internal static extern IntPtr CreateRoundRectRgn(int x1, int y1, int x2, int y2, int cx, int cy);
+
+        // LumiFinder #3: 최대화 시에는 각진 영역을 써야 한다. 둥근 영역을 그대로 두면
+        // 잘려나간 네 모서리가 창 밖으로 취급되어 그 지점 클릭이 아래 창으로 통과한다.
+        [DllImport("gdi32.dll", SetLastError = true)]
+        internal static extern IntPtr CreateRectRgn(int x1, int y1, int x2, int y2);
 
         [DllImport("gdi32.dll")]
         internal static extern bool DeleteObject(IntPtr hObject);
