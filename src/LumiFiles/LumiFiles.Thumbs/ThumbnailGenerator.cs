@@ -37,9 +37,14 @@ internal sealed class ThumbnailGenerator
         // ── 0. Issue #56: .clip은 셸 썸네일 미지원 → 내장 SQLite 미리보기 추출 경로 ──
         // 클라우드 전용(OneDrive online-only) 파일은 FileStream open이 하이드레이션(다운로드)을
         // 유발하므로 P2-4c 가드에 맞춰 커스텀 추출을 건너뛴다 (셸 캐시 경로로 폴백).
+        // 추출 실패 시 null 로 끝내지 않고 아래 셸 경로로 폴백한다 — CSP 가 설치돼
+        // 셸 핸들러가 동작할 수 있는 환경에서도 빈 아이콘이 되던 문제(Span 1affd80).
         if (!isCloudOnly &&
             string.Equals(Path.GetExtension(filePath), ".clip", StringComparison.OrdinalIgnoreCase))
-            return await GenerateFromClipAsync(filePath, requestedSize, ct);
+        {
+            var fromClip = await GenerateFromClipAsync(filePath, requestedSize, ct);
+            if (fromClip != null) return fromClip;
+        }
 
         // ── 0b. Issue #56: .psd는 Windows에 PSD 셸 코덱이 있어야만 썸네일이 나온다.
         // 최신 Photoshop은 코덱을 설치해주지 않아 대부분 환경에서 기본 아이콘만 보였다.

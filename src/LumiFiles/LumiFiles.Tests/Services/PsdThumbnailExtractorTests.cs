@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -135,16 +135,32 @@ public class PsdThumbnailExtractorTests
         CollectionAssert.AreEqual(jpeg, result, "내장 JPEG 바이트가 그대로 나와야 한다");
     }
 
-    /// <summary>Photoshop 4.0 이 쓰던 ID 1033 도 같은 레이아웃이다.</summary>
+    /// <summary>
+    /// Photoshop 4.0 판(ID 1033)은 레이아웃은 같지만 JPEG 데이터가 BGR 순서라
+    /// 그대로 쓰면 색이 뒤바뀐다. 틀린 색을 보여주느니 셸 폴백에 맡긴다 → null.
+    /// </summary>
     [TestMethod]
-    public void Extract_Ps4ThumbnailResource_ReturnsJpeg()
+    public void Extract_Ps4ThumbnailResource_IsIgnored()
     {
-        var jpeg = FakeJpeg(10);
-        var path = WritePsd("8BPS", new[] { ThumbnailResource(1033, format: 1, jpeg) });
+        var path = WritePsd("8BPS", new[] { ThumbnailResource(1033, format: 1, FakeJpeg(10)) });
 
-        var result = PsdThumbnailExtractor.TryExtractThumbnailJpeg(path, CancellationToken.None);
+        Assert.IsNull(PsdThumbnailExtractor.TryExtractThumbnailJpeg(path, CancellationToken.None),
+            "1033 은 BGR 순서라 사용하면 색이 뒤집힌다");
+    }
 
-        CollectionAssert.AreEqual(jpeg, result);
+    /// <summary>1033 과 1036 이 함께 있으면 1036 을 쓴다.</summary>
+    [TestMethod]
+    public void Extract_PrefersPs5OverPs4()
+    {
+        var correct = FakeJpeg(12);
+        var path = WritePsd("8BPS", new[]
+        {
+            ThumbnailResource(1033, format: 1, FakeJpeg(30)),
+            ThumbnailResource(1036, format: 1, correct),
+        });
+
+        CollectionAssert.AreEqual(correct,
+            PsdThumbnailExtractor.TryExtractThumbnailJpeg(path, CancellationToken.None));
     }
 
     /// <summary>앞선 다른 리소스들을 정확히 건너뛰어야 찾을 수 있다 (패딩 계산 검증).</summary>

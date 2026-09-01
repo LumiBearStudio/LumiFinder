@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Threading;
 
@@ -12,7 +12,7 @@ namespace LumiFiles.Thumbs;
 /// 기본 아이콘만 표시된다(업스트림 이슈에서 제보된 상황).
 ///
 /// PSD 는 파일 안에 JPEG 썸네일을 이미 갖고 있다. Image Resources 섹션의
-/// 리소스 블록 중 ID 1036(Photoshop 5.0+) 또는 1033(Photoshop 4.0)이 그것이다.
+/// 리소스 블록 ID 1036(Photoshop 5.0+)이 그것이다.
 /// 이를 직접 읽어내면 Photoshop 설치 여부·코덱 유무와 무관하게 동작한다.
 ///
 /// 파일 구조 (모두 big-endian):
@@ -31,8 +31,10 @@ namespace LumiFiles.Thumbs;
 /// </summary>
 internal static class PsdThumbnailExtractor
 {
-    private const int ThumbnailResourcePs5 = 1036;  // kJpegRGB (BGR 순서 아님)
-    private const int ThumbnailResourcePs4 = 1033;  // 구버전, 동일 레이아웃
+    // Photoshop 5.0+ 썸네일 리소스.
+    // 1033(Photoshop 4.0판)은 레이아웃은 같지만 JPEG 데이터가 BGR 순서라 색이 뒤바뀐다.
+    // 색이 틀린 썸네일을 보여주느니 셸 폴백에 맡기는 편이 낫다 → 의도적으로 쓰지 않는다.
+    private const int ThumbnailResourcePs5 = 1036;  // kJpegRGB
     private const int ThumbnailHeaderSize = 28;
 
     /// <summary>리소스 섹션 탐색 상한 — 손상 파일에서 무한 루프를 막는다.</summary>
@@ -95,7 +97,7 @@ internal static class PsdThumbnailExtractor
                 long dataStart = fs.Position;
                 long paddedSize = dataSize + (dataSize % 2);  // 데이터는 짝수 바이트 정렬
 
-                if (resourceId is ThumbnailResourcePs5 or ThumbnailResourcePs4)
+                if (resourceId == ThumbnailResourcePs5)
                 {
                     var jpeg = ReadThumbnailData(fs, dataSize, filePath, ct);
                     if (jpeg != null) return jpeg;
