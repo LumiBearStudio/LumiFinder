@@ -189,7 +189,7 @@ PSD 는 파일 안에 JPEG 썸네일을 갖고 있다 — Image Resources 섹션
   crt-static). 사전 빌드 바이너리를 받는 이유는 Rust 크레이트 일부가 CMake를
   요구하는데 빌드 머신에 없기 때문. 대응소스는 VERSION.txt의 커밋 SHA.
 - 출하 게이트를 `build-msix.bat`에 연결. **경로를 `%~dp0` 기준으로 고쳤다** —
-  Span 원본은 `D:	.AI\Span` 절대경로라 그대로 두면 남의 DLL을 검사하고,
+  Span 원본은 `D:\11.AI\Span` 절대경로라 그대로 두면 남의 DLL을 검사하고,
   그 폴더가 없으면 `if exist`가 거짓이라 게이트가 조용히 통과한다.
 - x64가 아니면 엔진을 비활성화하고 기존 경로로 폴백한다.
 
