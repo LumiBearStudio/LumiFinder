@@ -1,4 +1,4 @@
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using LumiFiles.Helpers;
 
 namespace LumiFiles.Services.Archive;
@@ -22,7 +22,7 @@ internal static class ArchiveEntryStaging
     /// <summary>Staged folders older than this are removed on the next call.</summary>
     private static readonly TimeSpan StagingLifetime = TimeSpan.FromHours(1);
 
-    private const string StagingPrefix = "SpanArchive_";
+    private const string StagingPrefix = "LumiArchive_";
 
     internal static bool ContainsArchiveEntry(IEnumerable<string>? paths)
         => paths is not null && paths.Any(ArchivePathHelper.IsArchivePath);
@@ -62,6 +62,8 @@ internal static class ArchiveEntryStaging
             return result;
         }
 
+        var reserver = new StagingNameReserver(stagingRoot);
+
         // Group by archive so each file is opened once even when several entries are dragged.
         foreach (var group in archiveEntries.GroupBy(
                      p => ArchivePathHelper.Parse(p).ArchiveFilePath,
@@ -76,7 +78,7 @@ internal static class ArchiveEntryStaging
             try
             {
                 var staged = await Task.Run(
-                    () => StageFromArchive(group.Key, internalPaths, stagingRoot, ct), ct);
+                    () => StageFromArchive(group.Key, internalPaths, stagingRoot, reserver, ct), ct);
                 result.AddRange(staged);
             }
             catch (OperationCanceledException) { throw; }
@@ -197,10 +199,36 @@ internal static class ArchiveEntryStaging
         return hash;
     }
 
+    /// <summary>
+    /// 스테이징된 항목마다 겹치지 않는 실제 경로를 내주되 원래 파일 이름은 유지한다
+    /// (드롭 받은 쪽에 보이는 이름이 그것이기 때문).
+    ///
+    /// 스테이징 폴더 안은 평평해서, 서로 다른 폴더에 있던 "readme.txt" 두 개 —
+    /// 또는 한 번의 드래그에 포함된 서로 다른 아카이브의 같은 이름 —— 가 같은 경로로
+    /// 떨어져 뒤엣것이 앞엣것을 조용히 덮어쓴다. 사용자는 두 개를 끌었는데 하나만
+    /// 받게 된다. 충돌하는 항목만 번호 붙인 하위 폴더로 보낸다.
+    /// </summary>
+    private sealed class StagingNameReserver(string root)
+    {
+        private readonly HashSet<string> _taken = new(StringComparer.OrdinalIgnoreCase);
+        private int _slot;
+
+        internal string Reserve(string fileName)
+        {
+            if (_taken.Add(fileName))
+                return Path.Combine(root, fileName);
+
+            var dir = Path.Combine(root, (++_slot).ToString());
+            Directory.CreateDirectory(dir);
+            return Path.Combine(dir, fileName);
+        }
+    }
+
     private static List<string> StageFromArchive(
         string archiveFilePath,
         List<string> internalPaths,
         string stagingRoot,
+        StagingNameReserver reserver,
         CancellationToken ct)
     {
         var staged = new List<string>();
@@ -225,7 +253,7 @@ internal static class ArchiveEntryStaging
             {
                 if (file is not null)
                 {
-                    var target = Path.Combine(stagingRoot, SanitizeName(Path.GetFileName(normalized)));
+                    var target = reserver.Reserve(SanitizeName(Path.GetFileName(normalized)));
                     ExtractEntry(file, target, ct);
                     staged.Add(target);
                     continue;
@@ -242,7 +270,7 @@ internal static class ArchiveEntryStaging
                     continue;
                 }
 
-                var folderRoot = Path.Combine(stagingRoot, SanitizeName(Path.GetFileName(normalized)));
+                var folderRoot = reserver.Reserve(SanitizeName(Path.GetFileName(normalized)));
                 Directory.CreateDirectory(folderRoot);
                 var folderRootWithSep = folderRoot.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
 

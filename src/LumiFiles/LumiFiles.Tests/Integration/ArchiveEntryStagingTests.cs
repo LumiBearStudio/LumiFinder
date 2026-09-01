@@ -1,4 +1,4 @@
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using LumiFiles.Services.Archive;
 
 namespace LumiFiles.Tests.Integration;
@@ -217,6 +217,39 @@ public class ArchiveEntryStagingTests
         Assert.AreEqual("docs", Path.GetFileName(result[0]));
         Assert.AreEqual("nested guide", File.ReadAllText(Path.Combine(result[0], "guide.txt")));
         Assert.AreEqual("deep file", File.ReadAllText(Path.Combine(result[0], "images", "logo.txt")));
+    }
+
+    /// <summary>
+    /// 스테이징 폴더 안은 평평하다. 서로 다른 폴더에 있던 같은 이름 두 개를 함께 끌면
+    /// 뒤엣것이 앞엣것을 덮어써서, 두 개를 끌었는데 하나만 받게 된다.
+    /// 이름은 유지하되 경로가 겹치지 않아야 한다.
+    /// </summary>
+    [TestMethod]
+    public async Task Materialize_SameFileNameInDifferentFolders_DoesNotOverwriteEitherOne()
+    {
+        var dupZip = Path.Combine(_tempDir, "dup.zip");
+        using (var fs = File.Create(dupZip))
+        using (var a = new ZipArchive(fs, ZipArchiveMode.Create))
+        {
+            using (var w = new StreamWriter(a.CreateEntry("a/note.txt").Open())) w.Write("from a");
+            using (var w = new StreamWriter(a.CreateEntry("b/note.txt").Open())) w.Write("from b");
+        }
+
+        var result = await ArchiveEntryStaging.MaterializeAsync([
+            LumiFiles.Helpers.ArchivePathHelper.Combine(dupZip, "a/note.txt"),
+            LumiFiles.Helpers.ArchivePathHelper.Combine(dupZip, "b/note.txt"),
+        ]);
+
+        Assert.AreEqual(2, result.Count, "both entries must survive");
+        Assert.AreNotEqual(result[0], result[1], "they must not stage to the same path");
+
+        // 드롭 받은 쪽에 보이는 이름은 원래 이름이어야 한다.
+        Assert.AreEqual("note.txt", Path.GetFileName(result[0]));
+        Assert.AreEqual("note.txt", Path.GetFileName(result[1]));
+
+        var contents = result.Select(File.ReadAllText).OrderBy(x => x).ToList();
+        CollectionAssert.AreEqual(new[] { "from a", "from b" }, contents,
+            "each entry must keep its own content");
     }
 
     [TestMethod]
