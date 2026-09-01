@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using LumiFiles.Models;
 using LumiFiles.Services;
@@ -168,6 +168,27 @@ public class FolderTagServiceTests
         Assert.IsTrue(svc.SetTag(_dir, FolderTagColor.Blue));
         Assert.IsTrue(svc.SetTag(_dir, FolderTagColor.Red), "두 번째 쓰기 실패");
         Assert.AreEqual(FolderTagColor.Red, new FolderTagService().Load(_dir));
+    }
+
+    /// <summary>
+    /// 회귀 방지: 태그를 단 폴더에 <b>System</b> 속성을 붙이면 안 된다.
+    /// FolderViewModel 의 열거가 숨김 표시 OFF(기본값)일 때 Hidden|System 을 건너뛰므로
+    /// System 을 붙이면 태그를 다는 순간 그 폴더가 목록에서 사라진다.
+    /// Windows 가 '폴더 사용자 지정' 시 실제로 쓰는 속성도 ReadOnly 다.
+    /// </summary>
+    [TestMethod]
+    public void SetTag_MarksFolderReadOnly_NotSystem()
+    {
+        var svc = new FolderTagService();
+        svc.SetTag(_dir, FolderTagColor.Blue);
+
+        var attrs = File.GetAttributes(_dir);
+        Assert.IsTrue(attrs.HasFlag(FileAttributes.ReadOnly),
+            "desktop.ini 가 해석되려면 폴더에 ReadOnly 가 필요하다");
+        Assert.IsFalse(attrs.HasFlag(FileAttributes.System),
+            "System 을 붙이면 숨김 표시 OFF 상태에서 폴더가 목록에서 사라진다");
+        Assert.IsFalse(attrs.HasFlag(FileAttributes.Hidden),
+            "폴더 자체를 숨기면 안 된다");
     }
 
     [TestMethod]

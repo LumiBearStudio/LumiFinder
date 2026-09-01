@@ -127,17 +127,23 @@ namespace LumiFiles.Services
                         saved ?? (FileAttributes.Hidden | FileAttributes.System));
                 }
 
-                // Windows 는 폴더에 ReadOnly/System 속성이 있을 때만 desktop.ini 를 해석한다.
-                // 우리 목록 코드도 이 속성을 '커스터마이즈된 폴더' 사전 게이트로 쓰므로
+                // Windows 는 폴더에 ReadOnly 또는 System 속성이 있을 때만 desktop.ini 를 해석한다.
+                // 우리 목록 코드도 이 속성을 '커스터마이즈된 폴더' 사전 게이트로 재사용하므로
                 // (FolderItem.MaybeHasCustomIcon) 태그를 남길 때 함께 표시해 둔다.
                 // → 대부분의 폴더는 desktop.ini 존재 확인조차 하지 않는다 = 목록 성능 보호.
+                //
+                // ⚠ 반드시 ReadOnly 여야 한다. System 을 쓰면 태그를 단 폴더가 목록에서 사라진다:
+                //   FolderViewModel 의 열거가 숨김 표시 OFF(기본값)일 때 Hidden|System 을 건너뛴다.
+                //   ReadOnly 는 그 필터에 걸리지 않고, 탐색기에서 '폴더 사용자 지정' 을 했을 때
+                //   Windows 가 실제로 붙이는 속성도 ReadOnly 다(폴더의 ReadOnly 는 내용을 읽기
+                //   전용으로 만들지 않는다 — '커스터마이즈됨' 표시일 뿐).
                 if (color != FolderTagColor.None)
                 {
                     try
                     {
                         var dirAttrs = File.GetAttributes(folderPath);
                         if ((dirAttrs & (FileAttributes.ReadOnly | FileAttributes.System)) == 0)
-                            File.SetAttributes(folderPath, dirAttrs | FileAttributes.System);
+                            File.SetAttributes(folderPath, dirAttrs | FileAttributes.ReadOnly);
                     }
                     catch (Exception ex)
                     {
