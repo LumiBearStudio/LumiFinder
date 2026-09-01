@@ -422,6 +422,11 @@ namespace LumiFiles
         private Models.TabStateDto? _pendingTearOff;
         // True if this window was created from a tear-off (skip session save on close)
         private bool _isTearOffWindow;
+        // True only for a window created by DRAGGING a tab out. Ctrl+N/점프리스트 창도
+        // _pendingTearOff를 쓰기 때문에 _isTearOffWindow만으로는 둘을 구분할 수 없다.
+        // 언클로킹 주체가 다르다 — 드래그 창은 StartManualWindowDrag 타이머가 풀고,
+        // Ctrl+N 창은 Loaded가 직접 풀어야 한다. 이 플래그가 그 갈림길이다.
+        private bool _isDragTearOff;
 
         private const double ColumnWidth = 220;
 
@@ -916,7 +921,9 @@ namespace LumiFiles
             // Cloak the window so the user never sees the WinUI default size.
             // Activate() resets the size, but the Loaded handler re-applies
             // the saved placement and then uncloaks.
-            // Skip for tear-off windows — TearOffTab manages cloak/position via drag timer.
+            // 주의: 아래 _pendingTearOff 검사는 실제로는 항상 참이다. 이 필드는 생성자가
+            // 끝난 뒤에 호출자가 채우므로(TabManager.cs:1038, :1154) 여기서는 늘 null이다.
+            // 즉 tear-off 창도 여기서 클로킹된다 — 언클로킹 주체가 누구인지가 중요하다.
             if (_settings.RememberWindowPosition && _pendingTearOff == null)
             {
                 int cloakOn = 1;
@@ -1025,9 +1032,12 @@ namespace LumiFiles
                         ViewModel.Favorites.CollectionChanged += OnFavoritesCollectionChanged;
                         ApplySidebarSectionVisibility();
 
-                        // Uncloak if cloaked during constructor (RememberWindowPosition)
-                        // For tear-off windows, uncloak is managed by StartManualWindowDrag timer
-                        if (_settings.RememberWindowPosition && !_isTearOffWindow)
+                        // Uncloak if cloaked during constructor (RememberWindowPosition).
+                        // 드래그로 떼어낸 창만 StartManualWindowDrag 타이머가 언클로킹한다.
+                        // 여기서 _isTearOffWindow를 보면 안 된다 — 바로 위에서 true로 세팅되므로
+                        // 조건이 영영 거짓이 되고, Ctrl+N 창이 클로킹된 채로 남아 화면에 안 뜬다.
+                        // (v1.2.13.0 ~ v2.0.4 회귀. 작업표시줄에는 보이는데 창이 없던 증상.)
+                        if (_settings.RememberWindowPosition && !_isDragTearOff)
                         {
                             int cloakOff = 0;
                             Helpers.NativeMethods.DwmSetWindowAttribute(
@@ -1135,7 +1145,9 @@ namespace LumiFiles
                         App.StartupArguments = null; // Consume to prevent re-navigation
                         jumpArg = jumpArg?.Trim().Trim('"');
 
-                        if (jumpArg != "--new-window")
+                        // "--new-window"로 시작한 경우는 이 창 자체가 그 새 창이므로 할 일이 없다.
+                        // (앱이 이미 떠 있을 때는 App.OnAppActivated가 창을 하나 더 만든다.)
+                        if (!App.IsNewWindowArgument(jumpArg))
                         {
                             // 가상 폴더 처리 (휴지통, 내 PC 등)
                             if (IsRecycleBinArgument(jumpArg))
@@ -2622,13 +2634,18 @@ namespace LumiFiles
                 await col.ReloadAsync();
                 explorer.NotifyCurrentItemsChanged();
 
+                // 리로드가 오류로 끝났으면 "빈 폴더"가 아니다. 접근이 잠깐 실패한 것뿐인데
+                // 아래 정리를 실행하면 오른쪽 컬럼 체인이 통째로 사라지고 활성 컬럼이
+                // 부모로 되감긴다 — 표시가 아니라 탐색 위치를 잃는 손실이다.
+                bool reloadFailed = !string.IsNullOrEmpty(col.ErrorMessage);
+
                 // 리로드 후 빈 컬럼 → 자식 컬럼 정리 + Active를 부모로 이동
-                if (col.Children.Count == 0 && i + 1 < explorer.Columns.Count)
+                if (!reloadFailed && col.Children.Count == 0 && i + 1 < explorer.Columns.Count)
                 {
                     explorer.CleanupColumnsFrom(i + 1);
                 }
                 // 빈 컬럼 자체가 Active이면 부모로 Active 이동
-                if (col.Children.Count == 0 && col.IsActive && i > 0)
+                if (!reloadFailed && col.Children.Count == 0 && col.IsActive && i > 0)
                 {
                     explorer.SetActiveColumn(explorer.Columns[i - 1]);
                 }
@@ -6395,6 +6412,7 @@ namespace LumiFiles
         async void Services.IContextMenuHost.PerformPaste(string targetFolderPath)
         {
             if (Helpers.ArchivePathHelper.IsArchivePath(targetFolderPath)) { ViewModel.ShowToast(_loc.Get("Toast_ArchiveReadOnly")); return; }
+            if (Helpers.UncPathHelper.IsVirtualRoot(targetFolderPath)) { Helpers.DebugLogger.Log("[ServerRoot] write blocked"); ViewModel.ShowToast(_loc.Get("Toast_NetworkRootReadOnly")); return; }
             try
             {
             List<string> sourcePaths;
@@ -6720,6 +6738,7 @@ namespace LumiFiles
         async void Services.IContextMenuHost.PerformNewFolder(string parentFolderPath)
         {
             if (Helpers.ArchivePathHelper.IsArchivePath(parentFolderPath)) { ViewModel.ShowToast(_loc.Get("Toast_ArchiveReadOnly")); return; }
+            if (Helpers.UncPathHelper.IsVirtualRoot(parentFolderPath)) { Helpers.DebugLogger.Log("[ServerRoot] write blocked"); ViewModel.ShowToast(_loc.Get("Toast_NetworkRootReadOnly")); return; }
             string baseName = _loc.Get("NewFolderBaseName");
             string newPath = System.IO.Path.Combine(parentFolderPath, baseName);
 
@@ -6797,6 +6816,7 @@ namespace LumiFiles
         async void Services.IContextMenuHost.PerformNewFile(string parentFolderPath, string fileName)
         {
             if (Helpers.ArchivePathHelper.IsArchivePath(parentFolderPath)) { ViewModel.ShowToast(_loc.Get("Toast_ArchiveReadOnly")); return; }
+            if (Helpers.UncPathHelper.IsVirtualRoot(parentFolderPath)) { Helpers.DebugLogger.Log("[ServerRoot] write blocked"); ViewModel.ShowToast(_loc.Get("Toast_NetworkRootReadOnly")); return; }
             string baseName = System.IO.Path.GetFileNameWithoutExtension(fileName);
             string ext = System.IO.Path.GetExtension(fileName);
             string newPath = System.IO.Path.Combine(parentFolderPath, fileName);
@@ -6872,6 +6892,7 @@ namespace LumiFiles
         async void Services.IContextMenuHost.PerformNewFileFromShellNew(string parentFolderPath, Services.ShellNewItem shellNewItem)
         {
             if (Helpers.ArchivePathHelper.IsArchivePath(parentFolderPath)) { ViewModel.ShowToast(_loc.Get("Toast_ArchiveReadOnly")); return; }
+            if (Helpers.UncPathHelper.IsVirtualRoot(parentFolderPath)) { Helpers.DebugLogger.Log("[ServerRoot] write blocked"); ViewModel.ShowToast(_loc.Get("Toast_NetworkRootReadOnly")); return; }
 
             try
             {
@@ -6939,12 +6960,14 @@ namespace LumiFiles
         {
             if (paths == null || paths.Length == 0) return;
             if (paths.Any(p => Helpers.ArchivePathHelper.IsArchivePath(p))) { ViewModel.ShowToast(_loc.Get("Toast_ArchiveReadOnly")); return; }
+            if (paths.Any(p => Helpers.UncPathHelper.IsVirtualRoot(p))) { Helpers.DebugLogger.Log("[ServerRoot] write blocked"); ViewModel.ShowToast(_loc.Get("Toast_NetworkRootReadOnly")); return; }
 
             try
             {
                 // Multi-selection support: path 기반으로 올바른 컬럼의 선택 항목을 가져옴
                 var allPaths = GetSelectedPathsForContextMenu(paths[0]);
                 if (allPaths.Any(p => Helpers.ArchivePathHelper.IsArchivePath(p))) { ViewModel.ShowToast(_loc.Get("Toast_ArchiveReadOnly")); return; }
+                if (allPaths.Any(p => Helpers.UncPathHelper.IsVirtualRoot(p))) { Helpers.DebugLogger.Log("[ServerRoot] write blocked"); ViewModel.ShowToast(_loc.Get("Toast_NetworkRootReadOnly")); return; }
 
                 // ZIP name: first item name + .zip
                 string firstPath = allPaths[0];
@@ -6988,7 +7011,12 @@ namespace LumiFiles
                 }
 
                 var op = new LumiFiles.Services.FileOperations.ExtractOperation(zipPath, destPath);
-                var activeIndex = GetActiveColumnIndex();
+                // Issue #63: 컨텍스트 메뉴에서 호출되면 포커스가 MenuFlyoutItem에 있어
+                // GetActiveColumnIndex()가 -1을 반환한다. 그러면 갱신 대상이 "마지막 컬럼"으로
+                // 폴백하는데, zip을 열어 둔 상태에서는 그게 archive:// 컬럼이라 실제 폴더가
+                // 갱신되지 않아 추출 결과가 F5 전까지 보이지 않았다.
+                // PerformCompress가 이미 쓰는 경로 매칭 방식으로 통일한다(커밋 6a980ac 선례).
+                var activeIndex = GetColumnIndexForPath(zipPath);
                 await ViewModel.ExecuteFileOperationAsync(op, activeIndex >= 0 ? activeIndex : null);
             }
             catch (Exception ex)
@@ -7026,7 +7054,12 @@ namespace LumiFiles
                 }
 
                 var op = new LumiFiles.Services.FileOperations.ExtractOperation(zipPath, destPath);
-                var activeIndex = GetActiveColumnIndex();
+                // Issue #63: 컨텍스트 메뉴에서 호출되면 포커스가 MenuFlyoutItem에 있어
+                // GetActiveColumnIndex()가 -1을 반환한다. 그러면 갱신 대상이 "마지막 컬럼"으로
+                // 폴백하는데, zip을 열어 둔 상태에서는 그게 archive:// 컬럼이라 실제 폴더가
+                // 갱신되지 않아 추출 결과가 F5 전까지 보이지 않았다.
+                // PerformCompress가 이미 쓰는 경로 매칭 방식으로 통일한다(커밋 6a980ac 선례).
+                var activeIndex = GetColumnIndexForPath(zipPath);
                 await ViewModel.ExecuteFileOperationAsync(op, activeIndex >= 0 ? activeIndex : null);
             }
             catch (Exception ex)

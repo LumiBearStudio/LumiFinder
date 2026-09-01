@@ -1122,7 +1122,31 @@ namespace LumiFiles
                 return;
             }
 
-            if (System.IO.Directory.Exists(path))
+            // Issue #67: UNC 경로에서 Directory.Exists는 도달 불가 호스트에 30초 이상
+            // 매달린다. 여기는 UI 스레드라 그대로 두면 주소창 입력만으로 앱이 멈춘다.
+            // ExplorerViewModel.NavigateToPath가 같은 이유로 이미 Task.Run을 쓴다.
+            bool isUnc = Helpers.UncPathHelper.IsUnc(path);
+
+            // Issue #67: 서버 루트(\\dave-mba)와 \\wsl.localhost 는 Directory.Exists가 항상
+            // false라 아래 검사로는 절대 통과하지 못한다. 탐색으로 넘겨 각각 공유 목록과
+            // WSL 배포판 목록을 열게 한다.
+            if (Helpers.UncPathHelper.IsServerRoot(path) || Helpers.UncPathHelper.IsShellNamespaceRoot(path))
+            {
+                var rootFolder = new Models.FolderItem
+                {
+                    Name = path.TrimStart('\\').TrimEnd('\\', '/'),
+                    Path = path.TrimEnd('\\', '/')
+                };
+                _ = explorer.NavigateTo(rootFolder);
+                return;
+            }
+
+            bool dirExists = isUnc
+                ? await System.Threading.Tasks.Task.Run(() => System.IO.Directory.Exists(path))
+                : System.IO.Directory.Exists(path);
+            if (_isClosed) return;
+
+            if (dirExists)
             {
                 // 주소바 입력은 해당 폴더를 루트로 열기 (shell: / 로컬라이즈 이름과 동일 패턴)
                 var dirFolder = new Models.FolderItem
@@ -1155,6 +1179,19 @@ namespace LumiFiles
                 if (archiveUri != null)
                 {
                     _ = explorer.NavigateToPath(archiveUri);
+                }
+                else if (isUnc)
+                {
+                    // Issue #67: UNC 경로를 아래 ShellExecute로 넘기면 안 된다. 그 호출은
+                    // "cmd" / "calc" 같은 실행 명령 호환용인데 \\wsl.localhost 같은 입력까지
+                    // 삼켜서, SPAN이 기본 파일 관리자인데도 윈도우 탐색기가 떴다(제보 #67).
+                    //
+                    // 셸 네임스페이스 루트(\\wsl.localhost)와 서버 루트는 위에서 이미 탐색으로
+                    // 넘겼으므로 여기 오지 않는다. 남는 것은 도달할 수 없거나 존재하지 않는
+                    // 네트워크 경로뿐이다. 이전에는 아무 반응이 없었다 — ShellExecute가
+                    // 조용히 실패했다.
+                    Helpers.DebugLogger.Log($"[AddressBar] unreachable UNC path: {path}");
+                    ViewModel.ShowToast(string.Format(_loc.Get("Error_NetworkPath"), path), isError: true);
                 }
                 else
                 {

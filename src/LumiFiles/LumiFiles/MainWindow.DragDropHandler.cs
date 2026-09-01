@@ -877,6 +877,15 @@ namespace LumiFiles
             // Archive safety: block drag from archives (not yet supported)
             if (sourcePaths.Any(p => Helpers.ArchivePathHelper.IsArchivePath(p)))
                 return;
+            // Issue #67: 서버 루트(\\server)는 공유 목록일 뿐 쓸 수 있는 위치가 아니다.
+            // 막지 않으면 드롭이 조용히 실패한다.
+            if (Helpers.UncPathHelper.IsVirtualRoot(destFolder))
+            {
+                Helpers.DebugLogger.Log($"[ServerRoot] drop blocked into {destFolder}");
+                ViewModel.ShowToast(_loc.Get("Toast_NetworkRootReadOnly"));
+                return;
+            }
+
 
             // Early check: if the destination is one of the selected/dragged items, warn and block.
             // e.g., selecting 24 folders and dropping into one of them is almost certainly a mistake.

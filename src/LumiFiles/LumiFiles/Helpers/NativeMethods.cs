@@ -104,6 +104,12 @@ namespace LumiFiles.Helpers
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool IsIconic(IntPtr hWnd);
 
+        /// <summary>창이 최대화 상태인지. LumiFinder: 최대화 창의 GetWindowRect 는
+        /// 작업 영역보다 큰 rect 라 새 창 위치 계산의 기준으로 쓸 수 없다.</summary>
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool IsZoomed(IntPtr hWnd);
+
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);

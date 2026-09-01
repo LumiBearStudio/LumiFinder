@@ -56,6 +56,7 @@
     <Compile Include="..\LumiFiles\Helpers\ZipEntryNameEncoding.cs" Link="Sources\Helpers\ZipEntryNameEncoding.cs" />
     <Compile Include="..\LumiFiles\Helpers\FontScaleService.cs" Link="Sources\Helpers\FontScaleService.cs" />
     <Compile Include="..\LumiFiles\Helpers\AppDataPaths.cs" Link="Sources\Helpers\AppDataPaths.cs" />
+    <Compile Include="..\LumiFiles\Helpers\UncPathHelper.cs" Link="Sources\Helpers\UncPathHelper.cs" />
     <!-- Services - file operations (pure C#) -->
     <Compile Include="..\LumiFiles\Services\FileOperations\OperationResult.cs" Link="Sources\Services\OperationResult.cs" />
     <Compile Include="..\LumiFiles\Services\DefaultFileManagerService.cs" Link="Sources\Services\DefaultFileManagerService.cs" />
