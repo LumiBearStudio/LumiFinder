@@ -164,10 +164,19 @@
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
   </PropertyGroup>
-  <!-- Self-signed cert for sideload/GitHub. Store re-signs on submission.
-       Disabled while LumiFiles_Dev.pfx is not yet generated.
-       Re-enable + create new dev cert via VS (Package.appxmanifest > Packaging > Create test certificate)
-       before producing sideload .msix or before Store submission. -->
+  <!-- MSBuild does not sign. Leave this false.
+
+       The Store re-signs on submission, and the sideload package is signed after the
+       build by tools\sign-sideload-package.ps1, which build-msix.bat runs before it
+       zips - and which aborts the release if signing fails.
+
+       Signing here instead would need the .pfx password in this file, and this file is
+       public. The script uses the certificate from the maintainer's certificate store
+       by thumbprint, so no secret lives in the repository.
+
+       v1.1.0.0 shipped with an unsigned .msix and no certificate, so it could not be
+       installed at all (issue #4). Nothing in the build caught it because the Store
+       path was unaffected. That gate now exists; do not route around it. -->
   <PropertyGroup>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <!-- <PackageCertificateKeyFile>LumiFiles_Dev.pfx</PackageCertificateKeyFile> -->

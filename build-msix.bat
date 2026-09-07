@@ -115,9 +115,23 @@ echo.
 :: -- Create ZIP packages for GitHub Release --
 :: AssemblyName is 'LumiFiles', so MSBuild creates LumiFiles_*_Test folders.
 :: We rename ZIP output to LumiFinder_v* prefix for consistency.
+::
+:: The MSIX is signed BEFORE zipping, and the build stops if signing fails.
+:: v1.1.0.0 shipped unsigned with no certificate and could not be installed at all
+:: (issue #4) - the Store re-signs on submission, so nothing else in the build
+:: noticed. This is the step that makes that impossible to repeat.
 echo Creating ZIP packages for GitHub Release...
 for %%P in (x64 x86 ARM64) do (
     if exist "%OUTDIR%\LumiFiles_%VER%_%%P_Test" (
+        powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\sign-sideload-package.ps1" -PackageDir "%OUTDIR%\LumiFiles_%VER%_%%P_Test"
+        if errorlevel 1 (
+            echo.
+            echo ERROR: could not sign the %%P sideload package - aborting release build.
+            echo        An unsigned .msix cannot be installed; publishing one is worse than
+            echo        publishing nothing.
+            pause
+            exit /b 1
+        )
         powershell -NoProfile -Command "Compress-Archive -Path '%OUTDIR%\LumiFiles_%VER%_%%P_Test\*' -DestinationPath '%OUTDIR%\LumiFinder_v%VER%_%%P.zip' -Force"
         echo [OK] LumiFinder_v%VER%_%%P.zip
     ) else (
