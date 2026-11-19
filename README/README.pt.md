@@ -8,6 +8,7 @@
 </p>
 
 <p align="center">
+  <a href="https://lumibear.dev/"><img src="https://img.shields.io/badge/lumibear.dev-f5b041?style=for-the-badge&logo=googlechrome&logoColor=white" alt="lumibear.dev"></a>
   <a href="https://github.com/LumiBearStudio/LumiFinder/releases/latest"><img src="https://img.shields.io/github/v/release/LumiBearStudio/LumiFinder?style=for-the-badge&label=Latest" alt="Última versão"></a>
   <a href="../LICENSE"><img src="https://img.shields.io/github/license/LumiBearStudio/LumiFinder?style=for-the-badge" alt="Licença"></a>
   <a href="https://github.com/sponsors/LumiBearStudio"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-ff69b4?style=for-the-badge&logo=github-sponsors" alt="Patrocinar"></a>
